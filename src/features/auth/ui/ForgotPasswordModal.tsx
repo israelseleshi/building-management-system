@@ -35,10 +35,11 @@ type ResetPasswordValues = z.infer<typeof resetPasswordSchema>
 interface ForgotPasswordModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialStep?: "email" | "reset"
 }
 
-export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalProps) {
-  const [step, setStep] = useState<"email" | "reset">("email")
+export function ForgotPasswordModal({ open, onOpenChange, initialStep }: ForgotPasswordModalProps) {
+  const [step, setStep] = useState<"email" | "reset">(initialStep ?? "email")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -74,10 +75,6 @@ export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalP
       }
 
       setSuccess("Password reset email sent! Check your inbox for instructions.")
-      setTimeout(() => {
-        setStep("reset")
-        setSuccess("")
-      }, 2000)
     } catch (error) {
       console.error("Forgot password error:", error)
       setError("An error occurred. Please try again.")
@@ -118,7 +115,7 @@ export function ForgotPasswordModal({ open, onOpenChange }: ForgotPasswordModalP
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      setStep("email")
+      setStep(initialStep ?? "email")
       emailForm.reset()
       resetForm.reset()
       setError("")
