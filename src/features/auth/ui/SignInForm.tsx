@@ -11,6 +11,7 @@ import { Heading, Text } from "@/components/ui/typography"
 import { Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
+import { ForgotPasswordModal } from "./ForgotPasswordModal"
 
 const signInSchema = z.object({
   email: z.string().email({
@@ -27,6 +28,7 @@ export function SignInForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false)
   const router = useRouter()
 
   const form = useForm<SignInValues>({
@@ -135,7 +137,18 @@ export function SignInForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Password</FormLabel>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setForgotPasswordOpen(true)}
+                    disabled={isLoading}
+                  >
+                    Forgot password?
+                  </Button>
+                </div>
                 <FormControl>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -187,6 +200,7 @@ export function SignInForm() {
           </Button>
         </form>
       </Form>
+      <ForgotPasswordModal open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen} />
     </div>
   )
 }
