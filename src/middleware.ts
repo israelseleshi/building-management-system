@@ -1,0 +1,58 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+// This function can be marked `async` if using `await` inside
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Protected routes that require authentication
+  const protectedRoutes = ['/dashboard', '/dashboard/listings', '/dashboard/create', '/dashboard/payouts', '/dashboard/analytics', '/dashboard/boost', '/dashboard/settings']
+  
+  // Auth routes that should redirect to dashboard if already authenticated
+  const authRoutes = ['/auth/signin', '/auth/signup']
+
+  // Check if the current path is a protected route
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  
+  // Check if the current path is an auth route
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+
+  // Get authentication status from cookies
+  const isAuthenticated = request.cookies.get('isAuthenticated')?.value === 'true'
+
+  // Redirect unauthenticated users from protected routes to sign-in
+  if (isProtectedRoute && !isAuthenticated) {
+    const signInUrl = new URL('/auth/signin', request.url)
+    signInUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(signInUrl)
+  }
+
+  // Redirect authenticated users from auth routes to dashboard
+  if (isAuthRoute && isAuthenticated) {
+    const dashboardUrl = new URL('/dashboard', request.url)
+    return NextResponse.redirect(dashboardUrl)
+  }
+
+  // Role-based protection (example: only landlords can access certain routes)
+  if (pathname.startsWith('/dashboard') && isAuthenticated) {
+    // You can add role-specific logic here
+    // For now, we'll allow all authenticated users to access dashboard routes
+  }
+
+  return NextResponse.next()
+}
+
+// See "Matching Paths" below to learn more
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
+  ],
+}

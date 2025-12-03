@@ -1,0 +1,219 @@
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Camo Color Palette - Matching bms-rental theme */
+:root {
+  --background: #EBD5AB;
+  --foreground: #1A1F1E;
+  --card: #E8D9C0;
+  --card-foreground: #1A1F1E;
+  --popover: #E8D9C0;
+  --popover-foreground: #1A1F1E;
+  --primary: #7D8B6F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #A8B79A;
+  --secondary-foreground: #1A1F1E;
+  --muted: #D9C2A7;
+  --muted-foreground: #4A3F35;
+  --accent: #6B5A46;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #6B5A46;
+  --input: #E8D9C0;
+  --ring: #7D8B6F;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: #1A1F1E;
+  --foreground: #EBD5AB;
+  --card: #2D3A35;
+  --card-foreground: #EBD5AB;
+  --popover: #2D3A35;
+  --popover-foreground: #EBD5AB;
+  --primary: #A8B79A;
+  --primary-foreground: #1A1F1E;
+  --secondary: #7D8B6F;
+  --secondary-foreground: #EBD5AB;
+  --muted: #4A3F35;
+  --muted-foreground: #A8B79A;
+  --accent: #5D6B55;
+  --accent-foreground: #EBD5AB;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #6B5A46;
+  --input: #2D3A35;
+  --ring: #A8B79A;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: #EBD5AB;
+    color: #1A1F1E;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  
+  /* Typography base styles */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+  
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.875rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+  h5 { font-size: 1.125rem; }
+  h6 { font-size: 1rem; }
+  
+  p {
+    margin-bottom: 1rem;
+  }
+  
+  /* Responsive typography */
+  @media (min-width: 768px) {
+    h1 { font-size: 3rem; }
+    h2 { font-size: 2.25rem; }
+    h3 { font-size: 1.875rem; }
+    h4 { font-size: 1.5rem; }
+    h5 { font-size: 1.25rem; }
+  }
+  
+  @media (min-width: 1024px) {
+    h1 { font-size: 3.75rem; }
+    h2 { font-size: 3rem; }
+    h3 { font-size: 2.25rem; }
+    h4 { font-size: 1.875rem; }
+  }
+}
+
+/* Custom utility classes matching bms-rental */
+.menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.menu-item-active {
+  color: white;
+  background-color: #7D8B6F;
+}
+
+.menu-item-inactive {
+  color: rgb(55 65 81);
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.menu-item-inactive:hover {
+  background-color: #7D8B6F;
+  color: white;
+}
+
+.menu-item.menu-item-inactive:hover svg {
+  color: white;
+}
+
+.menu-item-icon {
+  color: rgb(75 85 99);
+  transition: color 0.2s ease;
+}
+
+.menu-item-icon-active {
+  color: white;
+}
+
+.menu-item-icon-inactive {
+  color: rgb(107 114 128);
+}
+
+.menu-item-icon-inactive:hover {
+  color: rgb(55 65 81);
+}
+
+/* Listings Page Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.5s ease-out forwards;
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Card hover effects */
+.card-hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Button scale effects */
+.btn-scale-hover {
+  transition: transform 0.2s ease-in-out;
+}
+
+.btn-scale-hover:hover {
+  transform: scale(1.05);
+}
+
+.btn-scale-hover:active {
+  transform: scale(0.98);
+}
+
+/* Staggered animation for cards */
+.stagger-animation {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
