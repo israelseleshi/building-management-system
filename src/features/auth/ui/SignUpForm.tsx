@@ -9,6 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Heading, Text } from "@/components/ui/typography"
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
 
 const signUpSchema = z.object({
   name: z.string().min(2, {
@@ -34,6 +36,7 @@ export function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const router = useRouter()
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -49,14 +52,21 @@ export function SignUpForm() {
     setIsLoading(true)
     
     try {
-      // TODO: Implement actual sign up logic with Supabase
-      console.log("Sign up values:", values)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Show success message
-      alert("Account created successfully! (This will be replaced with actual navigation)")
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: { name: values.name },
+        },
+      })
+
+      if (error) {
+        alert(error.message)
+        return
+      }
+
+      alert("Account created! Check your email to verify your address.")
+      router.push("/auth/signin")
     } catch (error) {
       console.error("Sign up error:", error)
       // TODO: Show error toast/message
