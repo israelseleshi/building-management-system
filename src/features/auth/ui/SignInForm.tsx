@@ -51,14 +51,36 @@ export function SignInForm() {
         setError(error?.message || "Invalid email or password. Please try again.")
         return
       }
+      const userId = data.user?.id
+
+      let dbRole: string | null = null
+
+      if (userId) {
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .single()
+
+        if (!profileError && profile?.role) {
+          dbRole = profile.role
+        }
+      }
+
+      const effectiveDbRole = dbRole || "tenant"
+      const appRole = effectiveDbRole === "owner" ? "landlord" : "tenant"
 
       document.cookie = "isAuthenticated=true; path=/; max-age=86400"
-      document.cookie = "userRole=landlord; path=/; max-age=86400"
+      document.cookie = `userRole=${appRole}; path=/; max-age=86400`
 
       localStorage.setItem("isAuthenticated", "true")
-      localStorage.setItem("userRole", "landlord")
+      localStorage.setItem("userRole", appRole)
 
-      router.push("/dashboard")
+      if (effectiveDbRole === "tenant") {
+        router.push("/tenant-dashboard")
+      } else {
+        router.push("/dashboard")
+      }
     } catch (error) {
       console.error("Sign in error:", error)
       setError("An error occurred. Please try again.")

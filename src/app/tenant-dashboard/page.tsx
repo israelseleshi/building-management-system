@@ -85,7 +85,13 @@ function DashboardContent() {
   }
 
   const handleLogout = () => {
-    router.push("/auth/logout")
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("userRole")
+
+    document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+
+    router.push("/auth/signin")
   }
 
   return (
@@ -138,7 +144,7 @@ function DashboardContent() {
                   <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=tenant" />
                   <AvatarFallback>T</AvatarFallback>
                 </Avatar>
-                {!isSidebarCollapsed && <span className="text-sm font-medium flex-1 text-left">Tenant</span>}
+                {!isSidebarCollapsed && <span className="text-sm font-medium flex-1 text-left">Logout</span>}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
