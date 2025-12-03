@@ -39,7 +39,7 @@ const allListings = [
     area: 120,
     rating: 4.8,
     reviews: 24,
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=250&fit=crop",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=250&fit=crop",
     featured: true,
     amenities: ["Air Conditioning", "Security", "Storage Room", "Display Windows"],
     type: "shop",
@@ -57,7 +57,7 @@ const allListings = [
     area: 200,
     rating: 4.9,
     reviews: 18,
-    image: "https://images.unsplash.com/photo-1497366216548-375f7034aebf?w=400&h=250&fit=crop",
+    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop",
     featured: true,
     amenities: ["Meeting Rooms", "High-Speed Internet", "Parking", "Kitchen"],
     type: "office",
@@ -75,7 +75,7 @@ const allListings = [
     area: 60,
     rating: 4.6,
     reviews: 31,
-    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=250&fit=crop",
+    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=250&fit=crop",
     featured: false,
     amenities: ["Kitchen Setup", "Outdoor Seating", "Storage"],
     type: "shop",
@@ -93,7 +93,7 @@ const allListings = [
     area: 300,
     rating: 4.7,
     reviews: 15,
-    image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=250&fit=crop",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=250&fit=crop",
     featured: true,
     amenities: ["Hot Desks", "Private Offices", "Conference Room", "Lounge"],
     type: "office",
@@ -111,7 +111,7 @@ const allListings = [
     area: 500,
     rating: 4.5,
     reviews: 28,
-    image: "https://images.unsplash.com/photo-1586528256337-792f449820d9?w=400&h=250&fit=crop",
+    image: "https://images.unsplash.com/photo-1553531088-df340cf313ce?w=400&h=250&fit=crop",
     featured: false,
     amenities: ["Loading Dock", "Security", "High Ceiling", "Parking"],
     type: "warehouse",
@@ -147,7 +147,7 @@ const allListings = [
     area: 45,
     rating: 4.6,
     reviews: 19,
-    image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=250&fit=crop",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=250&fit=crop",
     featured: false,
     amenities: ["Display Lighting", "Storage", "Security"],
     type: "shop",
@@ -165,7 +165,7 @@ const allListings = [
     area: 1000,
     rating: 4.3,
     reviews: 8,
-    image: "https://images.unsplash.com/photo-1603796846057-b3214e1e5a7c?w=400&h=250&fit=crop",
+    image: "https://images.unsplash.com/photo-1553531088-df340cf313ce?w=400&h=250&fit=crop",
     featured: true,
     amenities: ["Loading Bay", "Office Space", "Security", "Heavy-Duty Floors"],
     type: "warehouse",
@@ -267,7 +267,7 @@ export default function ListingsPage() {
                   placeholder="Search commercial properties, locations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-12 text-base transition-all duration-200 focus:scale-[1.02]"
+                  className="pl-10 pr-4 h-12 text-base transition-all duration-200 focus:scale-[1.02] placeholder-black"
                 />
               </div>
             </div>
