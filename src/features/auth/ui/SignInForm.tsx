@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Heading, Text } from "@/components/ui/typography"
 import { Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
 
 const signInSchema = z.object({
   email: z.string().email({
@@ -41,26 +42,23 @@ export function SignInForm() {
     setError("")
     
     try {
-      // Check for landlord credentials
-      if (values.email === "landlord@bms.com" && values.password === "landlord123") {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // Store authentication state in cookies for middleware access
-        document.cookie = "isAuthenticated=true; path=/; max-age=86400" // 24 hours
-        document.cookie = "userRole=landlord; path=/; max-age=86400"
-        
-        // Also keep localStorage for client-side access
-        localStorage.setItem("isAuthenticated", "true")
-        localStorage.setItem("userRole", "landlord")
-        
-        // Redirect to dashboard
-        router.push("/dashboard")
-      } else {
-        // Simulate API call for other credentials
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        setError("Invalid email or password. Please try again.")
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      })
+
+      if (error || !data.session) {
+        setError(error?.message || "Invalid email or password. Please try again.")
+        return
       }
+
+      document.cookie = "isAuthenticated=true; path=/; max-age=86400"
+      document.cookie = "userRole=landlord; path=/; max-age=86400"
+
+      localStorage.setItem("isAuthenticated", "true")
+      localStorage.setItem("userRole", "landlord")
+
+      router.push("/dashboard")
     } catch (error) {
       console.error("Sign in error:", error)
       setError("An error occurred. Please try again.")
