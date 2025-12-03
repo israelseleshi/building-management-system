@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerSupabase } from "@/lib/supabase/server";
+import { createServerSupabase } from "@/lib/supabaseServer";
 
 export async function signUpAction(formData: FormData) {
   const supabase = createServerSupabase();
