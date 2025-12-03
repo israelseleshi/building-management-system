@@ -133,9 +133,6 @@ temp/
 # Storybook build outputs
 storybook-static
 
-# Tailwind CSS
-tailwind.config.js
-postcss.config.js
 
 # BMS specific
 /uploads
