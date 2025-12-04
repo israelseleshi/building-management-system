@@ -1,38 +1,37 @@
 import { supabase } from "./supabaseClient"
 
 export async function getOrCreateConversation(currentUserId: string, otherUserId: string) {
-  // 1) find all conversations where current user participates
-  const { data: myCps, error: myCpError } = await supabase
+  // Look for any existing 1:1 conversation that already has BOTH users
+  // as participants, regardless of who started it.
+  const { data: cps, error: cpError } = await supabase
     .from("conversation_participants")
-    .select("conversation_id")
-    .eq("user_id", currentUserId)
+    .select("conversation_id, user_id")
+    .in("user_id", [currentUserId, otherUserId])
 
-  if (myCpError) throw myCpError
-  if (!myCps || myCps.length === 0) {
-    // no conversations yet; create fresh one
-    return await createConversation(currentUserId, otherUserId)
+  if (cpError) throw cpError
+
+  if (cps && cps.length > 0) {
+    const byConversation = new Map<string, Set<string>>()
+
+    for (const row of cps as any[]) {
+      const convId = row.conversation_id as string
+      const uid = row.user_id as string
+      if (!byConversation.has(convId)) {
+        byConversation.set(convId, new Set())
+      }
+      byConversation.get(convId)!.add(uid)
+    }
+
+    const existingEntry = Array.from(byConversation.entries()).find(
+      ([, userSet]) => userSet.has(currentUserId) && userSet.has(otherUserId)
+    )
+
+    if (existingEntry) {
+      return { id: existingEntry[0] }
+    }
   }
 
-  const convIds = myCps.map((cp) => cp.conversation_id as string)
-
-  // 2) see if any of those conversations also contains otherUserId
-  const { data: existing, error: existingError } = await supabase
-    .from("conversation_participants")
-    .select("conversation_id")
-    .in("conversation_id", convIds)
-    .eq("user_id", otherUserId)
-    .maybeSingle()
-
-  if (existingError && existingError.code !== "PGRST116") {
-    // PGRST116 = no rows
-    throw existingError
-  }
-
-  if (existing && existing.conversation_id) {
-    return { id: existing.conversation_id as string }
-  }
-
-  // 3) create new 1:1 conversation
+  // No existing shared conversation found -> create new 1:1 conversation
   return await createConversation(currentUserId, otherUserId)
 }
 

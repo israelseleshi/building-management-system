@@ -127,8 +127,6 @@ temp/
 # Firebase
 .firebase/
 
-# Supabase
-.supabase/
 
 # Storybook build outputs
 storybook-static
