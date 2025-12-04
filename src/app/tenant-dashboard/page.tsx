@@ -126,6 +126,12 @@ function DashboardContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
+  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
+    if (!isCurrentlyCollapsed) {
+      setIsSidebarCollapsed(true)
+    }
+  }
+
   return (
     <div className="min-h-screen flex">
       <DashboardSidebar
@@ -133,6 +139,7 @@ function DashboardContent() {
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
+        onNavigate={handleSidebarNavigation}
       />
 
       {/* Main Content */}

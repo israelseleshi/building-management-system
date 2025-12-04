@@ -384,6 +384,12 @@ function ChatContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
+  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
+    if (!isCurrentlyCollapsed) {
+      setIsSidebarCollapsed(true)
+    }
+  }
+
   const currentPerson = people[selectedPersonIndex]
 
   return (
@@ -393,6 +399,7 @@ function ChatContent() {
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
+        onNavigate={handleSidebarNavigation}
       />
 
       {/* Main Content */}

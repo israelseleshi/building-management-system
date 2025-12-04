@@ -16,6 +16,7 @@ interface DashboardSidebarProps {
   isSidebarCollapsed: boolean
   onToggleSidebar: () => void
   onLogout: () => void
+  onNavigate?: (isCurrentlyCollapsed: boolean) => void
 }
 
 export function DashboardSidebar({
@@ -23,10 +24,14 @@ export function DashboardSidebar({
   isSidebarCollapsed,
   onToggleSidebar,
   onLogout,
+  onNavigate,
 }: DashboardSidebarProps) {
   const router = useRouter()
 
   const handleNavigation = (path: string) => {
+    if (onNavigate) {
+      onNavigate(isSidebarCollapsed)
+    }
     router.push(path)
   }
 

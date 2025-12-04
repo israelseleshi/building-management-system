@@ -17,7 +17,8 @@ import {
   CreditCard, 
   TrendingUp, 
   Settings,
-  Building2
+  Building2,
+  Users
 } from "lucide-react"
 
 export default function LandlordDashboard() {
@@ -116,6 +117,12 @@ function DashboardContent() {
       active: false
     },
     {
+      icon: <Users className="w-5 h-5" />,
+      name: "Employees",
+      path: "/dashboard/employees",
+      active: false
+    },
+    {
       icon: <MessageSquare className="w-5 h-5" />,
       name: "Chat",
       path: "/dashboard/chat",
@@ -158,6 +165,12 @@ function DashboardContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
+  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
+    if (!isCurrentlyCollapsed) {
+      setIsSidebarCollapsed(true)
+    }
+  }
+
   // Show loading state
   if (loading) {
     return (
@@ -167,6 +180,7 @@ function DashboardContent() {
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={toggleSidebar}
           onLogout={handleLogout}
+          onNavigate={handleSidebarNavigation}
         />
 
         <div className="flex-1 transition-all duration-300 ease-in-out">
@@ -195,6 +209,7 @@ function DashboardContent() {
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
+        onNavigate={handleSidebarNavigation}
       />
 
       {/* Main Content */}
