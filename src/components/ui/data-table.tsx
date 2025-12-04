@@ -46,7 +46,13 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-card">
+      <div 
+        className="rounded-2xl border-0 p-6"
+        style={{ 
+          backgroundColor: 'var(--card)', 
+          boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
+        }}
+      >
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow className="border-b border-border hover:bg-muted/50">

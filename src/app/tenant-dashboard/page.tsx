@@ -3,30 +3,46 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Heading, Text } from "@/components/ui/typography"
+import { Heading, Text, MutedText } from "@/components/ui/typography"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { 
   LayoutDashboard, 
   MessageSquare, 
-  Settings, 
-  LogOut,
-  Search,
-  Bell,
-  Menu,
-  X,
-  Send
+  Settings,
+  Send,
+  Grid
 } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { usePathname } from "next/navigation"
+
+// Note: This page now serves as a container for all tenant dashboard tabs
+// Individual tabs (chat, settings) have their own pages at /chat and /settings subdirectories
 
 export default function TenantDashboard() {
-  return <DashboardContent />
+  return (
+    <ProtectedRoute requiredRole="tenant">
+      <DashboardContent />
+    </ProtectedRoute>
+  )
 }
 
 function DashboardContent() {
   const router = useRouter()
+  const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activeTab, setActiveTab] = useState("chat")
+  
+  // Determine active tab based on current pathname
+  let activeTab = "dashboard"
+  if (pathname.includes("/chat")) {
+    activeTab = "chat"
+  } else if (pathname.includes("/listings")) {
+    activeTab = "listings"
+  } else if (pathname.includes("/settings")) {
+    activeTab = "settings"
+  }
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -60,13 +76,25 @@ function DashboardContent() {
       icon: <LayoutDashboard className="w-5 h-5" />,
       name: "Dashboard",
       path: "/tenant-dashboard",
-      active: true
+      active: activeTab === "dashboard"
+    },
+    {
+      icon: <Grid className="w-5 h-5" />,
+      name: "Listings",
+      path: "/tenant-dashboard/listings",
+      active: activeTab === "listings"
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,
       name: "Chat",
-      path: "/tenant-dashboard",
-      active: true
+      path: "/tenant-dashboard/chat",
+      active: activeTab === "chat"
+    },
+    {
+      icon: <Settings className="w-5 h-5" />,
+      name: "Settings",
+      path: "/tenant-dashboard/settings",
+      active: activeTab === "settings"
     }
   ]
 
@@ -94,103 +122,27 @@ function DashboardContent() {
     router.push("/auth/signin")
   }
 
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed)
+  }
+
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <div className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border transition-all duration-300 flex flex-col`}>
-        {/* Logo */}
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">BMS</span>
-            </div>
-            {!isSidebarCollapsed && (
-              <span className="text-xl font-bold text-foreground">BMS</span>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
-          {navItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveTab(item.name.toLowerCase())}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                item.active
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              {item.icon}
-              {!isSidebarCollapsed && <span className="text-sm font-medium">{item.name}</span>}
-            </button>
-          ))}
-        </nav>
-
-        {/* Sidebar Footer */}
-        <div className="p-4 border-t border-border space-y-2">
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted transition-all duration-200"
-          >
-            {isSidebarCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
-            {!isSidebarCollapsed && <span className="text-sm font-medium">Collapse</span>}
-          </button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted transition-all duration-200">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=tenant" />
-                  <AvatarFallback>T</AvatarFallback>
-                </Avatar>
-                {!isSidebarCollapsed && <span className="text-sm font-medium flex-1 text-left">Logout</span>}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+    <div className="min-h-screen flex">
+      <DashboardSidebar
+        navItems={navItems}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={toggleSidebar}
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <div className="bg-card border-b border-border px-8 py-4 flex items-center justify-between">
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-              <Bell className="w-5 h-5 text-muted-foreground" />
-            </button>
-            <Avatar className="w-10 h-10">
-              <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=tenant" />
-              <AvatarFallback>T</AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
+      <div className="flex-1 transition-all duration-300 ease-in-out">
+        <DashboardHeader
+          title={activeTab === "dashboard" ? "Dashboard" : activeTab === "chat" ? "Chat with Landlord" : "Settings"}
+          subtitle={activeTab === "dashboard" ? "Welcome to your tenant dashboard" : activeTab === "chat" ? "Direct messaging with your property landlord" : "Manage your account settings"}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto">
@@ -268,6 +220,135 @@ function DashboardContent() {
                 <Text className="text-muted-foreground">
                   More features coming soon for tenant dashboard.
                 </Text>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <div className="p-8">
+              <Heading level={2} className="text-2xl font-bold text-foreground mb-6">
+                Settings
+              </Heading>
+              <div className="space-y-6">
+                {/* Profile Settings */}
+                <div className="bg-card rounded-lg border border-border p-6">
+                  <Heading level={3} className="text-lg font-semibold text-foreground mb-4">
+                    Profile Information
+                  </Heading>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Your full name"
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="your@email.com"
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        placeholder="+1 (555) 000-0000"
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <Button
+                      className="w-full h-10 font-semibold rounded-lg"
+                      style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Password Settings */}
+                <div className="bg-card rounded-lg border border-border p-6">
+                  <Heading level={3} className="text-lg font-semibold text-foreground mb-4">
+                    Change Password
+                  </Heading>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Enter current password"
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Enter new password"
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Confirm Password
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Confirm new password"
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <Button
+                      className="w-full h-10 font-semibold rounded-lg"
+                      style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                    >
+                      Update Password
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Notification Settings */}
+                <div className="bg-card rounded-lg border border-border p-6">
+                  <Heading level={3} className="text-lg font-semibold text-foreground mb-4">
+                    Notification Preferences
+                  </Heading>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Text weight="medium" className="text-foreground">Email Notifications</Text>
+                        <MutedText className="text-sm">Receive updates via email</MutedText>
+                      </div>
+                      <input type="checkbox" defaultChecked className="w-5 h-5" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Text weight="medium" className="text-foreground">Chat Messages</Text>
+                        <MutedText className="text-sm">Get notified about new messages</MutedText>
+                      </div>
+                      <input type="checkbox" defaultChecked className="w-5 h-5" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Text weight="medium" className="text-foreground">Maintenance Alerts</Text>
+                        <MutedText className="text-sm">Receive maintenance updates</MutedText>
+                      </div>
+                      <input type="checkbox" defaultChecked className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

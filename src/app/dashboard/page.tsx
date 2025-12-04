@@ -4,22 +4,18 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Heading, Text, MutedText, Large } from "@/components/ui/typography"
+import { Heading, Text, Large, MutedText } from "@/components/ui/typography"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { RevenueChart } from "@/components/dashboard/RevenueChart"
 import { 
   LayoutDashboard, 
   PlusCircle, 
   MessageSquare, 
   CreditCard, 
   TrendingUp, 
-  Settings, 
-  LogOut,
-  Search,
-  Bell,
-  Menu,
-  X,
+  Settings,
   Building2
 } from "lucide-react"
 
@@ -112,10 +108,6 @@ function DashboardContent() {
     }
   ]
 
-  const handleNavigation = (path: string) => {
-    router.push(path)
-  }
-
   const handleLogout = () => {
     // Clear authentication state from localStorage
     localStorage.removeItem("isAuthenticated")
@@ -135,130 +127,21 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <aside 
-        className={`bg-card min-h-screen transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? 'w-20' : 'w-[290px]'
-        }`}
-        style={{ 
-          boxShadow: '0 0 12px rgba(0, 0, 0, 0.05)'
-        }}
-      >
-        <div className="p-6 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="h-8 w-8 hover:bg-muted"
-          >
-            {isSidebarCollapsed ? (
-              <Menu className="h-4 w-4" />
-            ) : (
-              <X className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-        
-        <nav className={`px-4 pb-6 ${isSidebarCollapsed ? 'px-2' : ''}`}>
-          {navItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => handleNavigation(item.path)}
-              className={`menu-item w-full mb-2 transition-all duration-200 ${
-                item.active ? 'menu-item-active' : 'menu-item-inactive'
-              } ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
-              title={isSidebarCollapsed ? item.name : ''}
-            >
-              <span className={`${item.active ? 'menu-item-icon-active' : 'menu-item-icon-inactive'} ${
-                isSidebarCollapsed ? 'mx-auto' : ''
-              }`}>
-                {item.icon}
-              </span>
-              {!isSidebarCollapsed && (
-                <span className="ml-3">{item.name}</span>
-              )}
-            </button>
-          ))}
-        </nav>
-
-        <div className={`px-4 pb-6 mt-auto ${isSidebarCollapsed ? 'px-2' : ''}`}>
-          <button 
-            onClick={handleLogout}
-            className={`menu-item w-full transition-all duration-200 hover:bg-red-50 ${
-              isSidebarCollapsed ? 'justify-center px-2' : ''
-            }`}
-            title={isSidebarCollapsed ? "Log Out" : ''}
-          >
-            <span className={`${isSidebarCollapsed ? 'mx-auto' : ''}`} style={{ color: '#DC2626' }}>
-              <LogOut className="w-5 h-5" />
-            </span>
-            {!isSidebarCollapsed && (
-              <span className="ml-3" style={{ color: '#DC2626' }}>Log Out</span>
-            )}
-          </button>
-        </div>
-      </aside>
+      <DashboardSidebar
+        navItems={navItems}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={toggleSidebar}
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
-        {/* Header */}
-        <header 
-          className="bg-card"
-          style={{ 
-            boxShadow: '0 0 12px rgba(0, 0, 0, 0.05)'
-          }}
-        >
-          <div className="flex h-16 items-center justify-between px-6">
-            <div className="flex items-center gap-6">
-              {/* Welcome text removed */}
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-64 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-
-              <Button variant="outline" size="sm" className="h-9 w-9 p-0">
-                <Bell className="w-4 h-4" />
-              </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/avatars/landlord.png" alt="Landlord" />
-                      <AvatarFallback>LL</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <Text weight="medium" className="text-foreground">Landlord</Text>
-                      <Text size="sm" className="text-muted-foreground">landlord@bms.com</Text>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </header>
+        <DashboardHeader
+          title="Dashboard"
+          subtitle="Welcome back to your landlord dashboard"
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
         {/* Dashboard Content */}
         <main className="p-6">
@@ -294,6 +177,9 @@ function DashboardContent() {
                   </div>
                 ))}
               </div>
+
+              {/* Revenue Chart */}
+              <RevenueChart />
 
               {/* Recent Activity */}
               <div 

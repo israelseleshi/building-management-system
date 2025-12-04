@@ -1,0 +1,445 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Heading, Text } from "@/components/ui/typography"
+import { Toaster } from "@/components/ui/toaster"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import {
+  LayoutDashboard,
+  MessageSquare,
+  Settings,
+  User,
+  Lock,
+  Bell,
+  Shield,
+  Save,
+  Eye,
+  EyeOff,
+  Check,
+  Edit2,
+  Grid,
+} from "lucide-react"
+
+interface SettingsTab {
+  id: string
+  label: string
+  icon: React.ReactNode
+}
+
+interface NotificationSetting {
+  id: string
+  label: string
+  description: string
+  enabled: boolean
+}
+
+export default function SettingsPage() {
+  return (
+    <ProtectedRoute requiredRole="tenant">
+      <SettingsContent />
+    </ProtectedRoute>
+  )
+}
+
+function SettingsContent() {
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [activeTab, setActiveTab] = useState("profile")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [editingField, setEditingField] = useState<string | null>(null)
+
+  // Profile state
+  const [profile, setProfile] = useState({
+    firstName: "Tenant",
+    lastName: "User",
+    email: "tenant@bms.com",
+    phone: "+251911234567",
+    address: "Addis Ababa, Ethiopia",
+    bio: "Professional tenant looking for quality housing",
+  })
+
+  // Password state
+  const [password, setPassword] = useState({
+    current: "",
+    new: "",
+    confirm: "",
+  })
+
+  // Notification state
+  const [notifications, setNotifications] = useState<NotificationSetting[]>([
+    { id: "messages", label: "Landlord Messages", description: "Get notified when your landlord sends you messages", enabled: true },
+    { id: "maintenance", label: "Maintenance Updates", description: "Receive updates about maintenance requests", enabled: true },
+    { id: "payments", label: "Payment Reminders", description: "Get payment due date reminders", enabled: true },
+    { id: "announcements", label: "Property Announcements", description: "Receive important property announcements", enabled: true },
+    { id: "offers", label: "Special Offers", description: "Get notified about special offers and promotions", enabled: false },
+  ])
+
+  const navItems = [
+    {
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      name: "Dashboard",
+      path: "/tenant-dashboard",
+      active: false,
+    },
+    {
+      icon: <Grid className="w-5 h-5" />,
+      name: "Listings",
+      path: "/tenant-dashboard/listings",
+      active: false,
+    },
+    {
+      icon: <MessageSquare className="w-5 h-5" />,
+      name: "Chat",
+      path: "/tenant-dashboard/chat",
+      active: false,
+    },
+    {
+      icon: <Settings className="w-5 h-5" />,
+      name: "Settings",
+      path: "/tenant-dashboard/settings",
+      active: true,
+    },
+  ]
+
+  const settingsTabs: SettingsTab[] = [
+    { id: "profile", label: "Profile", icon: <User className="w-5 h-5" /> },
+    { id: "security", label: "Security", icon: <Lock className="w-5 h-5" /> },
+    { id: "notifications", label: "Notifications", icon: <Bell className="w-5 h-5" /> },
+    { id: "privacy", label: "Privacy", icon: <Shield className="w-5 h-5" /> },
+  ]
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("userRole")
+    document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    router.push("/auth/signin")
+  }
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed)
+  }
+
+  const handlePasswordChange = (field: string, value: string) => {
+    setPassword((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleNotificationToggle = (id: string) => {
+    setNotifications((prev) =>
+      prev.map((notif) =>
+        notif.id === id ? { ...notif, enabled: !notif.enabled } : notif
+      )
+    )
+  }
+
+  const handleSaveProfile = () => {
+    setSaveSuccess(true)
+    setTimeout(() => setSaveSuccess(false), 3000)
+  }
+
+  const handleChangePassword = () => {
+    if (password.new !== password.confirm) {
+      alert("Passwords do not match")
+      return
+    }
+    setSaveSuccess(true)
+    setPassword({ current: "", new: "", confirm: "" })
+    setTimeout(() => setSaveSuccess(false), 3000)
+  }
+
+  const handleFieldEdit = (field: string) => {
+    setEditingField(field)
+  }
+
+  const handleFieldSave = (field: string, value: string) => {
+    setProfile((prev) => ({ ...prev, [field]: value }))
+    setEditingField(null)
+    setSaveSuccess(true)
+    setTimeout(() => setSaveSuccess(false), 3000)
+  }
+
+  const renderEditableField = (field: string, label: string, type: string = "text", rows?: number) => {
+    const value = profile[field as keyof typeof profile]
+    const isEditing = editingField === field
+
+    return (
+      <div key={field}>
+        <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
+        <div className="relative">
+          {isEditing ? (
+            rows ? (
+              <textarea
+                value={value}
+                onChange={(e) => setProfile((prev) => ({ ...prev, [field]: e.target.value }))}
+                onBlur={() => handleFieldSave(field, value)}
+                rows={rows}
+                className="w-full px-4 py-2 pr-10 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+                autoFocus
+              />
+            ) : (
+              <input
+                type={type}
+                value={value}
+                onChange={(e) => setProfile((prev) => ({ ...prev, [field]: e.target.value }))}
+                onBlur={() => handleFieldSave(field, value)}
+                className="w-full px-4 py-2 pr-10 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                autoFocus
+              />
+            )
+          ) : (
+            <div className="w-full px-4 py-2 pr-10 border border-border rounded-lg bg-background text-foreground flex items-center justify-between">
+              <span className={value ? "text-foreground" : "text-muted-foreground"}>
+                {value || `Enter ${label.toLowerCase()}`}
+              </span>
+              <button onClick={() => handleFieldEdit(field)} className="p-1 hover:bg-muted rounded">
+                <Edit2 className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex bg-background">
+      <DashboardSidebar
+        navItems={navItems}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={toggleSidebar}
+        onLogout={handleLogout}
+      />
+
+      <div className="flex-1 transition-all duration-300 ease-in-out">
+        <DashboardHeader
+          title="Settings"
+          subtitle="Manage your account and preferences"
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+
+        <main className="p-6">
+          <div className="max-w-5xl mx-auto">
+            {/* Tabs Navigation */}
+            <div className="flex justify-start gap-4 border-b border-border overflow-x-auto mb-8">
+              {settingsTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-3 font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "text-primary border-primary"
+                      : "text-muted-foreground hover:text-foreground border-transparent"
+                  }`}
+                >
+                  <span className={activeTab === tab.id ? "text-primary" : "text-muted-foreground"}>
+                    {tab.icon}
+                  </span>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Success Message */}
+            {saveSuccess && (
+              <div className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg flex items-center gap-3">
+                <Check className="w-5 h-5 text-green-600" />
+                <span className="text-sm font-medium text-green-800">Changes saved successfully!</span>
+              </div>
+            )}
+
+            {/* Profile Tab */}
+            {activeTab === "profile" && (
+              <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+                <div>
+                  <Heading level={3} className="text-xl font-bold text-foreground mb-1">
+                    Profile Information
+                  </Heading>
+                  <Text className="text-sm text-muted-foreground">Update your personal information</Text>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {renderEditableField("firstName", "First Name")}
+                    {renderEditableField("lastName", "Last Name")}
+                  </div>
+
+                  {renderEditableField("email", "Email Address", "email")}
+                  {renderEditableField("phone", "Phone Number", "tel")}
+                  {renderEditableField("address", "Address")}
+                  {renderEditableField("bio", "Bio", "text", 4)}
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-border">
+                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Security Tab */}
+            {activeTab === "security" && (
+              <div className="space-y-6">
+                <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+                  <div>
+                    <Heading level={3} className="text-xl font-bold text-foreground mb-1">
+                      Change Password
+                    </Heading>
+                    <Text className="text-sm text-muted-foreground">Update your password to keep your account secure</Text>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Current Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password.current}
+                          onChange={(e) => handlePasswordChange("current", e.target.value)}
+                          className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        />
+                        <button
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">New Password</label>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          value={password.new}
+                          onChange={(e) => handlePasswordChange("new", e.target.value)}
+                          className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        />
+                        <button
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={password.confirm}
+                        onChange={(e) => handlePasswordChange("confirm", e.target.value)}
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4 border-t border-border">
+                    <Button onClick={handleChangePassword} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Update Password
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Notifications Tab */}
+            {activeTab === "notifications" && (
+              <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+                <div>
+                  <Heading level={3} className="text-xl font-bold text-foreground mb-1">
+                    Notification Preferences
+                  </Heading>
+                  <Text className="text-sm text-muted-foreground">Choose which notifications you want to receive</Text>
+                </div>
+
+                <div className="space-y-4">
+                  {notifications.map((notif) => (
+                    <div key={notif.id} className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-background/50 transition-colors">
+                      <div className="flex-1">
+                        <h3 className="text-sm font-bold text-foreground">{notif.label}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{notif.description}</p>
+                      </div>
+                      <button
+                        onClick={() => handleNotificationToggle(notif.id)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ml-4 ${
+                          notif.enabled ? "bg-green-600" : "bg-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            notif.enabled ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-border">
+                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Preferences
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Privacy Tab */}
+            {activeTab === "privacy" && (
+              <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+                <div>
+                  <Heading level={3} className="text-xl font-bold text-foreground mb-1">
+                    Privacy & Security
+                  </Heading>
+                  <Text className="text-sm text-muted-foreground">Control your privacy settings and data sharing preferences</Text>
+                </div>
+
+                <div className="space-y-4">
+                  {[
+                    { label: "Profile Visibility", description: "Allow landlords to see your profile", enabled: true },
+                    { label: "Show Contact Information", description: "Let landlords see your contact details", enabled: true },
+                    { label: "Allow Search Indexing", description: "Allow search engines to index your profile", enabled: false },
+                    { label: "Data Collection", description: "Allow us to collect usage data for improvements", enabled: true },
+                  ].map((setting, idx) => (
+                    <div key={idx} className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-background/50 transition-colors">
+                      <div className="flex-1">
+                        <h3 className="text-sm font-bold text-foreground">{setting.label}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{setting.description}</p>
+                      </div>
+                      <button
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ml-4 ${
+                          setting.enabled ? "bg-green-600" : "bg-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            setting.enabled ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      <Toaster />
+    </div>
+  )
+}

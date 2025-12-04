@@ -21,7 +21,7 @@ export default function LandingPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   const handleGetStarted = () => {
-    router.push("/auth/signin")
+    router.push("/auth/signup")
   }
 
   const handleBrowseListings = () => {

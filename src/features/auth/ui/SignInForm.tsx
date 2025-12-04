@@ -14,7 +14,9 @@ import { supabase } from "@/lib/supabaseClient"
 import { ForgotPasswordModal } from "./ForgotPasswordModal"
 
 const signInSchema = z.object({
-  email: z.string().email({
+  email: z.string().min(1, {
+    message: "Please enter a valid email address.",
+  }).email({
     message: "Please enter a valid email address.",
   }),
   password: z.string().min(6, {
@@ -128,7 +130,7 @@ export function SignInForm() {
                     />
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-500" />
               </FormItem>
             )}
           />
@@ -175,7 +177,7 @@ export function SignInForm() {
                     </Button>
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-500" />
               </FormItem>
             )}
           />
