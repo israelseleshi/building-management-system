@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Heading, Text } from "@/components/ui/typography"
+import { Header } from "@/components/home/Header"
 import { 
   Building, 
   Search, 
@@ -12,8 +13,7 @@ import {
   Shield, 
   ArrowRight, 
   Calendar,
-  Lock,
-  ChevronDown
+  Lock
 } from "lucide-react"
 
 export default function LandingPage() {
@@ -37,44 +37,8 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background">
       {/* Content */}
       <div className="relative z-10">
-        {/* Navigation */}
-        <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                    <span className="text-primary-foreground font-bold text-sm">BMS</span>
-                  </div>
-                  <span className="text-lg font-bold text-foreground">BMS</span>
-                </div>
-              </div>
-              
-              <div className="hidden md:flex items-center space-x-6">
-                <a href="#features" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">Features</a>
-                <a href="/home/listings" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">Listings</a>
-                <Button variant="ghost" onClick={() => router.push("/auth/signin")} className="text-sm font-medium">Sign In</Button>
-                <Button 
-                  style={{ 
-                    backgroundColor: '#7D8B6F', 
-                    color: '#FFFFFF',
-                    boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
-                  }}
-                  className="hover:opacity-90 transition-opacity text-sm font-medium px-4 py-2"
-                  onClick={handleGetStarted}
-                >
-                  Get Started
-                </Button>
-              </div>
-
-              <div className="md:hidden">
-                <Button variant="ghost" size="sm">
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </nav>
+        {/* Header */}
+        <Header currentPage="home" />
 
         {/* Hero Section with Background */}
         <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
