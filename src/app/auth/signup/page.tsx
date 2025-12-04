@@ -1,5 +1,4 @@
 import { SignUpForm } from "@/features/auth/ui/SignUpForm"
-import { Text } from "@/components/ui/typography"
 import Link from "next/link"
 
 export default function SignUpPage() {
@@ -58,7 +57,7 @@ export default function SignUpPage() {
               Create your account
             </h2>
             <p className="text-muted-foreground">
-              Get started with BMS and streamline your property management
+              Start managing your properties today
             </p>
           </div>
           

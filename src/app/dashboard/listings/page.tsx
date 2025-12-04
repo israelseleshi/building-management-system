@@ -4,14 +4,15 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Heading, Text, MutedText, Large } from "@/components/ui/typography"
+import { Heading, Text, Large } from "@/components/ui/typography"
 import { Toaster } from "@/components/ui/toaster"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { Combobox } from "@/components/ui/combobox"
 import { DataTable } from "@/components/ui/data-table"
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import type { ColumnDef } from "@tanstack/react-table"
 import { landlordBuildings } from "@/data/buildings"
 import { 
@@ -21,12 +22,7 @@ import {
   MessageSquare, 
   CreditCard, 
   TrendingUp, 
-  Settings, 
-  LogOut,
-  Search,
-  Bell,
-  Menu,
-  MapPin,
+  Settings,
   Home,
   DollarSign,
   CheckCircle,
@@ -34,7 +30,8 @@ import {
   Eye,
   Edit,
   Trash2,
-  Filter
+  Filter,
+  Search
 } from "lucide-react"
 
 type Building = typeof landlordBuildings[0]
@@ -60,6 +57,9 @@ function ListingsContent() {
   const [buildings, setBuildings] = useState(landlordBuildings)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [buildingToDelete, setBuildingToDelete] = useState<string | null>(null)
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null)
 
   const navItems = [
     {
@@ -163,71 +163,114 @@ function ListingsContent() {
   // Column definitions with delete handler
   const columns: ColumnDef<Building>[] = [
     {
-      accessorKey: "name",
-      header: "Building Details",
+      id: "select",
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          checked={table.getIsAllPageRowsSelected()}
+          onChange={(value) => table.toggleAllPageRowsSelected(!!value.target.checked)}
+          aria-label="Select all"
+          className="w-4 h-4 cursor-pointer"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={row.getIsSelected()}
+          onChange={(value) => row.toggleSelected(!!value.target.checked)}
+          aria-label="Select row"
+          className="w-4 h-4 cursor-pointer"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "image",
+      header: "Image",
       cell: ({ row }) => {
         const building = row.original
         return (
-          <div>
-            <div className="font-medium">{building.name}</div>
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              <MapPin className="w-3 h-3" />
-              {building.location}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Manager: {building.manager} • {building.floors} floors
+          <div className="flex items-center justify-center py-2">
+            <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+              {building.image ? (
+                <img src={building.image} alt={building.businessName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">{building.businessName.charAt(0)}</span>
+                </div>
+              )}
             </div>
           </div>
+        )
+      },
+      enableSorting: false,
+    },
+    {
+      accessorKey: "businessName",
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting()}
+          className="flex items-center gap-2 font-semibold text-foreground hover:text-primary"
+        >
+          Name
+          <span className="text-xs">{column.getIsSorted() === "asc" ? "↑" : column.getIsSorted() === "desc" ? "↓" : "↕"}</span>
+        </button>
+      ),
+      cell: ({ row }) => {
+        const building = row.original
+        return (
+          <div className="font-medium text-foreground">{building.businessName}</div>
+        )
+      },
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting()}
+          className="flex items-center gap-2 font-semibold text-foreground hover:text-primary"
+        >
+          Unit Number
+          <span className="text-xs">{column.getIsSorted() === "asc" ? "↑" : column.getIsSorted() === "desc" ? "↓" : "↕"}</span>
+        </button>
+      ),
+      cell: ({ row }) => {
+        const building = row.original
+        return (
+          <div className="font-medium text-foreground">{building.name}</div>
         )
       },
     },
     {
       accessorKey: "type",
-      header: "Type",
-      cell: ({ row }) => (
-        <Badge variant="secondary" className="text-xs">
-          {row.getValue("type")}
-        </Badge>
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting()}
+          className="flex items-center gap-2 font-semibold text-foreground hover:text-primary"
+        >
+          Type
+          <span className="text-xs">{column.getIsSorted() === "asc" ? "↑" : column.getIsSorted() === "desc" ? "↓" : "↕"}</span>
+        </button>
       ),
-    },
-    {
-      accessorKey: "totalUnits",
-      header: "Units",
       cell: ({ row }) => {
         const building = row.original
         return (
-          <div className="text-center">
-            <div className="font-medium">{building.occupiedUnits}/{building.totalUnits}</div>
-            <div className="text-xs text-muted-foreground">{building.vacantUnits} vacant</div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "occupiedUnits",
-      header: "Occupancy",
-      cell: ({ row }) => {
-        const building = row.original
-        const occupancyRate = Math.round((building.occupiedUnits / building.totalUnits) * 100)
-        return (
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-12 bg-muted rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  occupancyRate >= 90 ? 'bg-green-500' : 
-                  occupancyRate >= 70 ? 'bg-yellow-500' : 'bg-red-500'
-                }`}
-                style={{ width: `${occupancyRate}%` }}
-              />
-            </div>
-            <span className="text-xs font-medium text-foreground">{occupancyRate}%</span>
-          </div>
+          <div className="font-medium text-foreground">{building.type}</div>
         )
       },
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting()}
+          className="flex items-center gap-2 font-semibold text-foreground hover:text-primary"
+        >
+          Status
+          <span className="text-xs">{column.getIsSorted() === "asc" ? "↑" : column.getIsSorted() === "desc" ? "↓" : "↕"}</span>
+        </button>
+      ),
       cell: ({ row }) => {
         const building = row.original
         return (
@@ -249,17 +292,18 @@ function ListingsContent() {
       },
     },
     {
-      accessorKey: "location",
-      header: "Location",
-      cell: ({ row }) => (
-        <div className="text-sm text-foreground">{row.getValue("location")}</div>
-      ),
-    },
-    {
       accessorKey: "monthlyRevenue",
-      header: "Revenue",
+      header: ({ column }) => (
+        <button
+          onClick={() => column.toggleSorting()}
+          className="flex items-center gap-2 font-semibold text-foreground hover:text-primary"
+        >
+          Revenue
+          <span className="text-xs">{column.getIsSorted() === "asc" ? "↑" : column.getIsSorted() === "desc" ? "↓" : "↕"}</span>
+        </button>
+      ),
       cell: ({ row }) => (
-        <div className="text-right font-medium text-foreground">
+        <div className="font-medium text-foreground">
           ETB {(row.getValue("monthlyRevenue") as number).toLocaleString()}
         </div>
       ),
@@ -275,7 +319,10 @@ function ListingsContent() {
               variant="ghost" 
               size="sm" 
               className="h-8 w-8 p-0 hover:bg-blue-100"
-              onClick={() => console.log("View building:", building.id)}
+              onClick={() => {
+                setSelectedBuilding(building)
+                setViewModalOpen(true)
+              }}
             >
               <Eye className="w-4 h-4 text-blue-600" />
             </Button>
@@ -283,7 +330,10 @@ function ListingsContent() {
               variant="ghost" 
               size="sm" 
               className="h-8 w-8 p-0 hover:bg-green-100"
-              onClick={() => console.log("Edit building:", building.id)}
+              onClick={() => {
+                setSelectedBuilding(building)
+                setEditModalOpen(true)
+              }}
             >
               <Edit className="w-4 h-4 text-green-600" />
             </Button>
@@ -298,23 +348,26 @@ function ListingsContent() {
           </div>
         )
       },
+      enableSorting: false,
     },
   ]
 
   // Filter buildings data
   const filteredBuildings = buildings.filter(building => {
-    const matchesSearch = building.name.toLowerCase().includes(buildingsSearch.toLowerCase()) ||
-                          building.location.toLowerCase().includes(buildingsSearch.toLowerCase()) ||
-                          building.id.toLowerCase().includes(buildingsSearch.toLowerCase())
+    const pageSearch = buildingsSearch.toLowerCase()
+    
+    const matchesPageSearch = !pageSearch ||
+                              building.businessName.toLowerCase().includes(pageSearch) ||
+                              building.name.toLowerCase().includes(pageSearch) ||
+                              building.location.toLowerCase().includes(pageSearch) ||
+                              building.id.toLowerCase().includes(pageSearch)
+    
     const matchesType = buildingFilter === 'all' || building.type === buildingFilter
     const matchesStatus = statusFilter === 'all' || building.status === statusFilter
     const matchesLocation = locationFilter === 'all' || building.location.includes(locationFilter)
-    return matchesSearch && matchesType && matchesStatus && matchesLocation
+    
+    return matchesPageSearch && matchesType && matchesStatus && matchesLocation
   })
-
-  const handleNavigation = (path: string) => {
-    router.push(path)
-  }
 
   const handleLogout = () => {
     // Clear authentication state from localStorage
@@ -335,115 +388,21 @@ function ListingsContent() {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Sidebar */}
-      <aside 
-        className={`bg-card min-h-screen transition-all duration-300 ease-in-out ${
-          isSidebarCollapsed ? 'w-20' : 'w-[290px]'
-        }`}
-        style={{ 
-          boxShadow: '0 0 12px rgba(0, 0, 0, 0.05)'
-        }}
-      >
-        <div className="p-6 flex items-center justify-between">
-          {!isSidebarCollapsed && (
-            <div className="flex-1" />
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="h-8 w-8 hover:bg-muted ml-auto"
-          >
-            {isSidebarCollapsed ? (
-              <Menu className="h-4 w-4" />
-            ) : (
-              <Menu className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-        
-        <nav className={`px-4 pb-6 ${isSidebarCollapsed ? 'px-2' : ''}`}>
-          {navItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => handleNavigation(item.path)}
-              className={`menu-item w-full mb-2 transition-all duration-200 ${
-                item.active ? 'menu-item-active' : 'menu-item-inactive'
-              } ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
-              title={isSidebarCollapsed ? item.name : ''}
-            >
-              <span className={`${item.active ? 'menu-item-icon-active' : 'menu-item-icon-inactive'} ${
-                isSidebarCollapsed ? 'mx-auto' : ''
-              }`}>
-                {item.icon}
-              </span>
-              {!isSidebarCollapsed && (
-                <span className="ml-3">{item.name}</span>
-              )}
-            </button>
-          ))}
-        </nav>
-
-        <div className={`px-4 pb-6 mt-auto ${isSidebarCollapsed ? 'px-2' : ''}`}>
-          <button 
-            onClick={handleLogout}
-            className={`menu-item w-full transition-all duration-200 hover:bg-red-50 ${
-              isSidebarCollapsed ? 'justify-center px-2' : ''
-            }`}
-            title={isSidebarCollapsed ? "Log Out" : ''}
-          >
-            <span className={`${isSidebarCollapsed ? 'mx-auto' : ''}`} style={{ color: '#DC2626' }}>
-              <LogOut className="w-5 h-5" />
-            </span>
-            {!isSidebarCollapsed && (
-              <span className="ml-3" style={{ color: '#DC2626' }}>Log Out</span>
-            )}
-          </button>
-        </div>
-      </aside>
+      <DashboardSidebar
+        navItems={navItems}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={toggleSidebar}
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
-        {/* Header */}
-        <header 
-          className="bg-card"
-          style={{ 
-            boxShadow: '0 0 12px rgba(0, 0, 0, 0.05)'
-          }}
-        >
-          <div className="flex h-16 items-center justify-between px-6">
-            <div className="flex items-center gap-6">
-              <div>
-                <Heading level={2} className="text-foreground">My Listings</Heading>
-                <MutedText className="text-sm">Manage your property portfolio</MutedText>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-64 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder-black"
-                />
-              </div>
-
-              <Button variant="outline" size="sm" className="h-9 w-9 p-0">
-                <Bell className="w-4 h-4" />
-              </Button>
-
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/avatars/landlord.png" alt="Landlord" />
-                  <AvatarFallback>LL</AvatarFallback>
-                </Avatar>
-              </Button>
-            </div>
-          </div>
-        </header>
+        <DashboardHeader
+          title="My Listings"
+          subtitle="Manage your property portfolio"
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
         {/* Listings Content */}
         <main className="p-6">
@@ -595,6 +554,254 @@ function ListingsContent() {
           )}
         </main>
       </div>
+
+      {/* View Modal */}
+      <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <DialogContent 
+          className="sm:max-w-3xl border-0 p-0 overflow-hidden max-h-[90vh] flex flex-col"
+          style={{ 
+            backgroundColor: 'var(--card)',
+          }}
+        >
+          {selectedBuilding && (
+            <>
+              {/* Header with Image */}
+              <div className="relative h-56 bg-gradient-to-br from-blue-400 to-blue-600 overflow-hidden flex-shrink-0">
+                {selectedBuilding.image ? (
+                  <img 
+                    src={selectedBuilding.image} 
+                    alt={selectedBuilding.businessName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-blue-600">
+                    <Building2 className="w-32 h-32 text-white opacity-30" />
+                  </div>
+                )}
+                {/* Overlay with title */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                  <div className="w-full p-6">
+                    <h2 className="text-3xl font-bold text-white mb-2">{selectedBuilding.businessName}</h2>
+                    <div className="flex items-center gap-3">
+                      <Badge 
+                        variant={selectedBuilding.status === 'Active' ? 'default' : 'secondary'}
+                        className={`text-xs gap-1 ${
+                          selectedBuilding.status === 'Active' 
+                            ? 'bg-green-100 text-green-800 border-green-200' 
+                            : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                        }`}
+                      >
+                        {selectedBuilding.status === 'Active' ? (
+                          <><CheckCircle className="w-3 h-3" /> Active</>
+                        ) : (
+                          <><AlertCircle className="w-3 h-3" /> Maintenance</>
+                        )}
+                      </Badge>
+                      <span className="text-sm text-white/90 font-medium">{selectedBuilding.type}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-8">
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 rounded-lg bg-background/50 border border-border hover:border-primary/50 transition-colors">
+                    <p className="text-xs text-muted-foreground mb-2 font-medium">Unit Number</p>
+                    <p className="text-xl font-bold text-foreground">{selectedBuilding.name}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-background/50 border border-border hover:border-primary/50 transition-colors">
+                    <p className="text-xs text-muted-foreground mb-2 font-medium">Monthly Revenue</p>
+                    <p className="text-xl font-bold text-foreground">ETB {selectedBuilding.monthlyRevenue.toLocaleString()}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-background/50 border border-border hover:border-primary/50 transition-colors">
+                    <p className="text-xs text-muted-foreground mb-2 font-medium">Occupancy</p>
+                    <p className="text-xl font-bold text-foreground">{selectedBuilding.occupiedUnits}/{selectedBuilding.totalUnits}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-background/50 border border-border hover:border-primary/50 transition-colors">
+                    <p className="text-xs text-muted-foreground mb-2 font-medium">Location</p>
+                    <p className="text-xl font-bold text-foreground">{selectedBuilding.location}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
+                  <div className="p-4 rounded-lg bg-background/50 border border-border text-center hover:border-primary/50 transition-colors">
+                    <p className="text-3xl font-bold text-foreground">{selectedBuilding.totalUnits}</p>
+                    <p className="text-xs text-muted-foreground mt-2 font-medium">Total Units</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-background/50 border border-border text-center hover:border-primary/50 transition-colors">
+                    <p className="text-3xl font-bold text-foreground">{selectedBuilding.tenantCount}</p>
+                    <p className="text-xs text-muted-foreground mt-2 font-medium">Tenants</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-background/50 border border-border text-center hover:border-primary/50 transition-colors">
+                    <p className="text-3xl font-bold text-foreground">{Math.round((selectedBuilding.occupiedUnits / selectedBuilding.totalUnits) * 100)}%</p>
+                    <p className="text-xs text-muted-foreground mt-2 font-medium">Occupancy</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-8 py-4 bg-background/50 border-t border-border flex justify-end gap-3 flex-shrink-0">
+                <Button 
+                  variant="outline"
+                  onClick={() => setViewModalOpen(false)}
+                  className="border-border"
+                >
+                  Close
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setViewModalOpen(false)
+                    setEditModalOpen(true)
+                  }}
+                  style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                >
+                  Edit Unit
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent 
+          className="sm:max-w-3xl border-0 p-0 overflow-hidden max-h-[90vh] flex flex-col"
+          style={{ 
+            backgroundColor: 'var(--card)',
+          }}
+        >
+          {selectedBuilding && (
+            <>
+              {/* Header with Image */}
+              <div className="relative h-56 bg-gradient-to-br from-green-400 to-green-600 overflow-hidden flex-shrink-0">
+                {selectedBuilding.image ? (
+                  <img 
+                    src={selectedBuilding.image} 
+                    alt={selectedBuilding.businessName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600">
+                    <Edit className="w-32 h-32 text-white opacity-30" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                  <div className="w-full p-6">
+                    <h2 className="text-3xl font-bold text-white mb-1">{selectedBuilding.businessName}</h2>
+                    <p className="text-white/80 text-sm">Edit Unit Details</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-8">
+                <div className="space-y-6">
+                  <div>
+                    <label className="text-sm font-semibold text-foreground block mb-2">Business Name</label>
+                    <input 
+                      type="text" 
+                      defaultValue={selectedBuilding.businessName}
+                      className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-2">Unit Number</label>
+                      <input 
+                        type="text" 
+                        defaultValue={selectedBuilding.name}
+                        className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-2">Type</label>
+                      <Combobox
+                        options={[
+                          { value: "Office", label: "Office" },
+                          { value: "Retail", label: "Retail" },
+                          { value: "Residential", label: "Residential" },
+                          { value: "Commercial", label: "Commercial" },
+                          { value: "Industrial", label: "Industrial" },
+                          { value: "Warehouse", label: "Warehouse" },
+                        ]}
+                        value={selectedBuilding.type}
+                        onValueChange={() => {}}
+                        placeholder="Select type"
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-2">Monthly Revenue (ETB)</label>
+                      <input 
+                        type="number" 
+                        defaultValue={selectedBuilding.monthlyRevenue}
+                        className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-2">Status</label>
+                      <Combobox
+                        options={[
+                          { value: "Active", label: "Active" },
+                          { value: "Maintenance", label: "Maintenance" },
+                        ]}
+                        value={selectedBuilding.status}
+                        onValueChange={() => {}}
+                        placeholder="Select status"
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
+                    <div className="p-4 rounded-lg bg-background/50 border border-border text-center hover:border-primary/50 transition-colors">
+                      <p className="text-xs text-muted-foreground mb-2 font-medium">Total Units</p>
+                      <p className="text-2xl font-bold text-foreground">{selectedBuilding.totalUnits}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-background/50 border border-border text-center hover:border-primary/50 transition-colors">
+                      <p className="text-xs text-muted-foreground mb-2 font-medium">Occupied</p>
+                      <p className="text-2xl font-bold text-foreground">{selectedBuilding.occupiedUnits}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-background/50 border border-border text-center hover:border-primary/50 transition-colors">
+                      <p className="text-xs text-muted-foreground mb-2 font-medium">Vacant</p>
+                      <p className="text-2xl font-bold text-foreground">{selectedBuilding.vacantUnits}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="px-8 py-4 bg-background/50 border-t border-border flex justify-end gap-3 flex-shrink-0">
+                <Button 
+                  variant="outline"
+                  onClick={() => setEditModalOpen(false)}
+                  className="border-border"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    toast({
+                      title: "Unit Updated",
+                      description: "Unit details have been updated successfully.",
+                    })
+                    setEditModalOpen(false)
+                  }}
+                  style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
