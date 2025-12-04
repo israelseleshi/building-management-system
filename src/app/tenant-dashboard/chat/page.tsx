@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
@@ -20,6 +20,8 @@ import {
   Grid
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { supabase } from "@/lib/supabaseClient"
+import { getOrCreateConversation } from "@/lib/chat"
 
 export default function ChatPage() {
   return (
@@ -29,70 +31,78 @@ export default function ChatPage() {
   )
 }
 
+type PersonItem = {
+  id: string
+  name: string
+  avatar: string | null
+  isOwner: boolean
+  isOnline?: boolean
+  unread: number
+}
+
+type MessageItem = {
+  id: string
+  senderId: string
+  message: string
+  timestamp: string
+  isOwn: boolean
+}
+
 function ChatContent() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [chatSearch, setChatSearch] = useState("")
-  const [selectedConversation, setSelectedConversation] = useState(0)
-  
-  const [conversations] = useState([
-    {
-      id: 1,
-      name: "Landlord",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=landlord",
-      lastMessage: "Great! Looking forward to it. See...",
-      timestamp: "10 minutes",
-      isOnline: true,
-      unread: 0
-    },
-    {
-      id: 2,
-      name: "Property Manager",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=manager",
-      lastMessage: "Sounds perfect! I've been waitin...",
-      timestamp: "40 minutes",
-      isOnline: true,
-      unread: 0
-    },
-    {
-      id: 3,
-      name: "Support Team",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=support",
-      lastMessage: "How about 7 PM at the new Italian pl...",
-      timestamp: "Yesterday",
-      isOnline: false,
-      unread: 0
-    }
-  ])
-
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "Landlord",
-      senderImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=landlord",
-      message: "Hi! How are you doing with the apartment?",
-      timestamp: "05:23 PM",
-      isOwn: false
-    },
-    {
-      id: 2,
-      sender: "You",
-      senderImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=tenant",
-      message: "Everything is great! Thanks for asking.",
-      timestamp: "05:25 PM",
-      isOwn: true
-    },
-    {
-      id: 3,
-      sender: "Landlord",
-      senderImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=landlord",
-      message: "I know how important this file is to you. You can trust me ;) I know how important this file is to you. You can trust me ;)",
-      timestamp: "05:23 PM",
-      isOwn: false
-    }
-  ])
+  const [selectedPersonIndex, setSelectedPersonIndex] = useState(0)
+  const [people, setPeople] = useState<PersonItem[]>([])
+  const [messages, setMessages] = useState<MessageItem[]>([])
   const [newMessage, setNewMessage] = useState("")
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const messagesChannelRef = useRef<any>(null)
+
+  const subscribeToMessages = (conversationId: string, userId: string) => {
+    if (messagesChannelRef.current) {
+      supabase.removeChannel(messagesChannelRef.current)
+    }
+
+    const channel = supabase
+      .channel(`messages-conv-${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const row = payload.new as any
+          if (!row) return
+          // Ignore our own inserts; we already added them optimistically
+          if (row.sender_id === userId) return
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: row.id as string,
+              senderId: row.sender_id as string,
+              message: row.content as string,
+              timestamp: row.created_at
+                ? new Date(row.created_at as string).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "",
+              isOwn: row.sender_id === userId,
+            },
+          ])
+        }
+      )
+      .subscribe()
+
+    messagesChannelRef.current = channel
+  }
 
   const navItems = [
     {
@@ -121,18 +131,243 @@ function ChatContent() {
     }
   ]
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      setMessages([...messages, {
-        id: messages.length + 1,
-        sender: "You",
-        senderImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=tenant",
-        message: newMessage,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isOwn: true
-      }])
-      setNewMessage("")
+  useEffect(() => {
+    const loadData = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+
+      setCurrentUserId(user.id)
+
+      // Use leases to determine landlord and co-tenants for this tenant
+      const { data: myLease, error: leaseError } = await supabase
+        .from("leases")
+        .select("id, landlord_id, property_id, status")
+        .eq("tenant_id", user.id)
+        .in("status", ["active", "pending"])
+        .order("created_at", { ascending: false })
+        .maybeSingle()
+
+      // PGRST116 = no rows for maybeSingle; treat that as "no lease yet" not as an error
+      if (leaseError && (leaseError as any).code !== "PGRST116") {
+        console.error("Error loading tenant lease", leaseError)
+        setIsLoading(false)
+        return
+      }
+
+      if (!myLease) {
+        // No lease yet -> no known landlord / co-tenants to chat with
+        setPeople([])
+        setIsLoading(false)
+        return
+      }
+
+      const peopleList: PersonItem[] = []
+
+      // 1) landlord at top based on lease.landlord_id
+      const { data: landlord, error: landlordError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .eq("id", myLease.landlord_id)
+        .maybeSingle()
+
+      if (landlordError) {
+        console.error("Error loading landlord profile", landlordError)
+      } else if (landlord) {
+        peopleList.push({
+          id: landlord.id as string,
+          name: landlord.full_name || "Landlord",
+          avatar:
+            landlord.avatar_url ||
+            (landlord.full_name
+              ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                  landlord.full_name
+                )}`
+              : null),
+          isOwner: true,
+          isOnline: false,
+          unread: 0,
+        })
+      }
+
+      // 2) other tenants who have leases with the same landlord (optionally same property)
+      const { data: siblingLeases, error: siblingsError } = await supabase
+        .from("leases")
+        .select("tenant_id")
+        .eq("landlord_id", myLease.landlord_id)
+        .in("status", ["active", "pending"])
+        .neq("tenant_id", user.id)
+
+      // If there are simply no sibling leases, that's fine; only log real errors
+      if (siblingsError && (siblingsError as any).code !== "PGRST116") {
+        console.error("Error loading sibling leases", siblingsError)
+      } else if (siblingLeases && siblingLeases.length > 0) {
+        const tenantIds = siblingLeases.map((l) => l.tenant_id)
+
+        const { data: otherTenants, error: tenantsError } = await supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url")
+          .in("id", tenantIds)
+          .order("full_name")
+
+        if (tenantsError) {
+          console.error("Error loading other tenants", tenantsError)
+        } else {
+          for (const t of otherTenants || []) {
+            peopleList.push({
+              id: t.id as string,
+              name: t.full_name || "Tenant",
+              avatar:
+                t.avatar_url ||
+                (t.full_name
+                  ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                      t.full_name
+                    )}`
+                  : null),
+              isOwner: false,
+              isOnline: false,
+              unread: 0,
+            })
+          }
+        }
+      }
+
+      setPeople(peopleList)
+
+      if (peopleList.length > 0) {
+        setSelectedPersonIndex(0)
+        const conv = await getOrCreateConversation(user.id, peopleList[0].id)
+        await loadMessagesForConversation(conv.id, user.id)
+      }
+
+      setIsLoading(false)
     }
+
+    const loadMessagesForConversation = async (
+      conversationId: string,
+      userId: string
+    ) => {
+      const { data: messageRows, error: msgError } = await supabase
+        .from("messages")
+        .select("id, sender_id, content, created_at")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true })
+
+      if (msgError) {
+        console.error("Error loading messages", msgError)
+        return
+      }
+
+      const builtMessages: MessageItem[] = (messageRows || []).map((m) => ({
+        id: m.id as string,
+        senderId: m.sender_id as string,
+        message: m.content as string,
+        timestamp: m.created_at
+          ? new Date(m.created_at as string).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "",
+        isOwn: m.sender_id === userId,
+      }))
+
+      setMessages(builtMessages)
+      subscribeToMessages(conversationId, userId)
+    }
+
+    loadData()
+
+    return () => {
+      if (messagesChannelRef.current) {
+        supabase.removeChannel(messagesChannelRef.current)
+      }
+    }
+  }, [])
+
+  const handlePersonClick = async (index: number) => {
+    setSelectedPersonIndex(index)
+    const person = people[index]
+    if (!person || !currentUserId) return
+
+    const conv = await getOrCreateConversation(currentUserId, person.id)
+
+    const { data: messageRows, error: msgError } = await supabase
+      .from("messages")
+      .select("id, sender_id, content, created_at")
+      .eq("conversation_id", conv.id)
+      .order("created_at", { ascending: true })
+
+    if (msgError) {
+      console.error("Error loading messages", msgError)
+      return
+    }
+
+    const builtMessages: MessageItem[] = (messageRows || []).map((m) => ({
+      id: m.id as string,
+      senderId: m.sender_id as string,
+      message: m.content as string,
+      timestamp: m.created_at
+        ? new Date(m.created_at as string).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "",
+      isOwn: m.sender_id === currentUserId,
+    }))
+
+    setMessages(builtMessages)
+    subscribeToMessages(conv.id, currentUserId)
+  }
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !currentUserId) return
+
+    const person = people[selectedPersonIndex]
+    if (!person) return
+
+    const conv = await getOrCreateConversation(currentUserId, person.id)
+    if (!conv) return
+
+    const content = newMessage.trim()
+    setNewMessage("")
+
+    const optimistic: MessageItem = {
+      id: `temp-${Date.now()}`,
+      senderId: currentUserId,
+      message: content,
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      isOwn: true,
+    }
+    setMessages((prev) => [...prev, optimistic])
+
+    const { error: insertError } = await supabase.from("messages").insert({
+      conversation_id: conv.id,
+      sender_id: currentUserId,
+      content,
+    })
+
+    if (insertError) {
+      console.error("Error sending message", insertError)
+      // on error, we could rollback optimistic message, but for now just log
+      return
+    }
+
+    await supabase
+      .from("conversations")
+      .update({
+        last_message: content,
+        last_message_at: new Date().toISOString(),
+        last_message_sender_id: currentUserId,
+      })
+      .eq("id", conv.id)
   }
 
   const handleLogout = () => {
@@ -149,7 +384,7 @@ function ChatContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
-  const currentConversation = conversations[selectedConversation]
+  const currentPerson = people[selectedPersonIndex]
 
   return (
     <div className="min-h-screen flex">
@@ -187,36 +422,36 @@ function ChatContent() {
               </div>
             </div>
 
-            {/* Conversations List */}
+            {/* People List: landlord first, then other tenants */}
             <div className="flex-1 overflow-y-auto">
-              {conversations.map((conv, idx) => (
+              {people.map((person, idx) => (
                 <button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(idx)}
+                  key={person.id}
+                  onClick={() => handlePersonClick(idx)}
                   className={`w-full px-4 py-3 border-b border-border text-left transition-all duration-200 transform hover:scale-[1.02] hover:shadow-md ${
-                    selectedConversation === idx ? 'bg-white/60 shadow-sm' : 'hover:bg-white/40'
+                    selectedPersonIndex === idx ? 'bg-white/60 shadow-sm' : 'hover:bg-white/40'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="relative">
                       <Avatar className="w-10 h-10">
-                        <AvatarImage src={conv.avatar} />
-                        <AvatarFallback>{conv.name[0]}</AvatarFallback>
+                        {person.avatar && <AvatarImage src={person.avatar} />}
+                        <AvatarFallback>{person.name[0]}</AvatarFallback>
                       </Avatar>
-                      {conv.isOnline && (
+                      {person.isOnline && (
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-card" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-foreground text-sm">{conv.name}</h3>
-                        <span className="text-xs text-muted-foreground">{conv.timestamp}</span>
+                        <h3 className="font-medium text-foreground text-sm">{person.name}</h3>
+                        <span className="text-xs text-muted-foreground">{person.isOwner ? "Owner" : "Tenant"}</span>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate mt-1">{conv.lastMessage}</p>
+                      {/* last message preview could be added by joining conversations */}
                     </div>
-                    {conv.unread > 0 && (
+                    {person.unread > 0 && (
                       <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {conv.unread}
+                        {person.unread}
                       </div>
                     )}
                   </div>
@@ -231,13 +466,14 @@ function ChatContent() {
             <div className="border-b border-border px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src={currentConversation.avatar} />
-                  <AvatarFallback>{currentConversation.name[0]}</AvatarFallback>
+                  {currentPerson?.avatar && <AvatarImage src={currentPerson.avatar} />}
+                  <AvatarFallback>{currentPerson?.name[0]}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-semibold text-foreground">{currentConversation.name}</h2>
+                  <h2 className="font-semibold text-foreground">{currentPerson?.name}</h2>
                   <p className="text-xs text-muted-foreground">
-                    {currentConversation.isOnline ? 'Online' : 'Offline'}
+                    {/* Online status could be wired later */}
+                    Online
                   </p>
                 </div>
               </div>
@@ -262,10 +498,9 @@ function ChatContent() {
                   className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
                 >
                   <div className={`flex items-end gap-2 max-w-md ${msg.isOwn ? 'flex-row-reverse' : ''}`}>
-                    {!msg.isOwn && (
+                    {!msg.isOwn && currentPerson && (
                       <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarImage src={msg.senderImage} />
-                        <AvatarFallback>{msg.sender[0]}</AvatarFallback>
+                        <AvatarFallback>{currentPerson.name[0]}</AvatarFallback>
                       </Avatar>
                     )}
                     <div className={`${msg.isOwn ? 'text-right' : 'text-left'}`}>
