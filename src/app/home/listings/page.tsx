@@ -88,7 +88,7 @@ export default function ListingsPage() {
           area: 150,
           rating: 4.5 + (index % 5) * 0.1, // Vary ratings
           reviews: 10 + (index % 20),
-          image: `https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop&t=${index}`,
+          image: property.image_url || `https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop&t=${index}`,
           featured: index < 3, // First 3 are featured
           amenities: ['Air Conditioning', 'Security', 'Parking', 'Storage'],
           type: property.description?.includes('Office') ? 'office' : property.description?.includes('Retail') ? 'retail' : 'commercial',
