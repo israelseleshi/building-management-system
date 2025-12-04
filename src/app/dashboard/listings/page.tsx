@@ -75,6 +75,8 @@ function ListingsContent() {
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null)
+  const [editFormData, setEditFormData] = useState<Partial<Building>>({})
+  const [isSaving, setIsSaving] = useState(false)
 
   // Fetch properties from Supabase
   useEffect(() => {
@@ -456,6 +458,61 @@ function ListingsContent() {
     }
   }
 
+  const handleSaveEdit = async () => {
+    if (!selectedBuilding) return
+
+    try {
+      setIsSaving(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Prepare update data
+      const updateData = {
+        title: editFormData.businessName || selectedBuilding.businessName,
+        monthly_rent: editFormData.monthlyRevenue || selectedBuilding.monthlyRevenue,
+        status: editFormData.status === 'Active' ? 'listed' : 'draft',
+        updated_at: new Date().toISOString(),
+      }
+
+      const { error } = await supabase
+        .from('properties')
+        .update(updateData)
+        .eq('id', selectedBuilding.id)
+        .eq('landlord_id', user.id)
+
+      if (error) throw error
+
+      // Update local state
+      const updatedBuildings = buildings.map(b => 
+        b.id === selectedBuilding.id 
+          ? {
+              ...b,
+              businessName: editFormData.businessName || b.businessName,
+              monthlyRevenue: editFormData.monthlyRevenue || b.monthlyRevenue,
+              status: editFormData.status || b.status,
+            }
+          : b
+      )
+      setBuildings(updatedBuildings)
+
+      toast({
+        title: "Success",
+        description: "Property updated successfully",
+      })
+      setEditModalOpen(false)
+      setEditFormData({})
+    } catch (err) {
+      console.error('Error saving edit:', err)
+      toast({
+        title: "Error",
+        description: "Failed to update property",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <DashboardSidebar
@@ -791,7 +848,8 @@ function ListingsContent() {
                     <label className="text-sm font-semibold text-foreground block mb-2">Business Name</label>
                     <input 
                       type="text" 
-                      defaultValue={selectedBuilding.businessName}
+                      value={editFormData.businessName !== undefined ? editFormData.businessName : selectedBuilding.businessName}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, businessName: e.target.value }))}
                       className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     />
                   </div>
@@ -801,7 +859,8 @@ function ListingsContent() {
                       <label className="text-sm font-semibold text-foreground block mb-2">Unit Number</label>
                       <input 
                         type="text" 
-                        defaultValue={selectedBuilding.name}
+                        value={editFormData.name !== undefined ? editFormData.name : selectedBuilding.name}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
                         className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                       />
                     </div>
@@ -816,8 +875,8 @@ function ListingsContent() {
                           { value: "Industrial", label: "Industrial" },
                           { value: "Warehouse", label: "Warehouse" },
                         ]}
-                        value={selectedBuilding.type}
-                        onValueChange={() => {}}
+                        value={editFormData.type || selectedBuilding.type}
+                        onValueChange={(value) => setEditFormData(prev => ({ ...prev, type: value }))}
                         placeholder="Select type"
                         className="w-full"
                       />
@@ -829,7 +888,8 @@ function ListingsContent() {
                       <label className="text-sm font-semibold text-foreground block mb-2">Monthly Revenue (ETB)</label>
                       <input 
                         type="number" 
-                        defaultValue={selectedBuilding.monthlyRevenue}
+                        value={editFormData.monthlyRevenue !== undefined ? editFormData.monthlyRevenue : selectedBuilding.monthlyRevenue}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, monthlyRevenue: parseFloat(e.target.value) }))}
                         className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                       />
                     </div>
@@ -840,8 +900,8 @@ function ListingsContent() {
                           { value: "Active", label: "Active" },
                           { value: "Maintenance", label: "Maintenance" },
                         ]}
-                        value={selectedBuilding.status}
-                        onValueChange={() => {}}
+                        value={editFormData.status || selectedBuilding.status}
+                        onValueChange={(value) => setEditFormData(prev => ({ ...prev, status: value }))}
                         placeholder="Select status"
                         className="w-full"
                       />
@@ -869,22 +929,21 @@ function ListingsContent() {
               <div className="px-8 py-4 bg-background/50 border-t border-border flex justify-end gap-3 flex-shrink-0">
                 <Button 
                   variant="outline"
-                  onClick={() => setEditModalOpen(false)}
+                  onClick={() => {
+                    setEditModalOpen(false)
+                    setEditFormData({})
+                  }}
                   className="border-border"
+                  disabled={isSaving}
                 >
                   Cancel
                 </Button>
                 <Button 
-                  onClick={() => {
-                    toast({
-                      title: "Unit Updated",
-                      description: "Unit details have been updated successfully.",
-                    })
-                    setEditModalOpen(false)
-                  }}
+                  onClick={handleSaveEdit}
+                  disabled={isSaving}
                   style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
                 >
-                  Save Changes
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </>

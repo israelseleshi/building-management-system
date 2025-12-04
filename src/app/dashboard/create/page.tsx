@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,8 +11,9 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { Combobox } from "@/components/ui/combobox"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { Building2, CheckCircle } from "lucide-react"
-import { LayoutDashboard, PlusCircle, MessageSquare, CreditCard, TrendingUp, Settings } from "lucide-react"
+import { Building2, CheckCircle, Loader2 } from "lucide-react"
+import { LayoutDashboard, PlusCircle, MessageSquare, CreditCard, TrendingUp, Settings, Users } from "lucide-react"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function CreateListing() {
   return (
@@ -28,16 +29,27 @@ function CreateListingContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [formData, setFormData] = useState({
-    businessName: "",
-    unitNumber: "",
-    type: "Office",
-    location: "Bole, Addis Ababa",
-    monthlyRevenue: "",
-    status: "Active",
-    image: "",
+    title: "",
+    description: "",
+    addressLine1: "",
+    city: "Addis Ababa",
+    country: "Ethiopia",
+    monthlyRent: "",
+    status: "draft",
   })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+  // Get current user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setCurrentUserId(user.id)
+    }
+    getUser()
+  }, [])
 
   const navItems = [
     {
@@ -57,6 +69,12 @@ function CreateListingContent() {
       name: "Create Listing",
       path: "/dashboard/create",
       active: true
+    },
+    {
+      icon: <Users className="w-5 h-5" />,
+      name: "Employees",
+      path: "/dashboard/employees",
+      active: false
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,
@@ -96,25 +114,33 @@ function CreateListingContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Image must be less than 10MB",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload an image file",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setImageFile(file)
       const reader = new FileReader()
       reader.onloadend = () => {
-        const result = reader.result as string
-        setImagePreview(result)
-        setFormData(prev => ({
-          ...prev,
-          image: result
-        }))
+        setImagePreview(reader.result as string)
       }
       reader.readAsDataURL(file)
     }
@@ -124,60 +150,140 @@ function CreateListingContent() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Validation
-    if (!formData.businessName.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a business name",
-        variant: "destructive",
-      })
-      setIsSubmitting(false)
-      return
-    }
+    try {
+      // Validation
+      if (!formData.title.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter a property title",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
 
-    if (!formData.unitNumber.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a unit number",
-        variant: "destructive",
-      })
-      setIsSubmitting(false)
-      return
-    }
+      if (!formData.addressLine1.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter an address",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
 
-    if (!formData.monthlyRevenue) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter monthly revenue",
-        variant: "destructive",
-      })
-      setIsSubmitting(false)
-      return
-    }
+      if (!formData.monthlyRent) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter monthly rent",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
 
-    // Simulate API call
-    setTimeout(() => {
+      if (!currentUserId) {
+        toast({
+          title: "Error",
+          description: "User not authenticated",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      let imageUrl: string | null = null
+
+      // Upload image to Supabase Storage if provided
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop()
+        const fileName = `${Date.now()}.${fileExt}`
+        const filePath = `properties/${currentUserId}/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, imageFile)
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError)
+          toast({
+            title: "Upload Error",
+            description: "Failed to upload image",
+            variant: "destructive",
+          })
+          setIsSubmitting(false)
+          return
+        }
+
+        // Get public URL
+        const { data } = supabase.storage
+          .from('images')
+          .getPublicUrl(filePath)
+        imageUrl = data.publicUrl
+      }
+
+      // Insert property into database
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([
+          {
+            landlord_id: currentUserId,
+            title: formData.title,
+            description: formData.description,
+            address_line1: formData.addressLine1,
+            city: formData.city,
+            country: formData.country,
+            monthly_rent: parseFloat(formData.monthlyRent),
+            status: formData.status,
+            is_active: true,
+            image_url: imageUrl,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ])
+        .select()
+
+      if (error) {
+        console.error('Database error:', error)
+        toast({
+          title: "Error",
+          description: "Failed to create listing",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
+
       toast({
         title: "Success",
-        description: `Listing "${formData.businessName}" has been created successfully!`,
+        description: `Property "${formData.title}" has been created successfully!`,
       })
       
       // Reset form
       setFormData({
-        businessName: "",
-        unitNumber: "",
-        type: "Office",
-        location: "Bole, Addis Ababa",
-        monthlyRevenue: "",
-        status: "Active",
-        image: "",
+        title: "",
+        description: "",
+        addressLine1: "",
+        city: "Addis Ababa",
+        country: "Ethiopia",
+        monthlyRent: "",
+        status: "draft",
       })
       setImagePreview(null)
+      setImageFile(null)
 
       // Redirect to listings
       router.push("/dashboard/listings")
+    } catch (error) {
+      console.error('Submit error:', error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
       setIsSubmitting(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -193,7 +299,7 @@ function CreateListingContent() {
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
           title="Create Listing"
-          subtitle="Add a new unit to your portfolio"
+          subtitle="Add a new property to your portfolio"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
@@ -210,26 +316,44 @@ function CreateListingContent() {
               }}
             >
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Business Name */}
+                {/* Property Title */}
                 <div>
                   <label className="text-sm font-semibold text-foreground block mb-2">
-                    Business Name <span className="text-red-600">*</span>
+                    Property Title <span className="text-red-600">*</span>
                   </label>
                   <Input
                     type="text"
-                    name="businessName"
+                    name="title"
                     placeholder="e.g., Nano Computing ICT Solutions"
-                    value={formData.businessName}
-                    onChange={handleInputChange}
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    disabled={isSubmitting}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">The name of your business or shop</p>
+                  <p className="text-xs text-muted-foreground mt-1">The name of your property or business</p>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="text-sm font-semibold text-foreground block mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    placeholder="Describe your property..."
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                    rows={3}
+                    disabled={isSubmitting}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Add details about your property</p>
                 </div>
 
                 {/* Image Upload */}
                 <div>
                   <label className="text-sm font-semibold text-foreground block mb-2">
-                    Unit Image
+                    Property Image
                   </label>
                   <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer bg-background/50">
                     <input
@@ -238,6 +362,7 @@ function CreateListingContent() {
                       onChange={handleImageChange}
                       className="hidden"
                       id="image-upload"
+                      disabled={isSubmitting}
                     />
                     <label htmlFor="image-upload" className="cursor-pointer block">
                       {imagePreview ? (
@@ -254,82 +379,73 @@ function CreateListingContent() {
                       )}
                     </label>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Upload a photo of your unit</p>
+                  <p className="text-xs text-muted-foreground mt-1">Upload a photo of your property (optional)</p>
                 </div>
 
-                {/* Unit Number */}
+                {/* Address */}
                 <div>
                   <label className="text-sm font-semibold text-foreground block mb-2">
-                    Unit Number <span className="text-red-600">*</span>
+                    Address <span className="text-red-600">*</span>
                   </label>
                   <Input
                     type="text"
-                    name="unitNumber"
-                    placeholder="e.g., Unit 101"
-                    value={formData.unitNumber}
-                    onChange={handleInputChange}
+                    name="addressLine1"
+                    placeholder="e.g., Bole Road, Building A"
+                    value={formData.addressLine1}
+                    onChange={(e) => setFormData(prev => ({ ...prev, addressLine1: e.target.value }))}
                     className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    disabled={isSubmitting}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">The unit identifier in your building</p>
+                  <p className="text-xs text-muted-foreground mt-1">Street address of your property</p>
                 </div>
 
-                {/* Type and Location */}
+                {/* City and Country */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-semibold text-foreground block mb-2">
-                      Type
+                      City
                     </label>
-                    <Combobox
-                      options={[
-                        { value: "Office", label: "Office" },
-                        { value: "Retail", label: "Retail" },
-                        { value: "Residential", label: "Residential" },
-                        { value: "Commercial", label: "Commercial" },
-                        { value: "Industrial", label: "Industrial" },
-                        { value: "Warehouse", label: "Warehouse" },
-                        { value: "Mixed", label: "Mixed" },
-                      ]}
-                      value={formData.type}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
-                      placeholder="Select type"
-                      className="w-full"
+                    <Input
+                      type="text"
+                      name="city"
+                      placeholder="e.g., Addis Ababa"
+                      value={formData.city}
+                      onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                      className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      disabled={isSubmitting}
                     />
                   </div>
 
                   <div>
                     <label className="text-sm font-semibold text-foreground block mb-2">
-                      Location
+                      Country
                     </label>
-                    <Combobox
-                      options={[
-                        { value: "Bole, Addis Ababa", label: "Bole, Addis Ababa" },
-                        { value: "Kazanchis, Addis Ababa", label: "Kazanchis, Addis Ababa" },
-                        { value: "Mexico Square, Addis Ababa", label: "Mexico Square, Addis Ababa" },
-                        { value: "Piassa, Addis Ababa", label: "Piassa, Addis Ababa" },
-                        { value: "Sar Bet, Addis Ababa", label: "Sar Bet, Addis Ababa" },
-                        { value: "Mekane Yesus, Addis Ababa", label: "Mekane Yesus, Addis Ababa" },
-                      ]}
-                      value={formData.location}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
-                      placeholder="Select location"
-                      className="w-full"
+                    <Input
+                      type="text"
+                      name="country"
+                      placeholder="e.g., Ethiopia"
+                      value={formData.country}
+                      onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+                      className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
 
-                {/* Monthly Revenue and Status */}
+                {/* Monthly Rent and Status */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-semibold text-foreground block mb-2">
-                      Monthly Revenue (ETB) <span className="text-red-600">*</span>
+                      Monthly Rent (ETB) <span className="text-red-600">*</span>
                     </label>
                     <Input
                       type="number"
-                      name="monthlyRevenue"
+                      name="monthlyRent"
                       placeholder="e.g., 15000"
-                      value={formData.monthlyRevenue}
-                      onChange={handleInputChange}
+                      value={formData.monthlyRent}
+                      onChange={(e) => setFormData(prev => ({ ...prev, monthlyRent: e.target.value }))}
                       className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -339,8 +455,10 @@ function CreateListingContent() {
                     </label>
                     <Combobox
                       options={[
-                        { value: "Active", label: "Active" },
-                        { value: "Maintenance", label: "Maintenance" },
+                        { value: "draft", label: "Draft" },
+                        { value: "listed", label: "Listed" },
+                        { value: "occupied", label: "Occupied" },
+                        { value: "inactive", label: "Inactive" },
                       ]}
                       value={formData.status}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
@@ -357,19 +475,21 @@ function CreateListingContent() {
                     variant="outline"
                     onClick={() => router.push("/dashboard/listings")}
                     className="flex-1 h-12 rounded-xl border-border"
+                    disabled={isSubmitting}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex-1 h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                     style={{ 
                       backgroundColor: '#7D8B6F', 
                       color: '#FFFFFF',
                       boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
                     }}
                   >
+                    {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                     {isSubmitting ? "Creating..." : "Create Listing"}
                   </Button>
                 </div>
@@ -386,20 +506,20 @@ function CreateListingContent() {
                 }}
               >
                 <Heading level={3} className="text-lg font-semibold text-foreground mb-4">
-                  Tips for Creating a Listing
+                  Tips for Creating a Property Listing
                 </Heading>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">Use a clear and descriptive business name that reflects your unit's purpose</span>
+                    <span className="text-sm text-foreground">Use a clear and descriptive property title that reflects your property's purpose</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">Set a competitive monthly revenue based on market rates in your area</span>
+                    <span className="text-sm text-foreground">Upload a high-quality image of your property for better visibility</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">Keep your unit status updated to reflect its current availability</span>
+                    <span className="text-sm text-foreground">Set a competitive monthly rent based on market rates in your area</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />

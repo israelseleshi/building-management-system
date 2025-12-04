@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Heading, Text } from "@/components/ui/typography"
@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { supabase } from "@/lib/supabaseClient"
 import {
   LayoutDashboard,
   Building2,
@@ -61,13 +62,47 @@ function SettingsContent() {
 
   // Profile state
   const [profile, setProfile] = useState({
-    firstName: "Abebe",
-    lastName: "Kebede",
-    email: "abebe.kebede@ethiopianproperties.com",
-    phone: "+251911234567",
-    company: "Addis Property Management PLC",
-    bio: "Professional property manager specializing in commercial and residential properties in Addis Ababa with 8+ years of experience in the Ethiopian real estate market",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    company: "",
+    bio: "",
   })
+  const [loading, setLoading] = useState(true)
+
+  // Fetch profile from database
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (error) throw error
+
+        setProfile({
+          firstName: data.first_name || "",
+          lastName: data.last_name || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          company: data.company_name || "",
+          bio: data.bio || "",
+        })
+      } catch (err) {
+        console.error('Error fetching profile:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   // Password state
   const [password, setPassword] = useState({
@@ -183,9 +218,32 @@ function SettingsContent() {
     )
   }
 
-  const handleSaveProfile = () => {
-    setSaveSuccess(true)
-    setTimeout(() => setSaveSuccess(false), 3000)
+  const handleSaveProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          email: profile.email,
+          phone: profile.phone,
+          company_name: profile.company,
+          bio: profile.bio,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (err) {
+      console.error('Error saving profile:', err)
+      alert('Failed to save profile changes')
+    }
   }
 
   const handleChangePassword = () => {
@@ -202,11 +260,42 @@ function SettingsContent() {
     setEditingField(field)
   }
 
-  const handleFieldSave = (field: string, value: string) => {
-    setProfile((prev) => ({ ...prev, [field]: value }))
-    setEditingField(null)
-    setSaveSuccess(true)
-    setTimeout(() => setSaveSuccess(false), 3000)
+  const handleFieldSave = async (field: string, value: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Map field names to database column names
+      const fieldMap: { [key: string]: string } = {
+        firstName: 'first_name',
+        lastName: 'last_name',
+        email: 'email',
+        phone: 'phone',
+        company: 'company_name',
+        bio: 'bio',
+      }
+
+      const dbField = fieldMap[field]
+      if (!dbField) return
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          [dbField]: value,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setProfile((prev) => ({ ...prev, [field]: value }))
+      setEditingField(null)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (err) {
+      console.error('Error saving field:', err)
+      alert('Failed to save changes')
+    }
   }
 
   const renderEditableField = (field: string, label: string, type: string = "text", rows?: number) => {
@@ -218,25 +307,32 @@ function SettingsContent() {
         <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
         <div className="relative">
           {isEditing ? (
-            rows ? (
-              <textarea
-                value={value}
-                onChange={(e) => setProfile((prev) => ({ ...prev, [field]: e.target.value }))}
-                onBlur={() => handleFieldSave(field, value)}
-                rows={rows}
-                className="w-full px-4 py-2 pr-10 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
-                autoFocus
-              />
-            ) : (
-              <input
-                type={type}
-                value={value}
-                onChange={(e) => setProfile((prev) => ({ ...prev, [field]: e.target.value }))}
-                onBlur={() => handleFieldSave(field, value)}
-                className="w-full px-4 py-2 pr-10 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-                autoFocus
-              />
-            )
+            <div className="flex gap-2">
+              {rows ? (
+                <textarea
+                  value={value}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, [field]: e.target.value }))}
+                  rows={rows}
+                  className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+                  autoFocus
+                />
+              ) : (
+                <input
+                  type={type}
+                  value={value}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, [field]: e.target.value }))}
+                  className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  autoFocus
+                />
+              )}
+              <button
+                onClick={() => handleFieldSave(field, value)}
+                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
+                title="Save changes"
+              >
+                <Check className="w-4 h-4" />
+              </button>
+            </div>
           ) : (
             <div className="w-full px-4 py-2 pr-10 border border-border rounded-lg bg-background text-foreground flex items-center justify-between">
               <span className={value ? "text-foreground" : "text-muted-foreground"}>
