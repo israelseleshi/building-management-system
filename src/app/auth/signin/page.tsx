@@ -1,10 +1,16 @@
 import { SignInForm } from "@/features/auth/ui/SignInForm"
 import { Heading, Text } from "@/components/ui/typography"
+import { Header } from "@/components/home/Header"
 import Link from "next/link"
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-2">
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <Header currentPage="home" />
+      
+      {/* Main Content Grid */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2">
       {/* Left side - Ethiopian Building Image */}
       <div className="relative hidden lg:block">
         <img
@@ -77,6 +83,7 @@ export default function SignInPage() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   )
 }

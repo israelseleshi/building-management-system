@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Heading, Text, Large } from "@/components/ui/typography"
+import { Header } from "@/components/home/Header"
+import { ListingDetailView } from "@/components/home/ListingDetailView"
+import { supabase } from "@/lib/supabaseClient"
 import { 
   Building, 
   Search, 
@@ -22,181 +25,116 @@ import {
   Heart,
   Sparkles,
   TrendingUp,
-  Clock
+  Clock,
+  Loader
 } from "lucide-react"
 
-// Mock data for commercial listings
-const allListings = [
-  {
-    id: "1",
-    title: "Prime Retail Shop in Bole",
-    location: "Bole, Addis Ababa",
-    price: 35000,
-    currency: "ETB",
-    period: "monthly",
-    capacity: 15,
-    parking: 8,
-    area: 120,
-    rating: 4.8,
-    reviews: 24,
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=250&fit=crop",
-    featured: true,
-    amenities: ["Air Conditioning", "Security", "Storage Room", "Display Windows"],
-    type: "shop",
-    listed: "2 days ago"
-  },
-  {
-    id: "2",
-    title: "Modern Office Space in Kazanchis",
-    location: "Kazanchis, Addis Ababa",
-    price: 45000,
-    currency: "ETB",
-    period: "monthly",
-    capacity: 25,
-    parking: 12,
-    area: 200,
-    rating: 4.9,
-    reviews: 18,
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop",
-    featured: true,
-    amenities: ["Meeting Rooms", "High-Speed Internet", "Parking", "Kitchen"],
-    type: "office",
-    listed: "1 week ago"
-  },
-  {
-    id: "3",
-    title: "Small Cafe Space Near Mexico Square",
-    location: "Mexico Square, Addis Ababa",
-    price: 18000,
-    currency: "ETB",
-    period: "monthly",
-    capacity: 10,
-    parking: 4,
-    area: 60,
-    rating: 4.6,
-    reviews: 31,
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=250&fit=crop",
-    featured: false,
-    amenities: ["Kitchen Setup", "Outdoor Seating", "Storage"],
-    type: "shop",
-    listed: "3 days ago"
-  },
-  {
-    id: "4",
-    title: "Co-working Space in Bole Medhanealem",
-    location: "Bole Medhanealem, Addis Ababa",
-    price: 25000,
-    currency: "ETB",
-    period: "monthly",
-    capacity: 40,
-    parking: 20,
-    area: 300,
-    rating: 4.7,
-    reviews: 15,
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=250&fit=crop",
-    featured: true,
-    amenities: ["Hot Desks", "Private Offices", "Conference Room", "Lounge"],
-    type: "office",
-    listed: "5 days ago"
-  },
-  {
-    id: "5",
-    title: "Warehouse in Sar Bet",
-    location: "Sar Bet, Addis Ababa",
-    price: 55000,
-    currency: "ETB",
-    period: "monthly",
-    capacity: 0,
-    parking: 15,
-    area: 500,
-    rating: 4.5,
-    reviews: 28,
-    image: "https://images.unsplash.com/photo-1553531088-df340cf313ce?w=400&h=250&fit=crop",
-    featured: false,
-    amenities: ["Loading Dock", "Security", "High Ceiling", "Parking"],
-    type: "warehouse",
-    listed: "1 day ago"
-  },
-  {
-    id: "6",
-    title: "Restaurant Space in Piassa",
-    location: "Piassa, Addis Ababa",
-    price: 40000,
-    currency: "ETB",
-    period: "monthly",
-    capacity: 50,
-    parking: 10,
-    area: 180,
-    rating: 4.4,
-    reviews: 12,
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=250&fit=crop",
-    featured: false,
-    amenities: ["Kitchen", "Dining Area", "Storage", "Restrooms"],
-    type: "restaurant",
-    listed: "4 days ago"
-  },
-  {
-    id: "7",
-    title: "Boutique Shop in Mekane Yesus",
-    location: "Mekane Yesus, Addis Ababa",
-    price: 22000,
-    currency: "ETB",
-    period: "monthly",
-    capacity: 8,
-    parking: 6,
-    area: 45,
-    rating: 4.6,
-    reviews: 19,
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=250&fit=crop",
-    featured: false,
-    amenities: ["Display Lighting", "Storage", "Security"],
-    type: "shop",
-    listed: "6 days ago"
-  },
-  {
-    id: "8",
-    title: "Large Warehouse in Akaki",
-    location: "Akaki, Addis Ababa",
-    price: 75000,
-    currency: "ETB",
-    period: "monthly",
-    capacity: 0,
-    parking: 30,
-    area: 1000,
-    rating: 4.3,
-    reviews: 8,
-    image: "https://images.unsplash.com/photo-1553531088-df340cf313ce?w=400&h=250&fit=crop",
-    featured: true,
-    amenities: ["Loading Bay", "Office Space", "Security", "Heavy-Duty Floors"],
-    type: "warehouse",
-    listed: "2 weeks ago"
-  }
-]
+interface Listing {
+  id: string
+  title: string
+  location: string
+  price: number
+  currency: string
+  period: string
+  capacity: number
+  parking: number
+  area: number
+  rating: number
+  reviews: number
+  image: string
+  featured: boolean
+  amenities: string[]
+  type: string
+  listed: string
+}
+
+const ITEMS_PER_PAGE = 6
 
 export default function ListingsPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "")
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filteredType, setFilteredType] = useState<string>('all')
   const [sortBy, setSortBy] = useState<string>('featured')
   const [savedListings, setSavedListings] = useState<string[]>([])
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  const [allListings, setAllListings] = useState<Listing[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  // Fetch listings from Supabase
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        setLoading(true)
+        const { data, error: fetchError } = await supabase
+          .from('properties')
+          .select('*')
+          .eq('is_active', true)
+
+        if (fetchError) throw fetchError
+
+        // Transform database records to listing format
+        const transformedListings: Listing[] = (data || []).map((property: any, index: number) => ({
+          id: property.id.toString(),
+          title: property.title,
+          location: `${property.address_line1}, ${property.city}`,
+          price: property.monthly_rent,
+          currency: 'ETB',
+          period: 'monthly',
+          capacity: 20, // Default values since DB doesn't have these
+          parking: 10,
+          area: 150,
+          rating: 4.5 + (index % 5) * 0.1, // Vary ratings
+          reviews: 10 + (index % 20),
+          image: `https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop&t=${index}`,
+          featured: index < 3, // First 3 are featured
+          amenities: ['Air Conditioning', 'Security', 'Parking', 'Storage'],
+          type: property.description?.includes('Office') ? 'office' : property.description?.includes('Retail') ? 'retail' : 'commercial',
+          listed: new Date(property.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+        }))
+
+        setAllListings(transformedListings)
+        setError(null)
+      } catch (err) {
+        console.error('Error fetching listings:', err)
+        setError('Failed to load listings. Please try again.')
+        setAllListings([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchListings()
+  }, [])
 
   // Filter and sort listings
-  const filteredListings = allListings
-    .filter(listing => {
+  const allFilteredListings = allListings
+    .filter((listing: Listing) => {
       const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           listing.location.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesType = filteredType === 'all' || listing.type === filteredType
       return matchesSearch && matchesType
     })
-    .sort((a, b) => {
+    .sort((a: Listing, b: Listing) => {
       if (sortBy === 'price-low') return a.price - b.price
       if (sortBy === 'price-high') return b.price - a.price
       if (sortBy === 'rating') return b.rating - a.rating
       if (sortBy === 'featured') return (b.featured ? 1 : 0) - (a.featured ? 1 : 0)
       return 0
     })
+
+  // Pagination
+  const totalPages = Math.ceil(allFilteredListings.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const filteredListings = allFilteredListings.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filteredType, sortBy])
 
   const toggleSaveListing = (listingId: string) => {
     setSavedListings(prev => 
@@ -206,49 +144,91 @@ export default function ListingsPage() {
     )
   }
 
-  const handleGetStarted = () => {
-    router.push("/auth/signin")
+  const handleViewDetails = (listing: Listing) => {
+    setSelectedListing(listing)
+  }
+
+  const handleBackToListings = () => {
+    setSelectedListing(null)
+  }
+
+  // If a listing is selected, show detail view
+  if (selectedListing) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <Header currentPage="listings" />
+
+        {/* Detail Content */}
+        <section className="py-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <ListingDetailView
+              listing={selectedListing}
+              onBack={handleBackToListings}
+              isSaved={savedListings.includes(selectedListing.id)}
+              onToggleSave={() => toggleSaveListing(selectedListing.id)}
+            />
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header currentPage="listings" />
+        <section className="py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto flex flex-col items-center justify-center min-h-96">
+            <Loader className="w-12 h-12 text-primary animate-spin mb-4" />
+            <Text className="text-muted-foreground">Loading properties...</Text>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header currentPage="listings" />
+        <section className="py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <Card className="text-center py-12 border-0">
+              <CardContent>
+                <Building className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                <Heading level={3} className="text-xl font-semibold text-foreground mb-2">
+                  Error Loading Properties
+                </Heading>
+                <Text className="text-muted-foreground mb-4">
+                  {error}
+                </Text>
+                <Button 
+                  onClick={() => window.location.reload()}
+                  className="transition-all duration-200 hover:scale-105"
+                  style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                >
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">BMS</span>
-                </div>
-                <span className="text-xl font-bold text-foreground">Building Management System</span>
-              </div>
-            </div>
-            
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="/home" className="text-muted-foreground hover:text-primary transition-colors">Home</a>
-              <a href="/home/listings" className="text-primary font-medium">Listings</a>
-              <Button variant="ghost" onClick={handleGetStarted}>Sign In</Button>
-              <Button 
-                style={{ 
-                  backgroundColor: '#7D8B6F', 
-                  color: '#FFFFFF',
-                  boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
-                }}
-                className="hover:opacity-90 transition-opacity"
-                onClick={handleGetStarted}
-              >
-                Get Started
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Header */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-muted/50">
+      <Header currentPage="listings" />
+
+      {/* Search and Filters Section */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-muted/50 animate-fade-in">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 animate-slide-up">
             <Heading level={1} className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Commercial Properties
             </Heading>
@@ -258,54 +238,47 @@ export default function ListingsPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 max-w-2xl">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search commercial properties, locations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-12 text-base transition-all duration-200 focus:scale-[1.02] placeholder-black"
-                />
-              </div>
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Search properties, locations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-11 h-12 border-border/50 focus:border-primary/50 transition-all duration-200 hover:border-primary/30"
+              />
             </div>
-
-            <div className="flex items-center gap-3">
-              {/* Type Filter */}
-              <select 
+            
+            <div className="flex gap-3 items-center">
+              <select
                 value={filteredType}
                 onChange={(e) => setFilteredType(e.target.value)}
-                className="px-4 py-3 h-12 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 hover:scale-[1.02]"
+                className="px-4 py-3 rounded-lg border border-border/50 bg-background text-sm focus:border-primary/50 transition-all duration-200 hover:border-primary/30 hover:shadow-sm"
               >
                 <option value="all">All Types</option>
-                <option value="shop">Shops & Retail</option>
-                <option value="office">Office Spaces</option>
-                <option value="warehouse">Warehouses</option>
-                <option value="restaurant">Restaurants</option>
+                <option value="shop">Shop</option>
+                <option value="office">Office</option>
+                <option value="warehouse">Warehouse</option>
               </select>
-
-              {/* Sort */}
-              <select 
+              
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 h-12 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 hover:scale-[1.02]"
+                className="px-4 py-3 rounded-lg border border-border/50 bg-background text-sm focus:border-primary/50 transition-all duration-200 hover:border-primary/30 hover:shadow-sm"
               >
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
                 <option value="price-high">Price: High to Low</option>
                 <option value="rating">Highest Rated</option>
               </select>
-
-              {/* View Mode */}
-              <div className="flex border border-border rounded-lg overflow-hidden">
+              
+              <div className="flex gap-1 bg-muted/50 rounded-lg p-1 hover:shadow-sm transition-all duration-200">
                 <Button
                   variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
-                  className="rounded-none h-12 px-4 transition-all duration-200"
-                  style={viewMode === 'grid' ? { backgroundColor: '#7D8B6F', color: '#FFFFFF' } : {}}
+                  className="transition-all duration-200 hover:scale-105"
                 >
                   <Grid className="w-4 h-4" />
                 </Button>
@@ -313,8 +286,7 @@ export default function ListingsPage() {
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode('list')}
-                  className="rounded-none h-12 px-4 transition-all duration-200"
-                  style={viewMode === 'list' ? { backgroundColor: '#7D8B6F', color: '#FFFFFF' } : {}}
+                  className="transition-all duration-200 hover:scale-105"
                 >
                   <List className="w-4 h-4" />
                 </Button>
@@ -327,7 +299,7 @@ export default function ListingsPage() {
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-muted-foreground" />
               <Text className="text-muted-foreground">
-                Showing {filteredListings.length} of {allListings.length} commercial properties
+                Showing {startIndex + 1}-{Math.min(endIndex, allFilteredListings.length)} of {allFilteredListings.length} commercial properties
               </Text>
             </div>
             <Button variant="outline" size="sm" className="gap-2 transition-all duration-200 hover:scale-105">
@@ -345,12 +317,14 @@ export default function ListingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredListings.map((listing, index) => (
                 <Card 
-                  key={listing.id}
-                  className="group overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-0"
+                  key={listing.id} 
+                  className="overflow-hidden border-0 hover:shadow-xl transition-all duration-300 cursor-pointer group animate-fade-in-up hover:scale-105"
                   style={{ 
-                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)',
-                    animationDelay: `${index * 100}ms`
+                    backgroundColor: 'var(--card)', 
+                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)',
+                    animationDelay: `${index * 0.05}s`
                   }}
+                  onClick={() => handleViewDetails(listing)}
                 >
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden">
@@ -427,7 +401,12 @@ export default function ListingsPage() {
                           {listing.rating} ({listing.reviews} reviews) • {listing.listed}
                         </div>
                       </div>
-                      <Button size="sm" className="gap-2 transition-all duration-200 hover:scale-105" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
+                      <Button 
+                        size="sm" 
+                        className="gap-2 transition-all duration-200 hover:scale-105" 
+                        style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                        onClick={() => handleViewDetails(listing)}
+                      >
                         View Details
                         <ArrowRight className="w-4 h-4" />
                       </Button>
@@ -440,12 +419,14 @@ export default function ListingsPage() {
             <div className="space-y-4">
               {filteredListings.map((listing, index) => (
                 <Card 
-                  key={listing.id}
-                  className="group overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-0"
+                  key={listing.id} 
+                  className="overflow-hidden border-0 hover:shadow-xl transition-all duration-300 cursor-pointer group animate-fade-in-up hover:translate-x-1"
                   style={{ 
-                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)',
-                    animationDelay: `${index * 100}ms`
+                    backgroundColor: 'var(--card)', 
+                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)',
+                    animationDelay: `${index * 0.05}s`
                   }}
+                  onClick={() => handleViewDetails(listing)}
                 >
                   <div className="flex flex-col md:flex-row">
                     {/* Image */}
@@ -533,7 +514,12 @@ export default function ListingsPage() {
                             <span>Listed {listing.listed}</span>
                           </div>
                         </div>
-                        <Button size="sm" className="gap-2 transition-all duration-200 hover:scale-105" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
+                        <Button 
+                          size="sm" 
+                          className="gap-2 transition-all duration-200 hover:scale-105" 
+                          style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                          onClick={() => handleViewDetails(listing)}
+                        >
                           View Details
                           <ArrowRight className="w-4 h-4" />
                         </Button>
@@ -565,6 +551,46 @@ export default function ListingsPage() {
                 </Button>
               </CardContent>
             </Card>
+          )}
+
+          {/* Pagination Controls */}
+          {allFilteredListings.length > 0 && totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="transition-all duration-200"
+              >
+                Previous
+              </Button>
+              
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className="transition-all duration-200 min-w-10"
+                    style={currentPage === page ? { backgroundColor: '#7D8B6F', color: '#FFFFFF' } : {}}
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="transition-all duration-200"
+              >
+                Next
+              </Button>
+            </div>
           )}
         </div>
       </section>

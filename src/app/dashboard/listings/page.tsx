@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,8 +13,8 @@ import { Combobox } from "@/components/ui/combobox"
 import { DataTable } from "@/components/ui/data-table"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { supabase } from "@/lib/supabaseClient"
 import type { ColumnDef } from "@tanstack/react-table"
-import { landlordBuildings } from "@/data/buildings"
 import { 
   LayoutDashboard, 
   Building2, 
@@ -34,7 +34,20 @@ import {
   Search
 } from "lucide-react"
 
-type Building = typeof landlordBuildings[0]
+interface Building {
+  id: string
+  businessName: string
+  name: string
+  type: string
+  location: string
+  status: string
+  monthlyRevenue: number
+  image?: string
+  totalUnits: number
+  occupiedUnits: number
+  vacantUnits: number
+  tenantCount: number
+}
 
 export default function LandlordListings() {
   return (
@@ -54,12 +67,56 @@ function ListingsContent() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [locationFilter, setLocationFilter] = useState<string>('all')
   const [showMoreFilters, setShowMoreFilters] = useState(false)
-  const [buildings, setBuildings] = useState(landlordBuildings)
+  const [buildings, setBuildings] = useState<Building[]>([])
+  const [loading, setLoading] = useState(true)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [buildingToDelete, setBuildingToDelete] = useState<string | null>(null)
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null)
+
+  // Fetch properties from Supabase
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true)
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+
+        if (error) throw error
+
+        // Transform Supabase data to Building format
+        const transformedBuildings: Building[] = (data || []).map((property: any) => ({
+          id: property.id,
+          businessName: property.title,
+          name: property.title,
+          type: 'Commercial',
+          location: property.city,
+          status: property.is_active ? 'Active' : 'Inactive',
+          monthlyRevenue: property.monthly_rent,
+          image: property.image_url,
+          totalUnits: 1,
+          occupiedUnits: 1,
+          vacantUnits: 0,
+          tenantCount: 1,
+        }))
+
+        setBuildings(transformedBuildings)
+      } catch (err) {
+        console.error('Error fetching properties:', err)
+        toast({
+          title: "Error",
+          description: "Failed to load listings from database",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProperties()
+  }, [])
 
   const navItems = [
     {
@@ -526,7 +583,25 @@ function ListingsContent() {
           </div>
 
           {/* Buildings Table */}
-          {filteredBuildings.length > 0 ? (
+          {loading ? (
+            <div 
+              className="rounded-2xl p-12 text-center border-0"
+              style={{ 
+                backgroundColor: 'var(--card)', 
+                boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
+              }}
+            >
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-8 h-8 border-4 border-gray-300 border-t-[#7D8B6F] rounded-full animate-spin"></div>
+              </div>
+              <Heading level={3} className="text-xl font-semibold text-foreground mb-2">
+                Loading listings...
+              </Heading>
+              <Text className="text-muted-foreground">
+                Fetching your properties from the database
+              </Text>
+            </div>
+          ) : filteredBuildings.length > 0 ? (
             <DataTable columns={columns} data={filteredBuildings} pageSize={8} />
           ) : (
             <div 
@@ -541,14 +616,14 @@ function ListingsContent() {
                 No buildings found
               </Heading>
               <Text className="text-muted-foreground mb-4">
-                Try adjusting your search or filters to find buildings.
+                You haven't created any listings yet. Start by creating your first property listing.
               </Text>
               <Button 
-                onClick={() => { setBuildingsSearch(''); setBuildingFilter('all'); setStatusFilter('all'); setLocationFilter('all') }}
+                onClick={() => router.push('/dashboard/create')}
                 className="transition-all duration-200 hover:scale-105"
                 style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
               >
-                Clear Filters
+                Create First Listing
               </Button>
             </div>
           )}
