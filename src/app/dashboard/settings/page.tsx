@@ -25,6 +25,7 @@ import {
   EyeOff,
   Check,
   Edit2,
+  Users,
 } from "lucide-react"
 
 interface SettingsTab {
@@ -113,6 +114,12 @@ function SettingsContent() {
       active: false,
     },
     {
+      icon: <Users className="w-5 h-5" />,
+      name: "Employees",
+      path: "/dashboard/employees",
+      active: false,
+    },
+    {
       icon: <MessageSquare className="w-5 h-5" />,
       name: "Chat",
       path: "/dashboard/chat",
@@ -156,6 +163,12 @@ function SettingsContent() {
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed)
+  }
+
+  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
+    if (!isCurrentlyCollapsed) {
+      setIsSidebarCollapsed(true)
+    }
   }
 
   const handlePasswordChange = (field: string, value: string) => {
@@ -246,6 +259,7 @@ function SettingsContent() {
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
+        onNavigate={handleSidebarNavigation}
       />
 
       <div className="flex-1 transition-all duration-300 ease-in-out">

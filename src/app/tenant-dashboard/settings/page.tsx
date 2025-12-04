@@ -127,6 +127,12 @@ function SettingsContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
+  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
+    if (!isCurrentlyCollapsed) {
+      setIsSidebarCollapsed(true)
+    }
+  }
+
   const handlePasswordChange = (field: string, value: string) => {
     setPassword((prev) => ({ ...prev, [field]: value }))
   }
@@ -215,6 +221,7 @@ function SettingsContent() {
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
+        onNavigate={handleSidebarNavigation}
       />
 
       <div className="flex-1 transition-all duration-300 ease-in-out">

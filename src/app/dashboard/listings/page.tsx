@@ -31,7 +31,8 @@ import {
   Edit,
   Trash2,
   Filter,
-  Search
+  Search,
+  Users
 } from "lucide-react"
 
 interface Building {
@@ -135,6 +136,12 @@ function ListingsContent() {
       icon: <PlusCircle className="w-5 h-5" />,
       name: "Create Listing",
       path: "/dashboard/create",
+      active: false
+    },
+    {
+      icon: <Users className="w-5 h-5" />,
+      name: "Employees",
+      path: "/dashboard/employees",
       active: false
     },
     {
@@ -443,6 +450,12 @@ function ListingsContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
+  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
+    if (!isCurrentlyCollapsed) {
+      setIsSidebarCollapsed(true)
+    }
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <DashboardSidebar
@@ -450,6 +463,7 @@ function ListingsContent() {
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
+        onNavigate={handleSidebarNavigation}
       />
 
       {/* Main Content */}

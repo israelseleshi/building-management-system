@@ -194,6 +194,12 @@ function ListingsContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
+  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
+    if (!isCurrentlyCollapsed) {
+      setIsSidebarCollapsed(true)
+    }
+  }
+
   // Show loading state
   if (loading) {
     return (
@@ -203,6 +209,7 @@ function ListingsContent() {
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={toggleSidebar}
           onLogout={handleLogout}
+          onNavigate={handleSidebarNavigation}
         />
 
         <div className="flex-1 transition-all duration-300 ease-in-out">
@@ -233,6 +240,7 @@ function ListingsContent() {
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={toggleSidebar}
           onLogout={handleLogout}
+          onNavigate={handleSidebarNavigation}
         />
 
         {/* Main Content */}
@@ -265,6 +273,7 @@ function ListingsContent() {
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
+        onNavigate={handleSidebarNavigation}
       />
 
       {/* Main Content */}

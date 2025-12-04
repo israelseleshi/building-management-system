@@ -21,6 +21,7 @@ import {
   Video,
   Smile,
   Paperclip,
+  Users,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/lib/supabaseClient"
@@ -121,6 +122,12 @@ function ChatContent() {
       icon: <PlusCircle className="w-5 h-5" />,
       name: "Create Listing",
       path: "/dashboard/create",
+      active: false,
+    },
+    {
+      icon: <Users className="w-5 h-5" />,
+      name: "Employees",
+      path: "/dashboard/employees",
       active: false,
     },
     {
@@ -352,6 +359,12 @@ function ChatContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
+  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
+    if (!isCurrentlyCollapsed) {
+      setIsSidebarCollapsed(true)
+    }
+  }
+
   const currentPerson = people[selectedPersonIndex]
 
   return (
@@ -361,6 +374,7 @@ function ChatContent() {
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
+        onNavigate={handleSidebarNavigation}
       />
 
       {/* Main Content */}

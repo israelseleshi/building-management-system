@@ -3,19 +3,19 @@
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heading, MutedText } from "@/components/ui/typography"
-import { Search, Bell } from "lucide-react"
+import { Bell, Search } from "lucide-react"
 
 interface DashboardHeaderProps {
   title: string
   subtitle: string
-  searchQuery: string
-  onSearchChange: (query: string) => void
+  searchQuery?: string
+  onSearchChange?: (query: string) => void
 }
 
 export function DashboardHeader({
   title,
   subtitle,
-  searchQuery,
+  searchQuery = "",
   onSearchChange,
 }: DashboardHeaderProps) {
   return (
@@ -42,7 +42,7 @@ export function DashboardHeader({
               type="text"
               placeholder="Search..."
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) => onSearchChange?.(e.target.value)}
               className="pl-10 pr-4 py-2 w-64 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder-black"
             />
           </div>
