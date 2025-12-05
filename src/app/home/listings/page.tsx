@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -50,7 +50,7 @@ interface Listing {
 
 const ITEMS_PER_PAGE = 6
 
-export default function ListingsPage() {
+function ListingsPageContent() {
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || "")
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -650,5 +650,19 @@ export default function ListingsPage() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function ListingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      }
+    >
+      <ListingsPageContent />
+    </Suspense>
   )
 }

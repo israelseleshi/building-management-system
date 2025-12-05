@@ -58,7 +58,6 @@ function ChatContent() {
   const [messages, setMessages] = useState<MessageItem[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const messagesChannelRef = useRef<any>(null)
 
   const subscribeToMessages = (conversationId: string, userId: string) => {
@@ -138,7 +137,6 @@ function ChatContent() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        setIsLoading(false)
         return
       }
 
@@ -156,14 +154,12 @@ function ChatContent() {
       // PGRST116 = no rows for maybeSingle; treat that as "no lease yet" not as an error
       if (leaseError && (leaseError as any).code !== "PGRST116") {
         console.error("Error loading tenant lease", leaseError)
-        setIsLoading(false)
         return
       }
 
       if (!myLease) {
         // No lease yet -> no known landlord / co-tenants to chat with
         setPeople([])
-        setIsLoading(false)
         return
       }
 
@@ -244,8 +240,6 @@ function ChatContent() {
         const conv = await getOrCreateConversation(user.id, peopleList[0].id)
         await loadMessagesForConversation(conv.id, user.id)
       }
-
-      setIsLoading(false)
     }
 
     const loadMessagesForConversation = async (

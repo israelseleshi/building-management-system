@@ -223,7 +223,7 @@ function CreateListingContent() {
       }
 
       // Insert property into database
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('properties')
         .insert([
           {
@@ -241,7 +241,6 @@ function CreateListingContent() {
             updated_at: new Date().toISOString(),
           }
         ])
-        .select()
 
       if (error) {
         console.error('Database error:', error)
