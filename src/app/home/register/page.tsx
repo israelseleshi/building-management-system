@@ -140,7 +140,7 @@ export default function OwnerRegisterPage() {
     try {
       const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim()
 
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
