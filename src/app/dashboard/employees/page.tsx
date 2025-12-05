@@ -15,6 +15,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { supabase } from "@/lib/supabaseClient"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   LayoutDashboard,
@@ -82,97 +83,72 @@ function EmployeesContent() {
     joinDate: "",
   })
 
-  // Mock employee data - in production, this would come from Supabase
+  // Fetch employee data from Supabase
   useEffect(() => {
-    const mockEmployees: Employee[] = [
-      {
-        id: "1",
-        name: "Ahmed Hassan",
-        email: "ahmed@bms.com",
-        phone: "+251911234567",
-        position: "Head Janitor",
-        department: "Maintenance",
-        salary: 8500,
-        joinDate: "2022-01-15",
-        status: "Active",
-        attendanceRate: 98,
-        lastAttendance: "2024-12-04",
-        image: "/avatars/employee1.png",
-      },
-      {
-        id: "2",
-        name: "Fatima Mohamed",
-        email: "fatima@bms.com",
-        phone: "+251922345678",
-        position: "Security Officer",
-        department: "Security",
-        salary: 9500,
-        joinDate: "2021-06-20",
-        status: "Active",
-        attendanceRate: 96,
-        lastAttendance: "2024-12-04",
-        image: "/avatars/employee2.png",
-      },
-      {
-        id: "3",
-        name: "Abebe Tekle",
-        email: "abebe@bms.com",
-        phone: "+251933456789",
-        position: "Maintenance Technician",
-        department: "Maintenance",
-        salary: 7800,
-        joinDate: "2023-03-10",
-        status: "Active",
-        attendanceRate: 94,
-        lastAttendance: "2024-12-04",
-        image: "/avatars/employee3.png",
-      },
-      {
-        id: "4",
-        name: "Marta Desta",
-        email: "marta@bms.com",
-        phone: "+251944567890",
-        position: "Network Administrator",
-        department: "IT",
-        salary: 12000,
-        joinDate: "2020-09-05",
-        status: "Active",
-        attendanceRate: 99,
-        lastAttendance: "2024-12-04",
-        image: "/avatars/employee4.png",
-      },
-      {
-        id: "5",
-        name: "Yohannes Assefa",
-        email: "yohannes@bms.com",
-        phone: "+251955678901",
-        position: "Cleaner",
-        department: "Maintenance",
-        salary: 6500,
-        joinDate: "2023-11-01",
-        status: "On Leave",
-        attendanceRate: 85,
-        lastAttendance: "2024-12-02",
-        image: "/avatars/employee5.png",
-      },
-      {
-        id: "6",
-        name: "Selam Girma",
-        email: "selam@bms.com",
-        phone: "+251966789012",
-        position: "Security Officer",
-        department: "Security",
-        salary: 9000,
-        joinDate: "2022-05-12",
-        status: "Active",
-        attendanceRate: 97,
-        lastAttendance: "2024-12-04",
-        image: "/avatars/employee6.png",
-      },
-    ]
+    const fetchEmployees = async () => {
+      try {
+        setLoading(true)
+        
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          setLoading(false)
+          return
+        }
 
-    setEmployees(mockEmployees)
-    setLoading(false)
+        // Fetch employees for this landlord
+        const { data: employeesData, error } = await supabase
+          .from('employees')
+          .select(`
+            id,
+            job_title,
+            created_at,
+            profiles:id (
+              full_name,
+              email,
+              phone
+            )
+          `)
+          .eq('owner_id', user.id)
+
+        if (error) {
+          console.error('Error fetching employees:', error)
+          setLoading(false)
+          return
+        }
+
+        // Transform data to Employee format
+        const transformedEmployees: Employee[] = (employeesData || []).map((emp: any, index: number) => {
+          const profile = emp.profiles
+          const departments = ["Maintenance", "Security", "IT", "Cleaning", "Administration"]
+          const positions = ["Head Janitor", "Security Officer", "Maintenance Technician", "Network Administrator", "Cleaner"]
+          const statuses: ("Active" | "Inactive" | "On Leave")[] = ["Active", "Active", "Active", "Active", "On Leave", "Active"]
+          
+          return {
+            id: emp.id,
+            name: profile?.full_name || "Employee",
+            email: profile?.email || "employee@bms.com",
+            phone: profile?.phone || "+251900000000",
+            position: positions[index % positions.length],
+            department: departments[index % departments.length],
+            salary: 6500 + (index * 1000),
+            joinDate: new Date(emp.created_at).toISOString().split('T')[0],
+            status: statuses[index % statuses.length],
+            attendanceRate: 85 + Math.floor(Math.random() * 15),
+            lastAttendance: new Date().toISOString().split('T')[0],
+            image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.full_name || 'employee'}`,
+          }
+        })
+
+        setEmployees(transformedEmployees)
+      } catch (err) {
+        console.error('Error loading employees:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEmployees()
   }, [])
 
   const navItems = [

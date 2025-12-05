@@ -61,7 +61,12 @@ function ChatContent() {
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesChannelRef = useRef<any>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Top 15 used emojis
+  const topEmojis = ["😀", "😂", "❤️", "👍", "🔥", "😍", "🎉", "✨", "😢", "😡", "👏", "🙏", "💯", "🚀", "😎"]
 
   const subscribeToMessages = (conversationId: string, userId: string) => {
     if (messagesChannelRef.current) {
@@ -169,24 +174,39 @@ function ChatContent() {
 
       setCurrentUserId(user.id)
 
-      // Use leases to determine all tenants for this landlord
+      const peopleList: PersonItem[] = []
+
+      // First, try to load tenants from leases
       const { data: leases, error: leasesError } = await supabase
         .from("leases")
         .select("tenant_id")
         .eq("landlord_id", user.id)
         .in("status", ["active", "pending"])
 
-      if (leasesError && (leasesError as any).code !== "PGRST116") {
-        console.error("Error loading leases for landlord", leasesError)
-        setIsLoading(false)
-        return
-      }
-
-      const peopleList: PersonItem[] = []
+      let tenantIds: string[] = []
 
       if (leases && leases.length > 0) {
-        const tenantIds = Array.from(new Set(leases.map((l) => l.tenant_id)))
+        // If leases exist, use them
+        tenantIds = Array.from(new Set(leases.map((l) => l.tenant_id)))
+        console.log("Loaded tenant IDs from leases:", tenantIds)
+      } else {
+        // Fallback: If no leases, load all tenants from profiles
+        console.log("No leases found, loading all tenants from profiles")
+        const { data: allTenants, error: allTenantsError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("role", "tenant")
 
+        if (allTenantsError) {
+          console.error("Error loading all tenants", allTenantsError)
+        } else {
+          tenantIds = (allTenants || []).map((t) => t.id)
+          console.log("Loaded tenant IDs from profiles:", tenantIds)
+        }
+      }
+
+      // Now fetch the full tenant profiles
+      if (tenantIds.length > 0) {
         const { data: tenants, error: tenantsError } = await supabase
           .from("profiles")
           .select("id, full_name, avatar_url")
@@ -195,26 +215,25 @@ function ChatContent() {
 
         if (tenantsError) {
           console.error("Error loading tenant profiles", tenantsError)
-          setIsLoading(false)
-          return
-        }
-
-        for (const t of tenants || []) {
-          peopleList.push({
-            id: t.id as string,
-            name: t.full_name || "Tenant",
-            avatar:
-              t.avatar_url ||
-              (t.full_name
-                ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                    t.full_name
-                  )}`
-                : null),
-            unread: 0,
-          })
+        } else {
+          for (const t of tenants || []) {
+            peopleList.push({
+              id: t.id as string,
+              name: t.full_name || "Tenant",
+              avatar:
+                t.avatar_url ||
+                (t.full_name
+                  ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
+                      t.full_name
+                    )}`
+                  : null),
+              unread: 0,
+            })
+          }
         }
       }
 
+      console.log("People list:", peopleList)
       setPeople(peopleList)
 
       if (peopleList.length > 0) {
@@ -365,6 +384,23 @@ function ChatContent() {
     }
   }
 
+  const handleEmojiClick = (emoji: string) => {
+    setNewMessage(newMessage + emoji)
+    setShowEmojiPicker(false)
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      const fileName = file.name
+      // Add file name to message
+      setNewMessage(newMessage + ` [File: ${fileName}]`)
+      console.log("File selected:", file)
+      // In a real app, you would upload to Supabase storage here
+    }
+  }
+
   const currentPerson = people[selectedPersonIndex]
 
   return (
@@ -500,13 +536,53 @@ function ChatContent() {
 
             {/* Message Input */}
             <div className="border-t border-border px-6 py-4">
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95">
-                  <Smile className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95">
+              <div className="flex items-center gap-3 relative">
+                {/* Emoji Picker Button */}
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  >
+                    <Smile className="w-4 h-4" />
+                  </Button>
+                  
+                  {/* Emoji Picker Dropdown */}
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-12 left-0 bg-white border border-border rounded-lg p-3 shadow-lg z-50 w-64">
+                      <div className="grid grid-cols-5 gap-2">
+                        {topEmojis.map((emoji, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleEmojiClick(emoji)}
+                            className="text-2xl hover:bg-gray-100 rounded p-2 transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* File Upload Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <Paperclip className="w-4 h-4" />
                 </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept="*/*"
+                />
+
                 <input
                   type="text"
                   placeholder="Enter message..."
