@@ -56,7 +56,7 @@ export function SignUpForm() {
       const [firstName, ...rest] = trimmedName.split(" ")
       const lastName = rest.join(" ") || null
 
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {

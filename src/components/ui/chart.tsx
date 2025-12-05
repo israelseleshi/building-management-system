@@ -5,14 +5,6 @@ import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
 
-const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-]
-
 type ChartConfig = {
   [k in string]: {
     label?: React.ReactNode
@@ -53,6 +45,7 @@ const ChartContainer = React.forwardRef<
     <ChartContext.Provider value={{ config }}>
       <div
         ref={ref}
+        id={chartId}
         className={cn(
           "flex aspect-video justify-center text-xs",
           "[&_.recharts-cartesian-axis-tick text]:fill-muted-foreground [&_.recharts-cartesian-axis-tick_line]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-default-tooltip]:!bg-background [&_.recharts-default-tooltip]:!border-border [&_.recharts-default-tooltip]:!rounded-md [&_.recharts-default-tooltip]:!shadow-md [&_.recharts-tooltip-wrapper]:!outline-none [&_.recharts-surface]:overflow-visible",
@@ -71,13 +64,12 @@ ChartContainer.displayName = "ChartContainer"
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
+type ChartTooltipProps = RechartsPrimitive.TooltipProps<number, string>
+
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> &
-    Pick<
-      RechartsPrimitive.TooltipProps,
-      "active" | "payload" | "label" | "cursor"
-    > & {
+    Pick<ChartTooltipProps, "active" | "payload" | "label" | "cursor"> & {
       hideLabel?: boolean
       hideIndicator?: boolean
       indicator?: "line" | "dot" | "dashed"
@@ -135,7 +127,7 @@ const ChartTooltipContent = React.forwardRef<
         {!hideLabel && tooltipLabel ? (
           <div className="text-muted-foreground">{tooltipLabel}</div>
         ) : null}
-        {payload.map((item, index) => {
+        {payload.map((item: any, index: number) => {
           const key = `${nameKey || item.name || item.dataKey || "value"}`
           const itemConfig = config[key as keyof typeof config]
           const indicatorColor =

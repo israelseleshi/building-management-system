@@ -60,7 +60,6 @@ function ChatContent() {
   const [messages, setMessages] = useState<MessageItem[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesChannelRef = useRef<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -168,7 +167,6 @@ function ChatContent() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        setIsLoading(false)
         return
       }
 
@@ -177,7 +175,7 @@ function ChatContent() {
       const peopleList: PersonItem[] = []
 
       // First, try to load tenants from leases
-      const { data: leases, error: leasesError } = await supabase
+      const { data: leases } = await supabase
         .from("leases")
         .select("tenant_id")
         .eq("landlord_id", user.id)
@@ -242,7 +240,6 @@ function ChatContent() {
         await loadMessagesForConversation(conv.id, user.id)
       }
 
-      setIsLoading(false)
     }
 
     const loadMessagesForConversation = async (

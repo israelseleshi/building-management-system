@@ -143,6 +143,14 @@ function SettingsContent() {
     },
   ]
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Text className="text-muted-foreground text-sm">Loading settings...</Text>
+      </div>
+    )
+  }
+
   const settingsTabs: SettingsTab[] = [
     { id: "profile", label: "Profile", icon: <User className="w-5 h-5" /> },
     { id: "security", label: "Security", icon: <Lock className="w-5 h-5" /> },
