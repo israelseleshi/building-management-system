@@ -25,8 +25,8 @@ export function VerticalAdSlider({ ads, position }: VerticalAdSliderProps) {
             autoplay={{ delay: 2500, disableOnInteraction: false }}
             loop
             slidesPerView={3}
-            spaceBetween={12}
-            className="w-full h-[540px]"
+            spaceBetween={16}
+            className="w-full h-[700px] xl:h-[780px] 2xl:h-[840px]"
           >
             {ads.map((ad) => (
               <SwiperSlide key={`${position}-${ad.id}`} className="!h-auto">
@@ -36,7 +36,7 @@ export function VerticalAdSlider({ ads, position }: VerticalAdSliderProps) {
                   rel="noopener noreferrer"
                   className="block w-full"
                 >
-                  <div className="w-full overflow-hidden rounded-xl shadow-md bg-card border border-border">
+                  <div className="w-full overflow-hidden rounded-xl shadow-md bg-card border border-border min-h-[220px] flex items-center justify-center p-2">
                     <Swiper
                       modules={[Autoplay]}
                       autoplay={{ delay: 3000, disableOnInteraction: false }}
