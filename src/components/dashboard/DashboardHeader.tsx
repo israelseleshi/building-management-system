@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heading, MutedText } from "@/components/ui/typography"
-import { Bell, Search } from "lucide-react"
+import { Search } from "lucide-react"
+import { NotificationsDropdown } from "./NotificationsDropdown"
 
 interface DashboardHeaderProps {
   title: string
@@ -47,9 +48,7 @@ export function DashboardHeader({
             />
           </div>
 
-          <Button variant="outline" size="sm" className="h-9 w-9 p-0">
-            <Bell className="w-4 h-4" />
-          </Button>
+          <NotificationsDropdown />
 
           <Button variant="ghost" className="relative h-9 w-9 rounded-full">
             <Avatar className="h-8 w-8">
