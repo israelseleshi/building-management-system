@@ -239,7 +239,6 @@ function ChatContent() {
         const conv = await getOrCreateConversation(user.id, peopleList[0].id)
         await loadMessagesForConversation(conv.id, user.id)
       }
-
     }
 
     const loadMessagesForConversation = async (

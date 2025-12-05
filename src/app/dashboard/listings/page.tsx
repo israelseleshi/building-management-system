@@ -32,7 +32,8 @@ import {
   Trash2,
   Filter,
   Search,
-  Users
+  Users,
+  X
 } from "lucide-react"
 
 interface Building {
@@ -75,7 +76,7 @@ function ListingsContent() {
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null)
-  const [editFormData, setEditFormData] = useState<Partial<Building>>({})
+  const [editFormData, setEditFormData] = useState<Partial<Building> & { newImage?: File; imagePreview?: string }>({})
   const [isSaving, setIsSaving] = useState(false)
 
   // Fetch properties from Supabase
@@ -384,7 +385,8 @@ function ListingsContent() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-8 w-8 p-0 hover:bg-blue-100"
+              className="h-8 w-8 p-0"
+              style={{ backgroundColor: '#3b82f620' }}
               onClick={() => {
                 setSelectedBuilding(building)
                 setViewModalOpen(true)
@@ -395,7 +397,8 @@ function ListingsContent() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-8 w-8 p-0 hover:bg-green-100"
+              className="h-8 w-8 p-0"
+              style={{ backgroundColor: '#10b98120' }}
               onClick={() => {
                 setSelectedBuilding(building)
                 setEditModalOpen(true)
@@ -406,7 +409,8 @@ function ListingsContent() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-8 w-8 p-0 hover:bg-red-100"
+              className="h-8 w-8 p-0"
+              style={{ backgroundColor: '#a85c5c20' }}
               onClick={() => handleDeleteClick(building.id)}
             >
               <Trash2 className="w-4 h-4 text-red-600" />
@@ -466,12 +470,52 @@ function ListingsContent() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      let imageUrl = selectedBuilding.image
+
+      // Handle image upload/deletion
+      if (editFormData.newImage) {
+        // Delete old image if it exists
+        if (selectedBuilding.image) {
+          try {
+            const oldImagePath = selectedBuilding.image.split('/').pop()
+            if (oldImagePath) {
+              await supabase.storage
+                .from('images')
+                .remove([`properties/${user.id}/${oldImagePath}`])
+            }
+          } catch (err) {
+            console.error('Error deleting old image:', err)
+          }
+        }
+
+        // Upload new image
+        const fileExt = editFormData.newImage.name.split('.').pop()
+        const fileName = `${Date.now()}.${fileExt}`
+        const filePath = `properties/${user.id}/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, editFormData.newImage)
+
+        if (uploadError) throw uploadError
+
+        // Get public URL
+        const { data } = supabase.storage
+          .from('images')
+          .getPublicUrl(filePath)
+        imageUrl = data.publicUrl
+      }
+
       // Prepare update data
-      const updateData = {
+      const updateData: any = {
         title: editFormData.businessName || selectedBuilding.businessName,
         monthly_rent: editFormData.monthlyRevenue || selectedBuilding.monthlyRevenue,
         status: editFormData.status === 'Active' ? 'listed' : 'draft',
         updated_at: new Date().toISOString(),
+      }
+
+      if (editFormData.newImage) {
+        updateData.image_url = imageUrl
       }
 
       const { error } = await supabase
@@ -490,6 +534,7 @@ function ListingsContent() {
               businessName: editFormData.businessName || b.businessName,
               monthlyRevenue: editFormData.monthlyRevenue || b.monthlyRevenue,
               status: editFormData.status || b.status,
+              image: imageUrl,
             }
           : b
       )
@@ -533,7 +578,7 @@ function ListingsContent() {
         />
 
         {/* Listings Content */}
-        <main className="p-6">
+        <main className="p-6 md:p-8 max-w-7xl mx-auto w-full">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {stats.map((stat, index) => (
@@ -709,6 +754,7 @@ function ListingsContent() {
             backgroundColor: 'var(--card)',
           }}
         >
+          <DialogTitle className="sr-only">View Building Details</DialogTitle>
           {selectedBuilding && (
             <>
               {/* Header with Image */}
@@ -818,13 +864,30 @@ function ListingsContent() {
             backgroundColor: 'var(--card)',
           }}
         >
+          <DialogTitle className="sr-only">Edit Building Details</DialogTitle>
           {selectedBuilding && (
             <>
-              {/* Header with Image */}
-              <div className="relative h-56 bg-gradient-to-br from-green-400 to-green-600 overflow-hidden flex-shrink-0">
-                {selectedBuilding.image ? (
+              {/* Header with Image - Editable */}
+              <div className="relative h-56 bg-gradient-to-br from-green-400 to-green-600 overflow-hidden flex-shrink-0 group cursor-pointer">
+                <input 
+                  type="file" 
+                  id="imageUpload" 
+                  accept="image/*" 
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onload = (event) => {
+                        setEditFormData(prev => ({ ...prev, newImage: file, imagePreview: event.target?.result as string }))
+                      }
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                />
+                {editFormData.imagePreview || selectedBuilding.image ? (
                   <img 
-                    src={selectedBuilding.image} 
+                    src={editFormData.imagePreview || selectedBuilding.image} 
                     alt={selectedBuilding.businessName}
                     className="w-full h-full object-cover"
                   />
@@ -833,7 +896,26 @@ function ListingsContent() {
                     <Edit className="w-32 h-32 text-white opacity-30" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                {/* Overlay with Edit Button */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-all duration-200 flex-col gap-3">
+                  <label htmlFor="imageUpload" className="cursor-pointer">
+                    <div className="bg-white/90 hover:bg-white text-gray-900 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all">
+                      <Edit className="w-4 h-4" />
+                      Change Image
+                    </div>
+                  </label>
+                  {editFormData.newImage && (
+                    <button 
+                      onClick={() => setEditFormData(prev => ({ ...prev, newImage: undefined, imagePreview: undefined }))}
+                      className="bg-red-500/90 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all"
+                    >
+                      <X className="w-4 h-4" />
+                      Remove New Image
+                    </button>
+                  )}
+                </div>
+                {/* Title Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end pointer-events-none">
                   <div className="w-full p-6">
                     <h2 className="text-3xl font-bold text-white mb-1">{selectedBuilding.businessName}</h2>
                     <p className="text-white/80 text-sm">Edit Unit Details</p>

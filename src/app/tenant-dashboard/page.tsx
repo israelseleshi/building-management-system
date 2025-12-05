@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Heading, Text, MutedText } from "@/components/ui/typography"
@@ -12,7 +12,8 @@ import {
   MessageSquare, 
   Settings,
   Send,
-  Grid
+  Grid,
+  FileText
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { usePathname } from "next/navigation"
@@ -35,12 +36,15 @@ function DashboardContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   
   // Determine active tab based on current pathname
+  // IMPORTANT: Check more specific paths first to avoid partial matches
   let activeTab = "dashboard"
-  if (pathname.includes("/chat")) {
-    activeTab = "chat"
-  } else if (pathname.includes("/listings")) {
+  if (pathname === "/tenant-dashboard/leases" || pathname.startsWith("/tenant-dashboard/leases/")) {
+    activeTab = "leases"
+  } else if (pathname === "/tenant-dashboard/listings" || pathname.startsWith("/tenant-dashboard/listings/")) {
     activeTab = "listings"
-  } else if (pathname.includes("/settings")) {
+  } else if (pathname === "/tenant-dashboard/chat" || pathname.startsWith("/tenant-dashboard/chat/")) {
+    activeTab = "chat"
+  } else if (pathname === "/tenant-dashboard/settings" || pathname.startsWith("/tenant-dashboard/settings/")) {
     activeTab = "settings"
   }
   const [messages, setMessages] = useState([
@@ -71,7 +75,7 @@ function DashboardContent() {
   ])
   const [newMessage, setNewMessage] = useState("")
 
-  const navItems = [
+  const navItems = useMemo(() => [
     {
       icon: <LayoutDashboard className="w-5 h-5" />,
       name: "Dashboard",
@@ -85,6 +89,12 @@ function DashboardContent() {
       active: activeTab === "listings"
     },
     {
+      icon: <FileText className="w-5 h-5" />,
+      name: "My Rents",
+      path: "/tenant-dashboard/leases",
+      active: activeTab === "leases"
+    },
+    {
       icon: <MessageSquare className="w-5 h-5" />,
       name: "Chat",
       path: "/tenant-dashboard/chat",
@@ -96,7 +106,7 @@ function DashboardContent() {
       path: "/tenant-dashboard/settings",
       active: activeTab === "settings"
     }
-  ]
+  ], [activeTab])
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {

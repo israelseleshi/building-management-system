@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useMemo } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Heading, Text, Large, MutedText } from "@/components/ui/typography"
@@ -18,7 +18,8 @@ import {
   TrendingUp, 
   Settings,
   Building2,
-  Users
+  Users,
+  FileText
 } from "lucide-react"
 
 export default function LandlordDashboard() {
@@ -31,8 +32,30 @@ export default function LandlordDashboard() {
 
 function DashboardContent() {
   const router = useRouter()
+  const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  
+  // Determine active tab based on current pathname
+  // IMPORTANT: Check more specific paths first to avoid partial matches
+  let activeTab = "dashboard"
+  if (pathname === "/dashboard/leases" || pathname.startsWith("/dashboard/leases/")) {
+    activeTab = "leases"
+  } else if (pathname === "/dashboard/listings" || pathname.startsWith("/dashboard/listings/")) {
+    activeTab = "listings"
+  } else if (pathname === "/dashboard/create" || pathname.startsWith("/dashboard/create/")) {
+    activeTab = "create"
+  } else if (pathname === "/dashboard/employees" || pathname.startsWith("/dashboard/employees/")) {
+    activeTab = "employees"
+  } else if (pathname === "/dashboard/chat" || pathname.startsWith("/dashboard/chat/")) {
+    activeTab = "chat"
+  } else if (pathname === "/dashboard/payouts" || pathname.startsWith("/dashboard/payouts/")) {
+    activeTab = "payouts"
+  } else if (pathname === "/dashboard/analytics" || pathname.startsWith("/dashboard/analytics/")) {
+    activeTab = "analytics"
+  } else if (pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings/")) {
+    activeTab = "settings"
+  }
   const [metrics, setMetrics] = useState([
     { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
     { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
@@ -97,56 +120,62 @@ function DashboardContent() {
     fetchMetrics()
   }, [])
 
-  const navItems = [
+  const navItems = useMemo(() => [
     {
       icon: <LayoutDashboard className="w-5 h-5" />,
       name: "Dashboard",
       path: "/dashboard",
-      active: true
+      active: activeTab === "dashboard"
     },
     {
       icon: <Building2 className="w-5 h-5" />,
       name: "My Listings",
       path: "/dashboard/listings",
-      active: false
+      active: activeTab === "listings"
     },
     {
       icon: <PlusCircle className="w-5 h-5" />,
       name: "Create Listing",
       path: "/dashboard/create",
-      active: false
+      active: activeTab === "create"
     },
     {
       icon: <Users className="w-5 h-5" />,
       name: "Employees",
       path: "/dashboard/employees",
-      active: false
+      active: activeTab === "employees"
+    },
+    {
+      icon: <FileText className="w-5 h-5" />,
+      name: "Rents",
+      path: "/dashboard/leases",
+      active: activeTab === "leases"
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,
       name: "Chat",
       path: "/dashboard/chat",
-      active: false
+      active: activeTab === "chat"
     },
     {
       icon: <CreditCard className="w-5 h-5" />,
       name: "Payouts",
       path: "/dashboard/payouts",
-      active: false
+      active: activeTab === "payouts"
     },
     {
       icon: <TrendingUp className="w-5 h-5" />,
       name: "Analytics",
       path: "/dashboard/analytics",
-      active: false
+      active: activeTab === "analytics"
     },
     {
       icon: <Settings className="w-5 h-5" />,
       name: "Settings",
       path: "/dashboard/settings",
-      active: false
+      active: activeTab === "settings"
     }
-  ]
+  ], [activeTab])
 
   const handleLogout = () => {
     // Clear authentication state from localStorage

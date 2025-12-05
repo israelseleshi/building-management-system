@@ -97,8 +97,11 @@ function ListingsPageContent() {
 
         setAllListings(transformedListings)
         setError(null)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching listings:', err)
+        console.error('Error message:', err?.message)
+        console.error('Error details:', err?.details)
+        console.error('Full error:', JSON.stringify(err, null, 2))
         setError('Failed to load listings. Please try again.')
         setAllListings([])
       } finally {
