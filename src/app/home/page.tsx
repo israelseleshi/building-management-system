@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Heading, Text } from "@/components/ui/typography"
 import { Header } from "@/components/home/Header"
+import { TopBannerSlider } from "@/components/ads/TopBannerSlider"
+import { VerticalAdSlider } from "@/components/ads/VerticalAdSlider"
+import { leftAds, rightAds } from "@/data/verticalAds"
 import { 
   Building, 
   Search, 
@@ -35,6 +38,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <TopBannerSlider />
       {/* Content */}
       <div className="relative z-10">
         {/* Header */}
@@ -131,34 +135,10 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-muted/50">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 text-center">
-              <div className="group">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 group-hover:scale-110 transition-transform" style={{ color: '#7D8B6F' }}>10,000+</div>
-                <Text className="text-muted-foreground font-medium text-xs sm:text-sm">Happy Users</Text>
-              </div>
-              <div className="group">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 group-hover:scale-110 transition-transform" style={{ color: '#7D8B6F' }}>5,000+</div>
-                <Text className="text-muted-foreground font-medium text-xs sm:text-sm">Properties Listed</Text>
-              </div>
-              <div className="group">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 group-hover:scale-110 transition-transform" style={{ color: '#7D8B6F' }}>98%</div>
-                <Text className="text-muted-foreground font-medium text-xs sm:text-sm">Satisfaction Rate</Text>
-              </div>
-              <div className="group">
-                <div className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 group-hover:scale-110 transition-transform" style={{ color: '#7D8B6F' }}>24/7</div>
-                <Text className="text-muted-foreground font-medium text-xs sm:text-sm">Support Available</Text>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Features Section */}
         <section id="features" className="py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12 sm:mb-16">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-8 sm:mb-10 lg:mb-12">
               <Heading level={2} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 sm:mb-6">
                 Everything You Need for
                 <span className="block" style={{ color: '#7D8B6F' }}>Property Management</span>
@@ -168,7 +148,15 @@ export default function LandingPage() {
               </Text>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_220px] gap-6 lg:gap-8 items-start">
+              {/* Left Vertical Ads - desktop only, start at cards */}
+              <div className="hidden lg:block">
+                <VerticalAdSlider ads={leftAds} position="left" />
+              </div>
+
+              {/* Main feature cards */}
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
               <div 
                 className="group relative bg-card rounded-xl sm:rounded-2xl border border-border hover:shadow-lg transition-all duration-300 overflow-hidden"
                 style={{ 
@@ -277,10 +265,15 @@ export default function LandingPage() {
                   <Heading level={3} className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-4 group-hover:text-green-600 transition-colors">
                     E-Signature
                   </Heading>
-                  <Text className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                    Digitally sign lease agreements and contracts securely online
-                  </Text>
                 </div>
+              </div>
+
+                </div>
+              </div>
+
+              {/* Right Vertical Ads - desktop only, start at cards */}
+              <div className="hidden lg:block">
+                <VerticalAdSlider ads={rightAds} position="right" />
               </div>
             </div>
           </div>

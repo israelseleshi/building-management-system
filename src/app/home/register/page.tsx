@@ -24,6 +24,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function OwnerRegisterPage() {
   const router = useRouter()
@@ -118,6 +119,7 @@ export default function OwnerRegisterPage() {
 
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault()
+
     const newErrors: Record<string, string> = {}
 
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required"
@@ -125,16 +127,48 @@ export default function OwnerRegisterPage() {
     if (!formData.location.trim()) newErrors.location = "Location is required"
 
     setErrors(newErrors)
-    if (Object.keys(newErrors).length === 0) {
-      setIsLoading(true)
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        router.push("/dashboard")
-      } catch (error) {
-        console.error("Registration error:", error)
-      } finally {
-        setIsLoading(false)
+    if (Object.keys(newErrors).length > 0) {
+      return
+    }
+
+    // Also re-run overall validation to be safe
+    if (!validateForm()) {
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim()
+
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: fullName,
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            role: "owner",
+            phone: formData.phone.trim(),
+            businessName: formData.businessName.trim(),
+            location: formData.location.trim(),
+          },
+        },
+      })
+
+      if (error) {
+        console.error("Supabase signUp error:", error)
+        alert(error.message)
+        return
       }
+
+      alert("Account created! Please check your email to verify your address.")
+      router.push("/auth/signin")
+    } catch (error) {
+      console.error("Registration error:", error)
+      alert("Something went wrong while creating your account.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
