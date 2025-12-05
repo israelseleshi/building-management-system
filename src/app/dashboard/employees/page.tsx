@@ -99,16 +99,7 @@ function EmployeesContent() {
         // Fetch employees for this landlord
         const { data: employeesData, error } = await supabase
           .from('employees')
-          .select(`
-            id,
-            job_title,
-            created_at,
-            profiles:id (
-              full_name,
-              email,
-              phone
-            )
-          `)
+          .select('*')
           .eq('owner_id', user.id)
 
         if (error) {
@@ -118,25 +109,20 @@ function EmployeesContent() {
         }
 
         // Transform data to Employee format
-        const transformedEmployees: Employee[] = (employeesData || []).map((emp: any, index: number) => {
-          const profile = emp.profiles
-          const departments = ["Maintenance", "Security", "IT", "Cleaning", "Administration"]
-          const positions = ["Head Janitor", "Security Officer", "Maintenance Technician", "Network Administrator", "Cleaner"]
-          const statuses: ("Active" | "Inactive" | "On Leave")[] = ["Active", "Active", "Active", "Active", "On Leave", "Active"]
-          
+        const transformedEmployees: Employee[] = (employeesData || []).map((emp: any) => {
           return {
             id: emp.id,
-            name: profile?.full_name || "Employee",
-            email: profile?.email || "employee@bms.com",
-            phone: profile?.phone || "+251900000000",
-            position: positions[index % positions.length],
-            department: departments[index % departments.length],
-            salary: 6500 + (index * 1000),
-            joinDate: new Date(emp.created_at).toISOString().split('T')[0],
-            status: statuses[index % statuses.length],
-            attendanceRate: 85 + Math.floor(Math.random() * 15),
-            lastAttendance: new Date().toISOString().split('T')[0],
-            image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.full_name || 'employee'}`,
+            name: emp.name || "Employee",
+            email: emp.email || "employee@bms.com",
+            phone: emp.phone || "+251900000000",
+            position: emp.position || "Staff",
+            department: emp.department || "Maintenance",
+            salary: emp.salary || 0,
+            joinDate: emp.join_date ? new Date(emp.join_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            status: emp.status || 'Active',
+            attendanceRate: emp.attendance_rate || 0,
+            lastAttendance: emp.last_attendance ? new Date(emp.last_attendance).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${emp.name || 'employee'}`,
           }
         })
 
@@ -220,6 +206,81 @@ function EmployeesContent() {
     }
   }
 
+  const handleAddEmployee = async () => {
+    if (!newEmployee.name || !newEmployee.email || !newEmployee.position) {
+      alert("Please fill in all required fields")
+      return
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Generate a proper UUID v4 for employee
+      const newEmployeeId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0
+        const v = c === 'x' ? r : (r & 0x3 | 0x8)
+        return v.toString(16)
+      })
+
+      // Create employee record directly
+      const { error: employeeError } = await supabase
+        .from('employees')
+        .insert({
+          id: newEmployeeId,
+          owner_id: user.id,
+          name: newEmployee.name,
+          email: newEmployee.email,
+          phone: newEmployee.phone,
+          position: newEmployee.position,
+          department: newEmployee.department,
+          salary: newEmployee.salary,
+          join_date: newEmployee.joinDate || new Date().toISOString().split('T')[0],
+          status: 'Active',
+          attendance_rate: 100,
+          last_attendance: new Date().toISOString(),
+        })
+
+      if (employeeError) {
+        console.error("Employee error:", employeeError)
+        throw employeeError
+      }
+
+      // Add to local state
+      const newEmp: Employee = {
+        id: newEmployeeId,
+        name: newEmployee.name,
+        email: newEmployee.email,
+        phone: newEmployee.phone,
+        position: newEmployee.position,
+        department: newEmployee.department,
+        salary: newEmployee.salary,
+        joinDate: newEmployee.joinDate,
+        status: 'Active',
+        attendanceRate: 100,
+        lastAttendance: new Date().toISOString().split('T')[0],
+        image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newEmployee.name}`,
+      }
+
+      setEmployees([...employees, newEmp])
+      setAddModalOpen(false)
+      setNewEmployee({
+        name: "",
+        email: "",
+        phone: "",
+        position: "",
+        department: "Maintenance",
+        salary: 0,
+        joinDate: "",
+      })
+
+      alert("Employee added successfully!")
+    } catch (err: any) {
+      console.error("Error adding employee:", err?.message || err)
+      alert("Failed to add employee: " + (err?.message || "Unknown error"))
+    }
+  }
+
   const handleViewEmployee = (employee: Employee) => {
     setSelectedEmployee(employee)
     setViewModalOpen(true)
@@ -227,7 +288,75 @@ function EmployeesContent() {
 
   const handleEditEmployee = (employee: Employee) => {
     setSelectedEmployee(employee)
-    // TODO: Implement edit modal in future
+    setNewEmployee({
+      name: employee.name,
+      email: employee.email,
+      phone: employee.phone,
+      position: employee.position,
+      department: employee.department,
+      salary: employee.salary,
+      joinDate: employee.joinDate,
+    })
+    setAddModalOpen(true)
+  }
+
+  const handleUpdateEmployee = async () => {
+    if (!selectedEmployee || !newEmployee.name || !newEmployee.email || !newEmployee.position) {
+      alert("Please fill in all required fields")
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .update({
+          name: newEmployee.name,
+          email: newEmployee.email,
+          phone: newEmployee.phone,
+          position: newEmployee.position,
+          department: newEmployee.department,
+          salary: newEmployee.salary,
+          join_date: newEmployee.joinDate || new Date().toISOString().split('T')[0],
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', selectedEmployee.id)
+
+      if (error) throw error
+
+      // Update local state
+      const updatedEmployees = employees.map(emp =>
+        emp.id === selectedEmployee.id
+          ? {
+              ...emp,
+              name: newEmployee.name,
+              email: newEmployee.email,
+              phone: newEmployee.phone,
+              position: newEmployee.position,
+              department: newEmployee.department,
+              salary: newEmployee.salary,
+              joinDate: newEmployee.joinDate,
+            }
+          : emp
+      )
+
+      setEmployees(updatedEmployees)
+      setAddModalOpen(false)
+      setSelectedEmployee(null)
+      setNewEmployee({
+        name: "",
+        email: "",
+        phone: "",
+        position: "",
+        department: "Maintenance",
+        salary: 0,
+        joinDate: "",
+      })
+
+      alert("Employee updated successfully!")
+    } catch (err: any) {
+      console.error("Error updating employee:", err?.message || err)
+      alert("Failed to update employee: " + (err?.message || "Unknown error"))
+    }
   }
 
   const handleDeleteEmployee = (employeeId: string) => {
@@ -840,35 +969,17 @@ function EmployeesContent() {
           </ScrollArea>
 
           <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => setAddModalOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setAddModalOpen(false)
+              setSelectedEmployee(null)
+            }}>
               Cancel
             </Button>
             <Button
               style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
-              onClick={() => {
-                if (newEmployee.name && newEmployee.email && newEmployee.position) {
-                  const employee: Employee = {
-                    id: Date.now().toString(),
-                    ...newEmployee,
-                    status: "Active",
-                    attendanceRate: 100,
-                    lastAttendance: new Date().toISOString().split('T')[0],
-                  }
-                  setEmployees([...employees, employee])
-                  setNewEmployee({
-                    name: "",
-                    email: "",
-                    phone: "",
-                    position: "",
-                    department: "Maintenance",
-                    salary: 0,
-                    joinDate: "",
-                  })
-                  setAddModalOpen(false)
-                }
-              }}
+              onClick={selectedEmployee ? handleUpdateEmployee : handleAddEmployee}
             >
-              Add Employee
+              {selectedEmployee ? "Update Employee" : "Add Employee"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -876,7 +987,7 @@ function EmployeesContent() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent style={{ backgroundColor: "white" }}>
           <DialogHeader>
             <DialogTitle>Delete Employee</DialogTitle>
             <DialogDescription>
