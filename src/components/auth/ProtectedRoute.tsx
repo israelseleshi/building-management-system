@@ -24,6 +24,15 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
+  const isRoleAllowed = (role: string | null, required: string) => {
+    if (!role) return false
+    if (role === required) return true
+    // Alias support: DB uses 'owner' but app sometimes stores 'landlord'
+    if (required === "owner" && role === "landlord") return true
+    if (required === "landlord" && role === "owner") return true
+    return false
+  }
+
   useEffect(() => {
     // Check authentication status
     const checkAuth = () => {
@@ -40,7 +49,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
         setIsAuthenticated(true)
 
         // Check if specific role is required
-        if (requiredRole && role !== requiredRole) {
+        if (requiredRole && !isRoleAllowed(role, requiredRole)) {
           // Redirect to unauthorized page or dashboard
           router.push("/auth/unauthorized")
           return

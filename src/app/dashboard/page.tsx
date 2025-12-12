@@ -47,6 +47,8 @@ function DashboardContent() {
     activeTab = "create"
   } else if (pathname === "/dashboard/employees" || pathname.startsWith("/dashboard/employees/")) {
     activeTab = "employees"
+  } else if (pathname === "/dashboard/documents" || pathname.startsWith("/dashboard/documents/")) {
+    activeTab = "documents"
   } else if (pathname === "/dashboard/chat" || pathname.startsWith("/dashboard/chat/")) {
     activeTab = "chat"
   } else if (pathname === "/dashboard/payouts" || pathname.startsWith("/dashboard/payouts/")) {
@@ -150,6 +152,12 @@ function DashboardContent() {
       name: "Rents",
       path: "/dashboard/leases",
       active: activeTab === "leases"
+    },
+    {
+      icon: <FileText className="w-5 h-5" />,
+      name: "Documents",
+      path: "/dashboard/documents",
+      active: activeTab === "documents"
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,
