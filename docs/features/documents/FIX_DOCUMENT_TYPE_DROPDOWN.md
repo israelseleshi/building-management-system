@@ -11,7 +11,7 @@ The RLS policy on the `document_types` table may not be allowing authenticated u
 ### Step 1: Run the RLS Fix SQL (2 minutes)
 
 1. Go to **Supabase Dashboard** → **SQL Editor**
-2. Copy and paste the entire content from `FIX_DOCUMENT_TYPES_RLS.sql`
+2. Copy and paste the entire content from `docs/requests/FIX_DOCUMENT_TYPES_RLS.sql`
 3. Click **"Run"**
 4. Verify you see output showing document types were inserted
 

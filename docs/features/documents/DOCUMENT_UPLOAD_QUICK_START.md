@@ -10,7 +10,7 @@ A complete tenant document upload system allowing tenants to upload PDF document
 
 ### Step 1: Run SQL Script in Supabase
 1. Go to Supabase Dashboard → SQL Editor
-2. Copy and paste the SQL script from `request.md` (Section 11)
+2. Copy and paste the SQL script from `docs/requests/request.md` (Section 11)
 3. Click "Run" to create tables and policies
 4. Verify `document_types` table has 8 sample document types
 
@@ -20,7 +20,7 @@ A complete tenant document upload system allowing tenants to upload PDF document
 3. Name: `tenant-documents`
 4. Uncheck "Public bucket"
 5. Click "Create bucket"
-6. Add the 5 storage RLS policies from `request.md` (Section 1)
+6. Add the 5 storage RLS policies from `docs/requests/request.md` (Section 1)
 
 ### Step 3: Test the Feature
 1. Start your dev server: `npm run dev`
@@ -65,8 +65,8 @@ src/app/api/documents/
 
 ### Documentation (2 files)
 ```
-DOCUMENT_UPLOAD_IMPLEMENTATION.md  - Complete implementation guide
-DOCUMENT_UPLOAD_QUICK_START.md     - This file
+docs/features/documents/DOCUMENT_UPLOAD_IMPLEMENTATION.md  - Complete implementation guide
+docs/features/documents/DOCUMENT_UPLOAD_QUICK_START.md     - This file
 ```
 
 ---
@@ -285,9 +285,9 @@ All components are fully responsive:
 
 ## 📞 Support Resources
 
-1. **Implementation Guide**: `DOCUMENT_UPLOAD_IMPLEMENTATION.md`
-2. **Database Schema**: `request.md` (Section 2)
-3. **RLS Policies**: `request.md` (Sections 1 & 2)
+1. **Implementation Guide**: `docs/features/documents/DOCUMENT_UPLOAD_IMPLEMENTATION.md`
+2. **Database Schema**: `docs/requests/request.md` (Section 2)
+3. **RLS Policies**: `docs/requests/request.md` (Sections 1 & 2)
 4. **API Documentation**: Check route files in `/api/documents/`
 
 ---
@@ -315,7 +315,7 @@ All components are fully responsive:
 
 The PDF document upload feature is fully implemented and ready to use. Follow the Quick Setup steps above to get started.
 
-**Questions?** Refer to `DOCUMENT_UPLOAD_IMPLEMENTATION.md` for detailed information.
+**Questions?** Refer to `docs/features/documents/DOCUMENT_UPLOAD_IMPLEMENTATION.md` for detailed information.
 
 ---
 
