@@ -12,11 +12,11 @@ The `document_types` table RLS policy needs to be updated to allow authenticated
 
 ### Action 1: Run SQL Fix Script
 
-**File:** `FIX_DOCUMENT_TYPES_RLS.sql`
+**File:** `docs/requests/FIX_DOCUMENT_TYPES_RLS.sql`
 
 1. Open Supabase Dashboard
 2. Go to **SQL Editor**
-3. Copy entire content of `FIX_DOCUMENT_TYPES_RLS.sql`
+3. Copy entire content of `docs/requests/FIX_DOCUMENT_TYPES_RLS.sql`
 4. Paste into SQL Editor
 5. Click **"Run"**
 
@@ -112,7 +112,7 @@ Should return: 8
 ## Files Modified/Created
 
 ### New Files
-- `FIX_DOCUMENT_TYPES_RLS.sql` - SQL fix script
+- `docs/requests/FIX_DOCUMENT_TYPES_RLS.sql` - SQL fix script
 - `FIX_DOCUMENT_TYPE_DROPDOWN.md` - Detailed fix guide
 - `DOCUMENT_TYPE_FIX_SUMMARY.md` - This file
 
@@ -156,7 +156,7 @@ Should return: 8
 
 ## Next Steps
 
-1. **Run the SQL fix** (FIX_DOCUMENT_TYPES_RLS.sql)
+1. **Run the SQL fix** (`docs/requests/FIX_DOCUMENT_TYPES_RLS.sql`)
 2. **Hard refresh browser**
 3. **Test upload flow**
 4. **Verify landlord can review**
@@ -169,7 +169,7 @@ Should return: 8
 
 If you encounter any issues:
 1. Check `FIX_DOCUMENT_TYPE_DROPDOWN.md` for detailed troubleshooting
-2. Review `DOCUMENT_UPLOAD_IMPLEMENTATION.md` for complete feature overview
+2. Review `docs/features/documents/DOCUMENT_UPLOAD_IMPLEMENTATION.md` for complete feature overview
 3. Check browser console for error messages
 4. Verify Supabase connection in `.env.local`
 
