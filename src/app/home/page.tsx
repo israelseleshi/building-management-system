@@ -8,6 +8,9 @@ import { Header } from "@/components/home/Header"
 import { TopBannerSlider } from "@/components/ads/TopBannerSlider"
 import { VerticalAdSlider } from "@/components/ads/VerticalAdSlider"
 import { leftAds, rightAds } from "@/data/verticalAds"
+import { HeroVideo } from "@/components/HeroVideo"
+import { FeatureCard } from "@/components/FeatureCard"
+import { Footer } from "@/components/Footer"
 import { 
   Building, 
   Search, 
@@ -44,23 +47,19 @@ export default function LandingPage() {
         {/* Header */}
         <Header currentPage="home" />
 
-        {/* Hero Section with Background */}
-        <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
-          {/* Background Image - Hero Only */}
-          <div className="absolute inset-0 z-0">
-            <div 
-              className="absolute inset-0" 
-              style={{
-                backgroundImage: 'url("/ethiopian-building.jpg")',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/90"></div>
-            </div>
-          </div>
-          
+        {/* Hero Section with Background Video */}
+        <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+          {/* Background video + poster */}
+          <HeroVideo
+            youtubeUrl="https://youtu.be/DPKlFPs4zII?si=P30TVCGlv-dTo-Vt"
+            posterSrc="/ethiopian-building.jpg"
+            loopStart={12}
+            loopEnd={22}
+          />
+
+          {/* Gradient overlay for contrast (slightly lighter to let video show through) */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60 z-0" />
+
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <div className="inline-flex items-center px-3 sm:px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6 sm:mb-8">
               <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
@@ -157,117 +156,46 @@ export default function LandingPage() {
               {/* Main feature cards */}
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-              <div 
-                className="group relative bg-card rounded-xl sm:rounded-2xl border border-border hover:shadow-lg transition-all duration-300 overflow-hidden"
-                style={{ 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <div className="relative p-6 sm:p-8">
-                  <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-lg sm:rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
-                    <Search className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
-                  </div>
-                  <Heading level={3} className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-4 group-hover:text-green-600 transition-colors">
-                    Advanced Search
-                  </Heading>
-                  <Text className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                    Find your perfect property with powerful filters and smart recommendations
-                  </Text>
-                </div>
-              </div>
-
-              <div 
-                className="group relative bg-card rounded-xl sm:rounded-2xl border border-border hover:shadow-lg transition-all duration-300 overflow-hidden"
-                style={{ 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <div className="relative p-6 sm:p-8">
-                  <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-lg sm:rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
-                    <MessageSquare className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
-                  </div>
-                  <Heading level={3} className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-4 group-hover:text-green-600 transition-colors">
-                    In-App Messaging
-                  </Heading>
-                  <Text className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                    Communicate directly with landlords and tenants through our secure messaging system
-                  </Text>
-                </div>
-              </div>
-
-              <div 
-                className="group relative bg-card rounded-xl sm:rounded-2xl border border-border hover:shadow-lg transition-all duration-300 overflow-hidden"
-                style={{ 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <div className="relative p-6 sm:p-8">
-                  <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-lg sm:rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
-                    <CreditCard className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
-                  </div>
-                  <Heading level={3} className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-4 group-hover:text-green-600 transition-colors">
-                    Online Payments
-                  </Heading>
-                  <Text className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                    Secure online rent payments and automated payout processing for landlords
-                  </Text>
-                </div>
-              </div>
-
-              <div 
-                className="group relative bg-card rounded-xl sm:rounded-2xl border border-border hover:shadow-lg transition-all duration-300 overflow-hidden"
-                style={{ 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <div className="relative p-6 sm:p-8">
-                  <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-lg sm:rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
-                    <Shield className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
-                  </div>
-                  <Heading level={3} className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-4 group-hover:text-green-600 transition-colors">
-                    Verified Listings
-                  </Heading>
-                  <Text className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                    All properties are verified by our team to ensure authenticity and quality
-                  </Text>
-                </div>
-              </div>
-
-              <div 
-                className="group relative bg-card rounded-xl sm:rounded-2xl border border-border hover:shadow-lg transition-all duration-300 overflow-hidden"
-                style={{ 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <div className="relative p-6 sm:p-8">
-                  <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-lg sm:rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
-                    <Calendar className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
-                  </div>
-                  <Heading level={3} className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-4 group-hover:text-green-600 transition-colors">
-                    Virtual Tours
-                  </Heading>
-                  <Text className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                    Take virtual tours of properties from the comfort of your home
-                  </Text>
-                </div>
-              </div>
-
-              <div 
-                className="group relative bg-card rounded-xl sm:rounded-2xl border border-border hover:shadow-lg transition-all duration-300 overflow-hidden"
-                style={{ 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <div className="relative p-6 sm:p-8">
-                  <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-lg sm:rounded-xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform shadow-lg" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
-                    <Lock className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
-                  </div>
-                  <Heading level={3} className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-4 group-hover:text-green-600 transition-colors">
-                    E-Signature
-                  </Heading>
-                </div>
-              </div>
-
+                  {[
+                    {
+                      icon: <Search className="w-6 sm:w-8 h-6 sm:h-8" />, 
+                      title: "Advanced Search",
+                      desc: "Find your perfect property with powerful filters and smart recommendations",
+                    },
+                    {
+                      icon: <MessageSquare className="w-6 sm:w-8 h-6 sm:h-8" />, 
+                      title: "In-App Messaging",
+                      desc: "Communicate directly with landlords and tenants through our secure messaging system",
+                    },
+                    {
+                      icon: <CreditCard className="w-6 sm:w-8 h-6 sm:h-8" />, 
+                      title: "Online Payments",
+                      desc: "Secure online rent payments and automated payout processing for landlords",
+                    },
+                    {
+                      icon: <Shield className="w-6 sm:w-8 h-6 sm:h-8" />, 
+                      title: "Verified Listings",
+                      desc: "All properties are verified by our team to ensure authenticity and quality",
+                    },
+                    {
+                      icon: <Calendar className="w-6 sm:w-8 h-6 sm:h-8" />, 
+                      title: "Virtual Tours",
+                      desc: "Take virtual tours of properties from the comfort of your home",
+                    },
+                    {
+                      icon: <Lock className="w-6 sm:w-8 h-6 sm:h-8" />, 
+                      title: "E-Signature",
+                      desc: "Sign leases digitally and securely with compliant e-signatures",
+                    },
+                  ].map((feature, index) => (
+                    <FeatureCard
+                      key={feature.title}
+                      icon={feature.icon}
+                      title={feature.title}
+                      desc={feature.desc}
+                      index={index}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -283,56 +211,7 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-card border-t border-border py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-xs sm:text-sm">BMS</span>
-                </div>
-                <span className="text-base sm:text-lg font-bold text-foreground">BMS</span>
-              </div>
-              <Text className="text-muted-foreground text-sm">
-                The modern way to find, manage, and rent properties.
-              </Text>
-            </div>
-            
-            <div>
-              <Heading level={4} className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Product</Heading>
-              <ul className="space-y-2">
-                <li><a href="#features" className="text-muted-foreground hover:text-foreground text-sm">Features</a></li>
-                <li><a href="/home/listings" className="text-muted-foreground hover:text-foreground text-sm">Listings</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Security</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <Heading level={4} className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Company</Heading>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">About</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Blog</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <Heading level={4} className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Legal</Heading>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Privacy</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Terms</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground text-sm">Cookie Policy</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-border mt-6 sm:mt-8 pt-6 sm:pt-8 text-center">
-            <Text className="text-muted-foreground text-xs sm:text-sm">
-              © 2025 Building Management System. All rights reserved.
-            </Text>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

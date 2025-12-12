@@ -1,0 +1,44 @@
+/* HeroVideo.module.css */
+
+.root {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.videoWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Tailwind-equivalent: absolute inset-0 w-full h-full object-cover */
+  object-fit: cover;
+}
+
+.poster {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.posterInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 800px) {
+  .videoWrap {
+    display: none;
+  }
+}
