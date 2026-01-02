@@ -123,6 +123,12 @@ function LeasesContent() {
       active: false,
     },
     {
+      icon: <Users className="w-5 h-5" />,
+      name: "Reports",
+      path: "/dashboard/reports",
+      active: false,
+    },
+    {
       icon: <FileText className="w-5 h-5" />,
       name: "Rents",
       path: "/dashboard/leases",
