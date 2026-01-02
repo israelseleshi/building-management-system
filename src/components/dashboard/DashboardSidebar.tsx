@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { LogOut, Menu } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
 
 interface NavItem {
   icon: React.ReactNode
@@ -27,6 +28,34 @@ export function DashboardSidebar({
   onNavigate,
 }: DashboardSidebarProps) {
   const router = useRouter()
+
+  const clearClientAuth = () => {
+    try {
+      localStorage.removeItem("isAuthenticated")
+      localStorage.removeItem("userRole")
+    } catch {
+      // ignore
+    }
+
+    // expire cookies immediately
+    document.cookie = "isAuthenticated=; path=/; max-age=0"
+    document.cookie = "userRole=; path=/; max-age=0"
+  }
+
+  const handleLogoutClick = async () => {
+    clearClientAuth()
+    router.replace("/auth/signin")
+    router.refresh()
+
+    // Fire-and-forget cleanup (do not block navigation)
+    Promise.resolve()
+      .then(() => supabase.auth.signOut())
+      .catch(() => {})
+
+    Promise.resolve()
+      .then(() => onLogout())
+      .catch(() => {})
+  }
 
   const handleNavigation = (path: string) => {
     if (onNavigate) {
@@ -79,7 +108,7 @@ export function DashboardSidebar({
 
       <div className={`px-4 pb-6 mt-auto ${isSidebarCollapsed ? "px-2" : ""}`}>
         <button
-          onClick={onLogout}
+          onClick={handleLogoutClick}
           className={`menu-item w-full transition-all duration-200 hover:bg-red-50 ${
             isSidebarCollapsed ? "justify-center px-2" : ""
           }`}

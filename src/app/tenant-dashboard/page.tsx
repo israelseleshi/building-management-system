@@ -42,6 +42,8 @@ function DashboardContent() {
     activeTab = "leases"
   } else if (pathname === "/tenant-dashboard/listings" || pathname.startsWith("/tenant-dashboard/listings/")) {
     activeTab = "listings"
+  } else if (pathname === "/tenant-dashboard/documents" || pathname.startsWith("/tenant-dashboard/documents/")) {
+    activeTab = "documents"
   } else if (pathname === "/tenant-dashboard/chat" || pathname.startsWith("/tenant-dashboard/chat/")) {
     activeTab = "chat"
   } else if (pathname === "/tenant-dashboard/settings" || pathname.startsWith("/tenant-dashboard/settings/")) {
@@ -93,6 +95,12 @@ function DashboardContent() {
       name: "My Rents",
       path: "/tenant-dashboard/leases",
       active: activeTab === "leases"
+    },
+    {
+      icon: <FileText className="w-5 h-5" />,
+      name: "Documents",
+      path: "/tenant-dashboard/documents",
+      active: activeTab === "documents"
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,

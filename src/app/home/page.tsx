@@ -48,7 +48,7 @@ export default function LandingPage() {
         <Header currentPage="home" />
 
         {/* Hero Section with Background Video */}
-        <section className="relative py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <section className="relative flex items-center py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-[70vh] md:min-h-[80vh]">
           {/* Background video + poster */}
           <HeroVideo
             youtubeUrl="https://youtu.be/DPKlFPs4zII?si=P30TVCGlv-dTo-Vt"
