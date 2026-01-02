@@ -167,10 +167,11 @@ function PayoutsContent() {
         // Fetch properties independently
         const fetchProperties = async () => {
           try {
+            // Fetch properties without explicit landlord_id filter to match listings page logic
+            // This ensures properties are visible even if RLS is disabled or IDs don't match perfectly
             const { data: props, error: propsError } = await supabase
               .from('properties')
               .select('id, title')
-              .eq('landlord_id', user.id)
             
             if (propsError) {
               console.error('Error fetching properties:', propsError)

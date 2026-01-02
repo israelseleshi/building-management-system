@@ -35,6 +35,7 @@ const landlordBase: Omit<NavItem, "active">[] = [
   { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/dashboard/chat" },
   { icon: <Users className="w-5 h-5" />, name: "Reports", path: "/dashboard/reports" },
   { icon: <CreditCard className="w-5 h-5" />, name: "Payouts", path: "/dashboard/payouts" },
+  { icon: <FileText className="w-5 h-5" />, name: "Invoices", path: "/dashboard/invoices" },
   { icon: <TrendingUp className="w-5 h-5" />, name: "Analytics", path: "/dashboard/analytics" },
   { icon: <MessageSquare className="w-5 h-5" />, name: "Manage Notices", path: "/dashboard/notices" },
   { icon: <Settings className="w-5 h-5" />, name: "Settings", path: "/dashboard/settings" },

@@ -48,7 +48,7 @@ function NoticesPageContent() {
         onNavigate={handleSidebarNavigation}
       />
 
-      <div className="flex-1 transition-all duration-300 ease-in-out">
+      <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
         <DashboardHeader
           title="Manage Global Notices"
           subtitle="Post and view notices for all tenants"
@@ -56,10 +56,9 @@ function NoticesPageContent() {
           onSearchChange={setSearchQuery}
         />
 
-        <main className="p-6">
-          <div className="grid lg:grid-cols-2 gap-8">
+        <main className="p-6 flex-1 flex flex-col items-center justify-center">
+          <div className="grid lg:grid-cols-2 gap-16 w-full max-w-6xl items-start">
             <div>
-              <h3 className="font-semibold mb-4 text-lg">Post a New Notice</h3>
               <NoticeManager />
             </div>
             <div>

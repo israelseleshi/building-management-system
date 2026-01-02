@@ -92,9 +92,12 @@ function EmployeesContent() {
         // Get current user
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
+          console.log("No user found")
           setLoading(false)
           return
         }
+        
+        console.log("Fetching employees for user:", user.id)
 
         // Fetch employees for this landlord
         const { data: employeesData, error } = await supabase
@@ -108,6 +111,8 @@ function EmployeesContent() {
           return
         }
 
+        console.log("Employees data fetched:", employeesData)
+
         // Transform data to Employee format
         const transformedEmployees: Employee[] = (employeesData || []).map((emp: any) => {
           return {
@@ -115,7 +120,7 @@ function EmployeesContent() {
             name: emp.name || "Employee",
             email: emp.email || "employee@bms.com",
             phone: emp.phone || "+251900000000",
-            position: emp.position || "Staff",
+            position: emp.position || emp.job_title || "Staff",
             department: emp.department || "Maintenance",
             salary: emp.salary || 0,
             joinDate: emp.join_date ? new Date(emp.join_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -224,22 +229,25 @@ function EmployeesContent() {
       })
 
       // Create employee record directly
+      const employeeData = {
+        id: newEmployeeId,
+        owner_id: user.id,
+        name: newEmployee.name,
+        email: newEmployee.email,
+        phone: newEmployee.phone,
+        position: newEmployee.position,
+        job_title: newEmployee.position, // Sync job_title with position
+        department: newEmployee.department,
+        salary: newEmployee.salary,
+        join_date: newEmployee.joinDate || new Date().toISOString().split('T')[0],
+        status: 'Active',
+        attendance_rate: 100,
+        last_attendance: new Date().toISOString(),
+      }
+
       const { error: employeeError } = await supabase
         .from('employees')
-        .insert({
-          id: newEmployeeId,
-          owner_id: user.id,
-          name: newEmployee.name,
-          email: newEmployee.email,
-          phone: newEmployee.phone,
-          position: newEmployee.position,
-          department: newEmployee.department,
-          salary: newEmployee.salary,
-          join_date: newEmployee.joinDate || new Date().toISOString().split('T')[0],
-          status: 'Active',
-          attendance_rate: 100,
-          last_attendance: new Date().toISOString(),
-        })
+        .insert(employeeData)
 
       if (employeeError) {
         console.error("Employee error:", employeeError)
@@ -314,6 +322,7 @@ function EmployeesContent() {
           email: newEmployee.email,
           phone: newEmployee.phone,
           position: newEmployee.position,
+          job_title: newEmployee.position, // Sync job_title with position
           department: newEmployee.department,
           salary: newEmployee.salary,
           join_date: newEmployee.joinDate || new Date().toISOString().split('T')[0],

@@ -73,3 +73,30 @@ export async function createGlobalNotice(formData: FormData): Promise<void> {
   })
   if (error) throw new Error(JSON.stringify(error));
 }
+
+export async function updateGlobalNotice(id: string, formData: FormData): Promise<void> {
+  'use server'
+  let role: string | undefined;
+  try {
+    const cookieStore = await cookies();
+    role = cookieStore.get('userRole')?.value;
+  } catch (error) {
+    throw error;
+  }
+
+  if (role !== 'owner' && role !== 'landlord') {
+    throw new Error(JSON.stringify({ code: 'NOT_AUTHORIZED', message: 'Only owner/landlord can update notices' }));
+  }
+
+  const supabase = await createServerSupabase()
+  const title = formData.get('title') as string
+  const message = formData.get('message') as string
+  const priority = (formData.get('priority') as string) || 'normal'
+
+  const { error } = await supabase
+    .from('notifications')
+    .update({ title, message, priority })
+    .eq('id', id)
+
+  if (error) throw new Error(JSON.stringify(error));
+}

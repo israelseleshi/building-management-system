@@ -26,10 +26,17 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   const isRoleAllowed = (role: string | null, required: string) => {
     if (!role) return false
-    if (role === required) return true
+    
+    // Normalize for case-insensitive comparison
+    const normalizedRole = role.toLowerCase()
+    const normalizedRequired = required.toLowerCase()
+    
+    if (normalizedRole === normalizedRequired) return true
+    
     // Alias support: DB uses 'owner' but app sometimes stores 'landlord'
-    if (required === "owner" && role === "landlord") return true
-    if (required === "landlord" && role === "owner") return true
+    if (normalizedRequired === "owner" && normalizedRole === "landlord") return true
+    if (normalizedRequired === "landlord" && normalizedRole === "owner") return true
+    
     return false
   }
 
