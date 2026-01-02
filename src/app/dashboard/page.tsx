@@ -55,6 +55,8 @@ function DashboardContent() {
     activeTab = "payouts"
   } else if (pathname === "/dashboard/analytics" || pathname.startsWith("/dashboard/analytics/")) {
     activeTab = "analytics"
+  } else if (pathname === "/dashboard/reports" || pathname.startsWith("/dashboard/reports/")) {
+    activeTab = "reports"
   } else if (pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings/")) {
     activeTab = "settings"
   }
@@ -164,6 +166,12 @@ function DashboardContent() {
       name: "Chat",
       path: "/dashboard/chat",
       active: activeTab === "chat"
+    },
+    {
+      icon: <Users className="w-5 h-5" />,
+      name: "Reports",
+      path: "/dashboard/reports",
+      active: activeTab === "reports"
     },
     {
       icon: <CreditCard className="w-5 h-5" />,
