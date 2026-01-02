@@ -113,8 +113,8 @@ export function HeroVideo({
       obs.observe(wrap);
       return () => obs.disconnect();
     } else {
-      const t = window.setTimeout(injectIframe, 1000);
-      return () => window.clearTimeout(t);
+      const t = setTimeout(injectIframe, 1000);
+      return () => clearTimeout(t);
     }
   }, [isClient, youtubeUrl, loopStart, loopEnd]);
 
