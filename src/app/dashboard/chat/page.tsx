@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -52,6 +52,7 @@ type MessageItem = {
 
 function ChatContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [chatSearch, setChatSearch] = useState("")
@@ -139,6 +140,12 @@ function ChatContent() {
       name: "Chat",
       path: "/dashboard/chat",
       active: true,
+    },
+    {
+      icon: <Users className="w-5 h-5" />,
+      name: "Reports",
+      path: "/dashboard/reports",
+      active: false,
     },
     {
       icon: <CreditCard className="w-5 h-5" />,
@@ -234,10 +241,59 @@ function ChatContent() {
       console.log("People list:", peopleList)
       setPeople(peopleList)
 
-      if (peopleList.length > 0) {
-        setSelectedPersonIndex(0)
-        const conv = await getOrCreateConversation(user.id, peopleList[0].id)
+      // Handle deep-linking from reports: tenantId, prefill, warning, autoSend
+      const tenantIdFromQuery = searchParams?.get("tenantId")
+      const prefillFromQuery = searchParams?.get("prefill") || ""
+      const autoSendFromQuery = searchParams?.get("autoSend") === "1"
+
+      const targetIndex = tenantIdFromQuery
+        ? peopleList.findIndex((p) => p.id === tenantIdFromQuery)
+        : 0
+
+      if (peopleList.length > 0 && targetIndex >= 0) {
+        setSelectedPersonIndex(targetIndex)
+        const targetPerson = peopleList[targetIndex]
+        const conv = await getOrCreateConversation(user.id, targetPerson.id)
         await loadMessagesForConversation(conv.id, user.id)
+
+        if (prefillFromQuery) {
+          setNewMessage(prefillFromQuery)
+          if (autoSendFromQuery) {
+            // Optimistically send the message using the same logic as handleSendMessage
+            const content = prefillFromQuery.trim()
+            if (content) {
+              const optimistic: MessageItem = {
+                id: `temp-${Date.now()}`,
+                senderId: user.id,
+                message: content,
+                timestamp: new Date().toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+                isOwn: true,
+              }
+              setMessages((prev) => [...prev, optimistic])
+              setNewMessage("")
+
+              const { error: insertError } = await supabase.from("messages").insert({
+                conversation_id: conv.id,
+                sender_id: user.id,
+                content,
+              })
+
+              if (!insertError) {
+                await supabase
+                  .from("conversations")
+                  .update({
+                    last_message: content,
+                    last_message_at: new Date().toISOString(),
+                    last_message_sender_id: user.id,
+                  })
+                  .eq("id", conv.id)
+              }
+            }
+          }
+        }
       }
     }
 
@@ -280,7 +336,7 @@ function ChatContent() {
         supabase.removeChannel(messagesChannelRef.current)
       }
     }
-  }, [])
+  }, [searchParams])
 
   const handlePersonClick = async (index: number) => {
     setSelectedPersonIndex(index)

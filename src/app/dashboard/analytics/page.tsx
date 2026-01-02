@@ -156,14 +156,6 @@ function AnalyticsContent() {
     document.body.removeChild(link)
   }
 
-  const topProperties = [
-    { name: "Nano Computing ICT Solutions", views: 3420, inquiries: 47, conversion: 1.37, status: "active" },
-    { name: "Jewelry Boutique", views: 2890, inquiries: 38, conversion: 1.31, status: "active" },
-    { name: "Fashion Boutique", views: 2156, inquiries: 29, conversion: 1.34, status: "active" },
-    { name: "Tech Hub Office", views: 1876, inquiries: 22, conversion: 1.17, status: "rented" },
-    { name: "Retail Showroom", views: 1654, inquiries: 19, conversion: 1.15, status: "active" },
-  ]
-
   const demographicData = [
     { category: "Commercial", percentage: 45, count: 17 },
     { category: "Office", percentage: 30, count: 11 },
@@ -176,6 +168,7 @@ function AnalyticsContent() {
     { icon: <Building2 className="w-5 h-5" />, name: "My Listings", path: "/dashboard/listings", active: false },
     { icon: <PlusCircle className="w-5 h-5" />, name: "Create Listing", path: "/dashboard/create", active: false },
     { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/dashboard/chat", active: false },
+    { icon: <Users className="w-5 h-5" />, name: "Reports", path: "/dashboard/reports", active: false },
     { icon: <CreditCard className="w-5 h-5" />, name: "Payouts", path: "/dashboard/payouts", active: false },
     { icon: <TrendingUp className="w-5 h-5" />, name: "Analytics", path: "/dashboard/analytics", active: true },
     { icon: <Settings className="w-5 h-5" />, name: "Settings", path: "/dashboard/settings", active: false },
@@ -342,79 +335,7 @@ function AnalyticsContent() {
               </div>
             </div>
 
-            {/* Top Performing Properties */}
-            <div className="rounded-2xl p-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <Heading level={3} className="text-lg font-bold text-foreground">
-                    Top Performing Properties
-                  </Heading>
-                  <Text className="text-sm text-muted-foreground">Properties with highest engagement</Text>
-                </div>
-                <button className="flex items-center gap-2 text-primary hover:text-primary/80 font-medium text-sm">
-                  <Filter className="w-4 h-4" />
-                  Filter
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Property</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Views</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Inquiries</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Conversion</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topProperties.map((property, index) => (
-                      <tr key={index} className="border-b border-border/50">
-                        <td className="py-3 px-4">
-                          <div className="font-medium text-foreground">{property.name}</div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <Eye className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-foreground">{property.views.toLocaleString()}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-foreground">{property.inquiries}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-muted rounded-full h-1.5">
-                              <div
-                                className="h-1.5 rounded-full bg-emerald-600"
-                                style={{ width: `${property.conversion * 20}%` }}
-                              />
-                            </div>
-                            <span className="text-sm text-foreground">{property.conversion}%</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              property.status === "active"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-blue-100 text-blue-800"
-                            }`}
-                          >
-                            {property.status === "active" ? "Active" : "Rented"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Market Trends */}
+              {/* Market Trends */}
             <div className="rounded-2xl p-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
               <div className="mb-6">
                 <Heading level={3} className="text-lg font-bold text-foreground">

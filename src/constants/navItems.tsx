@@ -33,6 +33,7 @@ const landlordBase: Omit<NavItem, "active">[] = [
   { icon: <FileText className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
   { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/dashboard/documents" },
   { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/dashboard/chat" },
+  { icon: <Users className="w-5 h-5" />, name: "Reports", path: "/dashboard/reports" },
   { icon: <CreditCard className="w-5 h-5" />, name: "Payouts", path: "/dashboard/payouts" },
   { icon: <TrendingUp className="w-5 h-5" />, name: "Analytics", path: "/dashboard/analytics" },
   { icon: <MessageSquare className="w-5 h-5" />, name: "Manage Notices", path: "/dashboard/notices" },
@@ -45,6 +46,7 @@ const tenantBase: Omit<NavItem, "active">[] = [
   { icon: <FileText className="w-5 h-5" />, name: "My Rents", path: "/tenant-dashboard/leases" },
   { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/tenant-dashboard/documents" },
   { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/tenant-dashboard/chat" },
+  { icon: <FileText className="w-5 h-5" />, name: "Reports", path: "/tenant-dashboard/reports" },
   { icon: <Settings className="w-5 h-5" />, name: "Settings", path: "/tenant-dashboard/settings" },
 ]
 
