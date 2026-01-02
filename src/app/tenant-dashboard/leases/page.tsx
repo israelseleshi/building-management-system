@@ -63,7 +63,6 @@ function TenantLeasesContent() {
   const [loading, setLoading] = useState(true)
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [selectedLease, setSelectedLease] = useState<Lease | null>(null)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   const navItems = [
     {
@@ -104,8 +103,6 @@ function TenantLeasesContent() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
-
-        setCurrentUserId(user.id)
 
         // Fetch leases for this tenant
         const { data: leasesData } = await supabase
