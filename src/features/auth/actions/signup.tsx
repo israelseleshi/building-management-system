@@ -3,7 +3,7 @@
 import { createServerSupabase } from "@/lib/supabaseServer";
 
 export async function signUpAction(formData: FormData) {
-  const supabase = createServerSupabase();
+  const supabase = await createServerSupabase();
 
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;

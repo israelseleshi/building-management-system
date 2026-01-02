@@ -8,7 +8,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:ci": "vitest run"
   },
   "keywords": [
     "nextjs",
@@ -27,6 +30,7 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-navigation-menu": "^1.2.14",
     "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-toast": "^1.2.15",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
@@ -35,6 +39,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "dayjs": "^1.11.19",
     "framer-motion": "^12.23.26",
     "intersection-observer": "^0.12.2",
     "lucide-react": "^0.555.0",
@@ -52,11 +57,19 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
+    "@vitejs/plugin-react": "^5.1.2",
     "autoprefixer": "^10.4.19",
+    "cross-fetch": "^4.1.0",
+    "jsdom": "^27.4.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite-tsconfig-paths": "^6.0.3",
+    "vitest": "^4.0.16"
   }
 }
