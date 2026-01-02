@@ -1,8 +1,8 @@
 // src/app/layout.tsx
 import './globals.css';
-import { Inter } from "next/font/google";
+import { Public_Sans } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"] });
+const publicSans = Public_Sans({ subsets: ["latin"], variable: "--font-public-sans" });
 
 export default function RootLayout({
   children,
@@ -11,7 +11,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={publicSans.className} suppressHydrationWarning>
         {children}
       </body>
     </html>
