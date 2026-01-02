@@ -59,6 +59,11 @@ interface PayoutMetric {
   color: string
 }
 
+interface Property {
+  id: string
+  title: string
+}
+
 export default function PayoutsPage() {
   return (
     <ProtectedRoute requiredRole="landlord">
@@ -72,8 +77,9 @@ function PayoutsContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [payouts, setPayouts] = useState<Payout[]>([])
-  const [loading, setLoading] = useState(true)
+  const [properties, setProperties] = useState<Property[]>([])
   const [metrics, setMetrics] = useState<PayoutMetric[]>([])
+  const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [methodFilter, setMethodFilter] = useState<string>("all")
   const [addPayoutModalOpen, setAddPayoutModalOpen] = useState(false)
@@ -139,33 +145,66 @@ function PayoutsContent() {
     },
   ]
 
-  // Fetch payouts from Supabase
+  // Fetch data from Supabase
   useEffect(() => {
-    const fetchPayouts = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true)
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        if (!user) {
+          console.log('No user found')
+          return
+        }
 
-        const { data, error } = await supabase
-          .from('payouts')
-          .select('*')
-          .eq('landlord_id', user.id)
-          .order('created_at', { ascending: false })
+        console.log('Fetching data for user:', user.id)
 
-        if (error) throw error
+        // Fetch properties independently
+        const fetchProperties = async () => {
+          try {
+            const { data: props, error: propsError } = await supabase
+              .from('properties')
+              .select('id, title')
+              .eq('landlord_id', user.id)
+            
+            if (propsError) {
+              console.error('Error fetching properties:', propsError)
+            } else {
+              console.log('Properties fetched:', props)
+              setProperties(props || [])
+            }
+          } catch (err) {
+            console.error('Exception fetching properties:', err)
+          }
+        }
 
-        setPayouts(data || [])
-        calculateMetrics(data || [])
+        // Fetch payouts
+        const fetchPayouts = async () => {
+          try {
+            const { data, error } = await supabase
+              .from('payouts')
+              .select('*')
+              .eq('landlord_id', user.id)
+              .order('created_at', { ascending: false })
+
+            if (error) throw error
+
+            setPayouts(data || [])
+            calculateMetrics(data || [])
+          } catch (err) {
+            console.error('Error fetching payouts:', err)
+          }
+        }
+
+        await Promise.all([fetchProperties(), fetchPayouts()])
+
       } catch (err) {
-        console.error('Error fetching payouts:', err)
-        console.error('Failed to load payouts')
+        console.error('Error in main fetch:', err)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchPayouts()
+    fetchData()
   }, [])
 
   const calculateMetrics = (data: Payout[]) => {
@@ -210,8 +249,14 @@ function PayoutsContent() {
   }
 
   const handleAddPayout = async () => {
+    const amount = parseFloat(formData.amount)
+    if (isNaN(amount) || amount <= 0) {
+      console.error('Invalid amount')
+      return
+    }
+
     if (!formData.property_id || !formData.amount) {
-        console.error('Please fill in all required fields')
+      console.error('Please fill in all required fields')
       return
     }
 
@@ -225,7 +270,7 @@ function PayoutsContent() {
           {
             landlord_id: user.id,
             property_id: formData.property_id,
-            amount: parseFloat(formData.amount),
+            amount: amount,
             currency: 'ETB',
             payment_method: formData.payment_method,
             status: 'pending',
@@ -237,7 +282,7 @@ function PayoutsContent() {
 
       if (error) throw error
 
-        console.log('Payout request created successfully')
+      console.log('Payout request created successfully')
 
       setFormData({
         property_id: "",
@@ -265,7 +310,7 @@ function PayoutsContent() {
       }
     } catch (err) {
       console.error('Error creating payout:', err)
-        console.error('Failed to create payout request')
+      console.error('Failed to create payout request')
     }
   }
 
@@ -561,9 +606,11 @@ function PayoutsContent() {
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
                 <option value="">Select property</option>
-                <option value="prop-001">Nano Computing ICT Solutions</option>
-                <option value="prop-002">Jewelry Boutique</option>
-                <option value="prop-003">Fashion Boutique</option>
+                {properties.map((property) => (
+                  <option key={property.id} value={property.id}>
+                    {property.title}
+                  </option>
+                ))}
               </select>
             </div>
 
