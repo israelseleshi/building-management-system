@@ -10,7 +10,6 @@ export default function NoticeBoard({ editable = false }: { editable?: boolean }
   const [notices, setNotices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -43,13 +42,12 @@ export default function NoticeBoard({ editable = false }: { editable?: boolean }
 
   async function handleDelete(id: string) {
     try {
-      setDeleting(id)
       await deleteGlobalNotice(id)
       setNotices((prev) => prev.filter((n) => n.id !== id))
     } catch (err: any) {
       setError(err.message)
     } finally {
-      setDeleting(null)
+      /* no-op */
     }
   }
 
