@@ -1,15 +1,16 @@
 "use client"
 import { useEffect, useState } from "react"
-import { getGlobalNotices } from "@/lib/actions/notices"
+import { getGlobalNotices, deleteGlobalNotice } from "@/lib/actions/notices"
 import NoticeCard from "./NoticeCard"
 import { Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
 import { AlertCircle } from "lucide-react"
 
-export default function NoticeBoard() {
+export default function NoticeBoard({ editable = false }: { editable?: boolean }) {
   const [notices, setNotices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -40,10 +41,26 @@ export default function NoticeBoard() {
     return <Text>No notices at the moment.</Text>
   }
 
+  async function handleDelete(id: string) {
+    try {
+      setDeleting(id)
+      await deleteGlobalNotice(id)
+      setNotices((prev) => prev.filter((n) => n.id !== id))
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setDeleting(null)
+    }
+  }
+
   return (
     <div className="grid gap-4">
       {notices.map((notice) => (
-        <NoticeCard key={notice.id} notice={notice} />
+        <NoticeCard
+          key={notice.id}
+          notice={notice}
+          onDelete={editable ? () => handleDelete(notice.id) : undefined}
+        />
       ))}
     </div>
   )

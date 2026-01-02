@@ -30,7 +30,7 @@ export default function NoticeManager() {
         setTitle("")
         setMessage("")
       } catch (err: any) {
-        setError(err.message)
+        setError(JSON.stringify(err, null, 2))
       }
     })
   }
@@ -59,7 +59,11 @@ export default function NoticeManager() {
           <SelectItem value="urgent">Urgent</SelectItem>
         </SelectContent>
       </Select>
-      {error && <Text size="sm" className="text-red-600">{error}</Text>}
+      {error && (
+        <pre className="text-sm whitespace-pre-wrap break-all text-red-600 bg-red-50 p-2 rounded-md border border-red-200 max-w-xl overflow-x-auto">
+          {error}
+        </pre>
+      )}
       {success && <Text size="sm" className="text-green-600">{success}</Text>}
       <Button type="submit" disabled={pending} style={{ backgroundColor: "#7D8B6F", color: "#FFF" }}>
         {pending ? "Posting..." : "Post Notice"}

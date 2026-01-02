@@ -64,7 +64,7 @@ function NoticesPageContent() {
             </div>
             <div>
               <h3 className="font-semibold mb-4 text-lg">Posted Notices</h3>
-              <NoticeBoard />
+              <NoticeBoard editable />
             </div>
           </div>
         </main>

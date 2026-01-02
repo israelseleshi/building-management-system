@@ -16,13 +16,23 @@ export async function getGlobalNotices() {
     .eq("is_global", true)
     .order("created_at", { ascending: false })
 
-  if (error) throw error
+  if (error) {
+    throw new Error(JSON.stringify(error));
+  }
   return data as any[]
 }
 
 import { cookies } from "next/headers"
 
-export async function createGlobalNotice(formData: FormData) {
+// Delete a notice by id (owner only)
+export async function deleteGlobalNotice(id: string) {
+  'use server'
+  const supabase = await createServerSupabase()
+  const { error } = await supabase.from('notifications').delete().eq('id', id)
+  if (error) throw new Error(JSON.stringify(error))
+}
+
+export async function createGlobalNotice(formData: FormData): Promise<void> {
   'use server'
   console.log('--- DEBUG: Inside createGlobalNotice ---');
   let role: string | undefined;
@@ -36,16 +46,18 @@ export async function createGlobalNotice(formData: FormData) {
     throw error; // Re-throw the error to see it in the UI
   }
 
-  if (role !== 'owner' && role !== 'landlord') throw new Error('Not authorized');
+  if (role !== 'owner' && role !== 'landlord') {
+    throw new Error(JSON.stringify({ code: 'NOT_AUTHORIZED', message: 'Only owner/landlord can post notices' }));
+  }
 
   const supabase = await createServerSupabase()
   const {
     data: { user },
     error: userErr,
-  } = await supabase.auth.getUser()
-  if (userErr) throw userErr
+  } = await supabase.auth.getUser();
+  if (userErr) throw new Error(JSON.stringify(userErr));
   if (!user) {
-    throw new Error('Auth session missing – please sign in again.')
+    throw new Error(JSON.stringify({ code: 'NO_USER', message: 'Auth session missing – please sign in again.' }));
   }
 
   const title = formData.get('title') as string
@@ -59,5 +71,5 @@ export async function createGlobalNotice(formData: FormData) {
     priority,
     is_global: true,
   })
-  if (error) throw error
+  if (error) throw new Error(JSON.stringify(error));
 }
