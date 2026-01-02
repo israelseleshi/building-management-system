@@ -77,6 +77,10 @@ export function SignInForm() {
       // Persist simple auth/role cookies for existing client-side guards
       document.cookie = `isAuthenticated=true; path=/; max-age=86400`
       document.cookie = `userRole=${appRole}; path=/; max-age=86400`
+      
+      // Also update localStorage to prevent stale data conflicts
+      localStorage.setItem("isAuthenticated", "true")
+      localStorage.setItem("userRole", appRole)
 
 
       if (effectiveDbRole === "tenant") {

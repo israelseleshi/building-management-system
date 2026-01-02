@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Text } from "@/components/ui/typography"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function NoticeManager() {
   const [title, setTitle] = useState("")
@@ -36,38 +37,50 @@ export default function NoticeManager() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
-      <Input
-        placeholder="Notice title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-      />
-      <Textarea
-        placeholder="Write your message..."
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        rows={4}
-        required
-      />
-      <Select value={priority} onValueChange={setPriority}>
-        <SelectTrigger className="w-40">
-          <SelectValue placeholder="Priority" />
-        </SelectTrigger>
-        <SelectContent style={{ backgroundColor: 'var(--card)' }}>
-          <SelectItem value="normal">Normal</SelectItem>
-          <SelectItem value="urgent">Urgent</SelectItem>
-        </SelectContent>
-      </Select>
-      {error && (
-        <pre className="text-sm whitespace-pre-wrap break-all text-red-600 bg-red-50 p-2 rounded-md border border-red-200 max-w-xl overflow-x-auto">
-          {error}
-        </pre>
-      )}
-      {success && <Text size="sm" className="text-green-600">{success}</Text>}
-      <Button type="submit" disabled={pending} style={{ backgroundColor: "#7D8B6F", color: "#FFF" }}>
-        {pending ? "Posting..." : "Post Notice"}
-      </Button>
-    </form>
+    <Card className="border-0" style={{ 
+      backgroundColor: 'var(--card)', 
+      boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
+    }}>
+      <CardHeader>
+        <CardTitle>Post a New Notice</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            placeholder="Notice title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            className="bg-background"
+          />
+          <Textarea
+            placeholder="Write your message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={4}
+            required
+            className="bg-background"
+          />
+          <Select value={priority} onValueChange={setPriority}>
+            <SelectTrigger className="w-40 bg-background">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent style={{ backgroundColor: 'var(--card)' }}>
+              <SelectItem value="normal">Normal</SelectItem>
+              <SelectItem value="urgent">Urgent</SelectItem>
+            </SelectContent>
+          </Select>
+          {error && (
+            <pre className="text-sm whitespace-pre-wrap break-all text-red-600 bg-red-50 p-2 rounded-md border border-red-200 max-w-xl overflow-x-auto">
+              {error}
+            </pre>
+          )}
+          {success && <Text size="sm" className="text-green-600">{success}</Text>}
+          <Button type="submit" disabled={pending} style={{ backgroundColor: "#7D8B6F", color: "#FFF" }}>
+            {pending ? "Posting..." : "Post Notice"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   )
 }

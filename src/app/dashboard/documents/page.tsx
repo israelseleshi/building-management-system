@@ -8,7 +8,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { LandlordDocumentReview } from "@/components/documents"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase } from "@/lib/supabaseBrowser"
 import {
   LayoutDashboard,
   Building2,

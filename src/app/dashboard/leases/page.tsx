@@ -186,7 +186,7 @@ function LeasesContent() {
         const { data: propertiesData } = await supabase
           .from("properties")
           .select("id, title, monthly_rent, address_line1")
-          .eq("landlord_id", user.id)
+          // .eq("landlord_id", user.id) // Removing explicit filter to match listings page logic
 
         setLeases(leasesData || [])
         setTenants(tenantsData || [])

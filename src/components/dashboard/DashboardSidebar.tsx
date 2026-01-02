@@ -81,7 +81,7 @@ export function DashboardSidebar({
 
   return (
     <aside
-      className={`bg-card min-h-screen transition-all duration-300 ease-in-out ${
+      className={`bg-background min-h-screen transition-all duration-300 ease-in-out ${
         isSidebarCollapsed ? "w-20" : "w-[290px]"
       }`}
       style={{

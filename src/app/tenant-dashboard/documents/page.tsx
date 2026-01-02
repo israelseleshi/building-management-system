@@ -8,7 +8,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { TenantDocumentUpload, DocumentList } from "@/components/documents"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase } from "@/lib/supabaseBrowser"
 import {
   LayoutDashboard,
   Building2,
@@ -186,6 +186,13 @@ function TenantDocumentsContent() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    
+    // Clear local storage and cookies
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("userRole")
+    document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    
     router.push("/")
   }
 
