@@ -15,6 +15,7 @@ import {
   Grid,
   FileText
 } from "lucide-react"
+import NoticeBoard from "@/components/dashboard/NoticeBoard"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { usePathname } from "next/navigation"
 
@@ -242,9 +243,8 @@ function DashboardContent() {
                 Welcome to Your Tenant Dashboard
               </Heading>
               <div className="bg-card rounded-lg border border-border p-6">
-                <Text className="text-muted-foreground">
-                  More features coming soon for tenant dashboard.
-                </Text>
+                <h3 className="font-semibold mb-4">Notice Board</h3>
+                <NoticeBoard />
               </div>
             </div>
           )}

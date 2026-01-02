@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { LogOut, Menu } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
+import { usePathname } from "next/navigation"
+import { getLandlordNavItems, getTenantNavItems } from "@/constants/navItems"
 
 interface NavItem {
   icon: React.ReactNode
@@ -13,20 +15,33 @@ interface NavItem {
 }
 
 interface DashboardSidebarProps {
-  navItems: NavItem[]
+  /**
+   * Existing navItems prop is ignored; sidebar now generates a complete list
+   * internally based on current pathname and user role (landlord vs tenant).
+   * Keeping it optional avoids breaking existing callers while ensuring
+   * consistent navigation everywhere.
+   */
+  navItems?: NavItem[]
   isSidebarCollapsed: boolean
   onToggleSidebar: () => void
   onLogout: () => void
   onNavigate?: (isCurrentlyCollapsed: boolean) => void
 }
 
+
 export function DashboardSidebar({
-  navItems,
+  navItems: _ignoredNavItems,
   isSidebarCollapsed,
   onToggleSidebar,
   onLogout,
   onNavigate,
 }: DashboardSidebarProps) {
+  const pathname = usePathname()
+  const generatedNavItems = pathname.startsWith("/tenant-dashboard")
+    ? getTenantNavItems(pathname)
+    : getLandlordNavItems(pathname)
+  // Always use generated list to guarantee completeness
+  const navItems = generatedNavItems
   const router = useRouter()
 
   const clearClientAuth = () => {

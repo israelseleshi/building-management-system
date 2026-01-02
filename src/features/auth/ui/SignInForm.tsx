@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Heading, Text } from "@/components/ui/typography"
 import { Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
+import { supabase } from "@/lib/supabaseBrowser"
 import { ForgotPasswordModal } from "./ForgotPasswordModal"
 
 const signInSchema = z.object({
@@ -74,11 +74,10 @@ export function SignInForm() {
       const effectiveDbRole = dbRole || "tenant"
       const appRole = effectiveDbRole === "owner" ? "landlord" : "tenant"
 
-      document.cookie = "isAuthenticated=true; path=/; max-age=86400"
+      // Persist simple auth/role cookies for existing client-side guards
+      document.cookie = `isAuthenticated=true; path=/; max-age=86400`
       document.cookie = `userRole=${appRole}; path=/; max-age=86400`
 
-      localStorage.setItem("isAuthenticated", "true")
-      localStorage.setItem("userRole", appRole)
 
       if (effectiveDbRole === "tenant") {
         router.push("/tenant-dashboard")
