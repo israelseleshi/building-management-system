@@ -92,7 +92,7 @@ const Large = forwardRef<HTMLDivElement, LargeProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("text-lg font-semibold", className)}
+      className={cn("text-2xl font-bold", className)}
       {...props}
     />
   )

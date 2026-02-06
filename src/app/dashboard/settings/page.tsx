@@ -382,11 +382,19 @@ function SettingsContent() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-3 font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
+                  className={`px-4 py-3 font-medium border-b-2 transition-all flex items-center gap-2 whitespace-nowrap rounded-lg ${
                     activeTab === tab.id
-                      ? "text-primary border-primary"
+                      ? "text-primary border-primary relative overflow-hidden"
                       : "text-muted-foreground hover:text-foreground border-transparent"
                   }`}
+                  style={{
+                    ...(activeTab === tab.id && {
+                      background: "rgba(255, 255, 255, 0.1)",
+                      backdropFilter: "blur(8px)",
+                      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)"
+                    })
+                  }}
                 >
                   <span className={activeTab === tab.id ? "text-primary" : "text-muted-foreground"}>
                     {tab.icon}
@@ -406,7 +414,13 @@ function SettingsContent() {
 
             {/* Profile Tab */}
             {activeTab === "profile" && (
-              <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+              <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
+                style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)"
+                }}>
                 <div>
                   <Heading level={3} className="text-xl font-bold text-foreground mb-1">
                     Profile Information
@@ -438,7 +452,13 @@ function SettingsContent() {
             {/* Security Tab */}
             {activeTab === "security" && (
               <div className="space-y-6">
-                <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+                <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
+                style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)"
+                }}>
                   <div>
                     <Heading level={3} className="text-xl font-bold text-foreground mb-1">
                       Change Password
@@ -506,7 +526,13 @@ function SettingsContent() {
 
             {/* Notifications Tab */}
             {activeTab === "notifications" && (
-              <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+              <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
+                style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)"
+                }}>
                 <div>
                   <Heading level={3} className="text-xl font-bold text-foreground mb-1">
                     Notification Preferences
@@ -516,7 +542,12 @@ function SettingsContent() {
 
                 <div className="space-y-4">
                   {notifications.map((notif) => (
-                    <div key={notif.id} className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-background/50 transition-colors">
+                    <div key={notif.id} className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-background/50 transition-colors"
+                      style={{
+                        background: "rgba(125, 139, 111, 0.1)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(125, 139, 111, 0.2)"
+                      }}>
                       <div className="flex-1">
                         <h3 className="text-sm font-bold text-foreground">{notif.label}</h3>
                         <p className="text-sm text-muted-foreground mt-1">{notif.description}</p>
@@ -548,7 +579,13 @@ function SettingsContent() {
 
             {/* Billing Tab */}
             {activeTab === "billing" && (
-              <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+              <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
+                style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)"
+                }}>
                 <div>
                   <Heading level={3} className="text-xl font-bold text-foreground mb-1">
                     Payment Method
@@ -589,7 +626,13 @@ function SettingsContent() {
 
             {/* Privacy Tab */}
             {activeTab === "privacy" && (
-              <div className="rounded-2xl p-8 space-y-6" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
+              <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
+                style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)"
+                }}>
                 <div>
                   <Heading level={3} className="text-xl font-bold text-foreground mb-1">
                     Privacy & Security

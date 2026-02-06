@@ -269,7 +269,7 @@ function DashboardContent() {
         {/* Dashboard Content */}
         <main className="p-6">
           <div className="grid grid-cols-12 gap-4 md:gap-6">
-            <div className="col-span-12 space-y-6 xl:col-span-8">
+            <div className="col-span-12 space-y-6 xl:col-span-12">
               {/* Metrics Grid */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
                 {metrics.map((metric, index) => (
@@ -283,16 +283,16 @@ function DashboardContent() {
                   >
                     <div className="flex items-end justify-between">
                       <div>
-                        <Text size="sm" className="text-muted-foreground">
+                        <Text size="xl" className="text-muted-foreground font-bold">
                           {metric.title}
                         </Text>
-                        <Large className="mt-2" style={{ color: 'var(--foreground)' }}>
+                        <Large className="mt-3 text-4xl font-bold" style={{ color: 'var(--foreground)' }}>
                           {metric.value}
                         </Large>
                       </div>
                       <Badge 
                         variant={metric.color === 'success' ? 'default' : 'destructive'}
-                        className="bg-green-100 text-green-800 border-green-200"
+                        className="bg-green-100 text-green-800 border-green-200 text-xl px-4 py-2 font-semibold"
                       >
                         {metric.change}
                       </Badge>
@@ -301,104 +301,105 @@ function DashboardContent() {
                 ))}
               </div>
 
-              {/* Revenue Chart */}
+              {/* Revenue Overview */}
               <RevenueChart />
 
-              {/* Recent Activity */}
-              <div 
-                className="rounded-2xl p-5 md:p-6 border-0"
-                style={{ 
-                  backgroundColor: 'var(--card)', 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <Heading level={3} className="text-foreground">Recent Activity</Heading>
-                    <MutedText className="mt-1">Latest updates from your properties</MutedText>
+              {/* Quick Actions and Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Quick Actions */}
+                <div 
+                  className="rounded-2xl p-5 md:p-6 border-0"
+                  style={{ 
+                    backgroundColor: 'var(--card)', 
+                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <Heading level={3} className="text-foreground">Quick Actions</Heading>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
+                      style={{ 
+                        backgroundColor: '#7D8B6F', 
+                        color: '#FFFFFF',
+                        boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
+                      }}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Create New Listing
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
+                      style={{ 
+                        backgroundColor: 'transparent',
+                        color: '#7D8B6F',
+                        border: '2px solid #7D8B6F',
+                        boxShadow: '0 4px 12px rgba(125, 139, 111, 0.2)'
+                      }}
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      View Messages
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
+                      style={{ 
+                        backgroundColor: 'transparent',
+                        color: '#7D8B6F',
+                        border: '2px solid #7D8B6F',
+                        boxShadow: '0 4px 12px rgba(125, 139, 111, 0.2)'
+                      }}
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Request Payout
+                    </Button>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <div className="flex-1">
-                      <Text weight="medium" className="text-foreground">New tenant application received</Text>
-                      <MutedText>Apartment 2A - 2 hours ago</MutedText>
+                
+                {/* Recent Activity */}
+                <div 
+                  className="rounded-2xl p-5 md:p-6 border-0"
+                  style={{ 
+                    backgroundColor: 'var(--card)', 
+                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <Heading level={3} className="text-foreground text-xl">Recent Activity</Heading>
+                      <MutedText className="mt-1 text-base">Latest updates from your properties</MutedText>
                     </div>
-                    <Badge variant="secondary">New</Badge>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <div className="flex-1">
-                      <Text weight="medium" className="text-foreground">Maintenance request submitted</Text>
-                      <MutedText>Unit 3B - Plumbing issue - 4 hours ago</MutedText>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <div className="flex-1">
+                        <Text weight="medium" className="text-foreground text-lg">New tenant application received</Text>
+                        <MutedText className="text-base">Apartment 2A - 2 hours ago</MutedText>
+                      </div>
+                      <Badge variant="secondary" className="text-base px-3 py-1">New</Badge>
                     </div>
-                    <Badge variant="outline">Pending</Badge>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <div className="flex-1">
-                      <Text weight="medium" className="text-foreground">Rent payment received</Text>
-                      <MutedText>John Doe - Studio 5 - 1 day ago</MutedText>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <div className="flex-1">
+                        <Text weight="medium" className="text-foreground text-lg">Maintenance request submitted</Text>
+                        <MutedText className="text-base">Unit 3B - Plumbing issue - 4 hours ago</MutedText>
+                      </div>
+                      <Badge variant="outline" className="text-base px-3 py-1">Pending</Badge>
                     </div>
-                    <Badge variant="default">Completed</Badge>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <div className="flex-1">
+                        <Text weight="medium" className="text-foreground text-lg">Rent payment received</Text>
+                        <MutedText className="text-base">John Doe - Studio 5 - 1 day ago</MutedText>
+                      </div>
+                      <Badge variant="default" className="text-base px-3 py-1">Completed</Badge>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-span-12 xl:col-span-4">
-              {/* Quick Actions */}
-              <div 
-                className="rounded-2xl p-5 md:p-6 border-0"
-                style={{ 
-                  backgroundColor: 'var(--card)', 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <Heading level={3} className="text-foreground">Quick Actions</Heading>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
-                    style={{ 
-                      backgroundColor: '#7D8B6F', 
-                      color: '#FFFFFF',
-                      boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
-                    }}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create New Listing
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
-                    style={{ 
-                      backgroundColor: 'transparent',
-                      color: '#7D8B6F',
-                      border: '2px solid #7D8B6F',
-                      boxShadow: '0 4px 12px rgba(125, 139, 111, 0.2)'
-                    }}
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    View Messages
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
-                    style={{ 
-                      backgroundColor: 'transparent',
-                      color: '#7D8B6F',
-                      border: '2px solid #7D8B6F',
-                      boxShadow: '0 4px 12px rgba(125, 139, 111, 0.2)'
-                    }}
-                  >
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Request Payout
-                  </Button>
                 </div>
               </div>
             </div>

@@ -20,13 +20,8 @@ export function DashboardHeader({
   onSearchChange,
 }: DashboardHeaderProps) {
   return (
-    <header
-      className="bg-card"
-      style={{
-        boxShadow: "0 0 12px rgba(0, 0, 0, 0.05)",
-      }}
-    >
-      <div className="flex h-16 items-center justify-between px-6">
+    <header className="bg-card border-b border-border shadow-sm px-8 py-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div>
             <Heading level={2} className="text-foreground">
