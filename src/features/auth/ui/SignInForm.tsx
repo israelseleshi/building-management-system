@@ -118,9 +118,9 @@ export function SignInForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <FormControl>
                     <Input
                       placeholder="Enter your email"
                       type="email"
@@ -128,8 +128,8 @@ export function SignInForm() {
                       className="pl-10"
                       {...field}
                     />
-                  </div>
-                </FormControl>
+                  </FormControl>
+                </div>
                 <FormMessage className="text-red-500" />
               </FormItem>
             )}
@@ -151,9 +151,9 @@ export function SignInForm() {
                     Forgot password?
                   </Button>
                 </div>
-                <FormControl>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <FormControl>
                     <Input
                       placeholder="Enter your password"
                       type={showPassword ? "text" : "password"}
@@ -161,22 +161,22 @@ export function SignInForm() {
                       className="pl-10 pr-10"
                       {...field}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                      disabled={isLoading}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </FormControl>
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <FormMessage className="text-red-500" />
               </FormItem>
             )}

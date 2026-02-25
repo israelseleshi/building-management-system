@@ -298,6 +298,9 @@ function EmployeesContent() {
   const handleEditEmployee = (employee: Employee) => {
     setSelectedEmployee(employee)
     setNewEmployee({
+      username: "",
+      password: "",
+      employeeCode: "",
       name: employee.name,
       email: employee.email,
       phone: employee.phone,

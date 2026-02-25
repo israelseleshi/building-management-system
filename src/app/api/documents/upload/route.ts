@@ -43,9 +43,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { error: "Supabase is not configured" },
+        { status: 500 }
+      )
+    }
+
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseKey,
       {
         global: {
           headers: {

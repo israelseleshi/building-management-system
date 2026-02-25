@@ -204,8 +204,8 @@ function ReportsContent() {
           .select("id, tenant_id, property_id, monthly_rent, status, start_date, end_date")
           .eq("landlord_id", user.id)
 
-        const tenantIds = Array.from(new Set((leases || []).map(l => l.tenant_id)))
-        const propertyIds = Array.from(new Set((leases || []).map(l => l.property_id)))
+        const tenantIds = Array.from(new Set((leases || []).map((l: any) => l.tenant_id)))
+        const propertyIds = Array.from(new Set((leases || []).map((l: any) => l.property_id)))
 
         let tenants: any[] = []
         let properties: any[] = []
@@ -231,7 +231,7 @@ function ReportsContent() {
         // Build mock report tenants using real leases when available, but
         // always fall back to synthetic mock data so the UI is populated even
         // in an empty database.
-        let reports: ReportTenant[] = (leases || []).map((lease, index) => {
+        let reports: ReportTenant[] = (leases || []).map((lease: any, index: number) => {
           const tenant = tenants.find(t => t.id === lease.tenant_id)
           const property = properties.find(p => p.id === lease.property_id)
 

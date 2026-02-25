@@ -83,7 +83,7 @@ function ChatContent() {
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
+        (payload: any) => {
           const row = payload.new as any
           if (!row) return
           if (row.sender_id === userId) return
@@ -211,7 +211,7 @@ function ChatContent() {
 
       if (leases && leases.length > 0) {
         // If leases exist, use them
-        tenantIds = Array.from(new Set(leases.map((l) => l.tenant_id)))
+        tenantIds = Array.from(new Set(leases.map((l: any) => l.tenant_id)))
         console.log("Loaded tenant IDs from leases:", tenantIds)
       } else {
         // Fallback: If no leases, load all tenants from profiles
@@ -224,7 +224,7 @@ function ChatContent() {
         if (allTenantsError) {
           console.error("Error loading all tenants", allTenantsError)
         } else {
-          tenantIds = (allTenants || []).map((t) => t.id)
+          tenantIds = (allTenants || []).map((t: any) => t.id)
           console.log("Loaded tenant IDs from profiles:", tenantIds)
         }
       }
@@ -331,7 +331,7 @@ function ChatContent() {
         return
       }
 
-      const builtMessages: MessageItem[] = (messageRows || []).map((m) => ({
+      const builtMessages: MessageItem[] = (messageRows || []).map((m: any) => ({
         id: m.id as string,
         senderId: m.sender_id as string,
         message: m.content as string,
@@ -375,7 +375,7 @@ function ChatContent() {
       return
     }
 
-    const builtMessages: MessageItem[] = (messageRows || []).map((m) => ({
+    const builtMessages: MessageItem[] = (messageRows || []).map((m: any) => ({
       id: m.id as string,
       senderId: m.sender_id as string,
       message: m.content as string,
