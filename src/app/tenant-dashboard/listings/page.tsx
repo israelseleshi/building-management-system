@@ -186,6 +186,24 @@ function ListingsContent() {
         setAllUnits(transformedUnits)
       } catch (err) {
         console.error('Error fetching listings:', err)
+        // If backend denies access (expired/missing token or insufficient role),
+        // clear local auth state and force re-auth.
+        if (err instanceof Error) {
+          const msg = err.message.toLowerCase()
+          if (msg.includes("permission") || msg.includes("unauthorized") || msg.includes("forbidden")) {
+            try {
+              localStorage.removeItem("authToken")
+              localStorage.removeItem("isAuthenticated")
+              localStorage.removeItem("userRole")
+              document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+              document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+              document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+            } catch {
+              // ignore
+            }
+            router.push("/auth/signin")
+          }
+        }
         setAllUnits([])
       } finally {
         setLoading(false)

@@ -13,7 +13,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { DataTable } from "@/components/ui/data-table"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import type { ColumnDef } from "@tanstack/react-table"
 import { 
   LayoutDashboard, 
@@ -38,6 +38,8 @@ import {
 
 interface Building {
   id: string
+  buildingId: string
+  unitId: string
   businessName: string
   name: string
   type: string
@@ -71,6 +73,7 @@ function ListingsContent() {
   const [showMoreFilters, setShowMoreFilters] = useState(false)
   const [buildings, setBuildings] = useState<Building[]>([])
   const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [buildingToDelete, setBuildingToDelete] = useState<string | null>(null)
   const [viewModalOpen, setViewModalOpen] = useState(false)
@@ -79,39 +82,73 @@ function ListingsContent() {
   const [editFormData, setEditFormData] = useState<Partial<Building> & { newImage?: File; imagePreview?: string }>({})
   const [isSaving, setIsSaving] = useState(false)
 
-  // Fetch properties from Supabase
+  // Fetch buildings + units from API
   useEffect(() => {
     const fetchProperties = async () => {
       try {
         setLoading(true)
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
+        const token = getAuthToken()
+        if (!token) {
+          setApiError("Not authenticated")
+          setBuildings([])
+          return
+        }
 
-        if (error) throw error
+        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const buildingsPayload = await buildingsRes.json().catch(() => ({}))
+        if (!buildingsRes.ok || buildingsPayload?.success === false) {
+          throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
+        }
 
-        // Transform Supabase data to Building format
-        const transformedBuildings: Building[] = (data || []).map((property: any) => ({
-          id: property.id,
-          businessName: property.title,
-          name: property.title,
-          type: 'Commercial',
-          location: property.city,
-          status: property.is_active ? 'Active' : 'Inactive',
-          monthlyRevenue: property.monthly_rent,
-          image: property.image_url,
-          totalUnits: 1,
-          occupiedUnits: 1,
-          vacantUnits: 0,
-          tenantCount: 1,
-        }))
+        const buildingsData = buildingsPayload?.data?.buildings || []
+        const rows: Building[] = []
 
-        setBuildings(transformedBuildings)
+        for (const building of buildingsData) {
+          const unitsRes = await fetch(`${API_BASE_URL}/buildings/${building.id}/units`, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          const unitsPayload = await unitsRes.json().catch(() => ({}))
+          if (!unitsRes.ok || unitsPayload?.success === false) {
+            continue
+          }
+          const units = unitsPayload?.data?.units || []
+          const occupiedUnits = units.filter((u: any) => u.status === "occupied").length
+          const vacantUnits = units.filter((u: any) => u.status === "vacant").length
+          const totalUnits = units.length || 1
+
+          for (const unit of units) {
+            const rawStatus = unit.status || "vacant"
+            const mappedStatus = rawStatus === "maintenance" ? "Maintenance" : "Active"
+            rows.push({
+              id: unit.id?.toString() || `${building.id}-${unit.unit_number}`,
+              buildingId: building.id?.toString(),
+              unitId: unit.id?.toString() || "",
+              businessName: building.name || "Building",
+              name: unit.unit_number?.toString() || "Unit",
+              type: "Residential",
+              location: building.address || "",
+              status: mappedStatus,
+              monthlyRevenue: unit.rent_amount || 0,
+              image: building.image_url,
+              totalUnits,
+              occupiedUnits,
+              vacantUnits,
+              tenantCount: occupiedUnits,
+            })
+          }
+        }
+
+        setBuildings(rows)
       } catch (err) {
         console.error('Error fetching properties:', err)
+        setApiError("Failed to load listings from API")
         toast({
           title: "Error",
-          description: "Failed to load listings from database",
+          description: "Failed to load listings from API",
           variant: "destructive",
         })
       } finally {
@@ -179,22 +216,26 @@ function ListingsContent() {
     }
   ]
 
+  const totalBuildings = new Set(buildings.map((b) => b.buildingId)).size
+  const totalUnits = buildings.length
+  const occupiedUnits = buildings.filter((b) => b.status === "Active").length
+  const occupancyRate = totalUnits ? Math.round((occupiedUnits / totalUnits) * 100) : 0
   const stats = [
     {
       title: "Total Buildings",
-      value: buildings.length.toString(),
+      value: totalBuildings.toString(),
       icon: <Home className="w-6 h-6" style={{ color: '#7D8B6F' }} />,
       color: '#7D8B6F'
     },
     {
       title: "Total Units",
-      value: buildings.reduce((sum, b) => sum + b.totalUnits, 0).toString(),
+      value: totalUnits.toString(),
       icon: <Building2 className="w-6 h-6" style={{ color: '#7D8B6F' }} />,
       color: '#7D8B6F'
     },
     {
       title: "Occupancy Rate",
-      value: `${Math.round((buildings.reduce((sum, b) => sum + b.occupiedUnits, 0) / buildings.reduce((sum, b) => sum + b.totalUnits, 0)) * 100)}%`,
+      value: `${occupancyRate}%`,
       icon: <TrendingUp className="w-6 h-6" style={{ color: '#7D8B6F' }} />,
       color: '#7D8B6F'
     },
@@ -215,6 +256,13 @@ function ListingsContent() {
   const confirmDelete = () => {
     if (buildingToDelete) {
       const deletedBuilding = buildings.find(b => b.id === buildingToDelete)
+      const token = getAuthToken()
+      if (token && deletedBuilding?.buildingId) {
+        fetch(`${API_BASE_URL}/buildings/${deletedBuilding.buildingId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => undefined)
+      }
       setBuildings(prevBuildings => prevBuildings.filter(building => building.id !== buildingToDelete))
       setDeleteDialogOpen(false)
       setBuildingToDelete(null)
@@ -446,13 +494,22 @@ function ListingsContent() {
   })
 
   const handleLogout = () => {
+    const token = getAuthToken()
+    if (token) {
+      fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined)
+    }
     // Clear authentication state from localStorage
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
     
     // Clear authentication state from cookies
     document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     
     // Redirect to sign-in page
     router.push("/auth/signin")
@@ -473,64 +530,45 @@ function ListingsContent() {
 
     try {
       setIsSaving(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      let imageUrl = selectedBuilding.image
-
-      // Handle image upload/deletion
-      if (editFormData.newImage) {
-        // Delete old image if it exists
-        if (selectedBuilding.image) {
-          try {
-            const oldImagePath = selectedBuilding.image.split('/').pop()
-            if (oldImagePath) {
-              await supabase.storage
-                .from('images')
-                .remove([`properties/${user.id}/${oldImagePath}`])
-            }
-          } catch (err) {
-            console.error('Error deleting old image:', err)
-          }
-        }
-
-        // Upload new image
-        const fileExt = editFormData.newImage.name.split('.').pop()
-        const fileName = `${Date.now()}.${fileExt}`
-        const filePath = `properties/${user.id}/${fileName}`
-
-        const { error: uploadError } = await supabase.storage
-          .from('images')
-          .upload(filePath, editFormData.newImage)
-
-        if (uploadError) throw uploadError
-
-        // Get public URL
-        const { data } = supabase.storage
-          .from('images')
-          .getPublicUrl(filePath)
-        imageUrl = data.publicUrl
-      }
-
-      // Prepare update data
-      const updateData: any = {
-        title: editFormData.businessName || selectedBuilding.businessName,
-        monthly_rent: editFormData.monthlyRevenue || selectedBuilding.monthlyRevenue,
-        status: editFormData.status === 'Active' ? 'listed' : 'draft',
-        updated_at: new Date().toISOString(),
-      }
+      const token = getAuthToken()
+      if (!token) return
 
       if (editFormData.newImage) {
-        updateData.image_url = imageUrl
+        toast({
+          title: "Image upload not available",
+          description: "Image upload is not supported by the current API.",
+          variant: "destructive",
+        })
       }
 
-      const { error } = await supabase
-        .from('properties')
-        .update(updateData)
-        .eq('id', selectedBuilding.id)
-        .eq('landlord_id', user.id)
+      // Update building name/address
+      await fetch(`${API_BASE_URL}/buildings/${selectedBuilding.buildingId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: editFormData.businessName || selectedBuilding.businessName,
+          address: editFormData.location || selectedBuilding.location,
+        }),
+      }).catch(() => undefined)
 
-      if (error) throw error
+      // Update unit info
+      if (selectedBuilding.unitId) {
+        const unitStatus = editFormData.status === "Maintenance" ? "maintenance" : "occupied"
+        await fetch(`${API_BASE_URL}/units/${selectedBuilding.unitId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            rent_amount: editFormData.monthlyRevenue || selectedBuilding.monthlyRevenue,
+            status: unitStatus,
+          }),
+        }).catch(() => undefined)
+      }
 
       // Update local state
       const updatedBuildings = buildings.map(b => 
@@ -540,7 +578,6 @@ function ListingsContent() {
               businessName: editFormData.businessName || b.businessName,
               monthlyRevenue: editFormData.monthlyRevenue || b.monthlyRevenue,
               status: editFormData.status || b.status,
-              image: imageUrl,
             }
           : b
       )
@@ -585,6 +622,11 @@ function ListingsContent() {
 
         {/* Listings Content */}
         <main className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+          {apiError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 mb-6">
+              {apiError}
+            </div>
+          )}
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {stats.map((stat, index) => (

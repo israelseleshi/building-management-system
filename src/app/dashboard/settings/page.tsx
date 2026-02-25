@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import {
   LayoutDashboard,
   Building2,
@@ -75,24 +75,43 @@ function SettingsContent() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        const token = getAuthToken()
+        if (!token) {
+          setLoading(false)
+          return
+        }
 
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
+        const userRes = await fetch(`${API_BASE_URL}/user/me`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const userPayload = await userRes.json().catch(() => ({}))
+        if (!userRes.ok || userPayload?.success === false) {
+          throw new Error(userPayload?.error || userPayload?.message || "Failed to load user profile")
+        }
 
-        if (error) throw error
+        const ownerRes = await fetch(`${API_BASE_URL}/owner/me`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const ownerPayload = await ownerRes.json().catch(() => ({}))
+        if (!ownerRes.ok || ownerPayload?.success === false) {
+          throw new Error(ownerPayload?.error || ownerPayload?.message || "Failed to load owner profile")
+        }
+
+        const user = userPayload?.data?.user || {}
+        const owner = ownerPayload?.data?.owner || {}
+        const fullName = user.full_name || owner.full_name || ""
+        const [firstName, ...rest] = fullName.split(" ")
+        const lastName = rest.join(" ")
 
         setProfile({
-          firstName: data.first_name || "",
-          lastName: data.last_name || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          company: data.company_name || "",
-          bio: data.bio || "",
+          firstName: firstName || "",
+          lastName: lastName || "",
+          email: user.email || "",
+          phone: user.phone || owner.phone || "",
+          company: owner.company_name || "",
+          bio: "",
         })
       } catch (err) {
         console.error('Error fetching profile:', err)
@@ -197,10 +216,19 @@ function SettingsContent() {
   ]
 
   const handleLogout = () => {
+    const token = getAuthToken()
+    if (token) {
+      fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined)
+    }
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
     document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     router.push("/auth/signin")
   }
 
@@ -228,23 +256,42 @@ function SettingsContent() {
 
   const handleSaveProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const token = getAuthToken()
+      if (!token) return
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: profile.firstName,
-          last_name: profile.lastName,
-          email: profile.email,
+      const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ")
+      const userRes = await fetch(`${API_BASE_URL}/user/me`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          full_name: fullName,
           phone: profile.phone,
-          company_name: profile.company,
-          bio: profile.bio,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id)
+        }),
+      })
+      const userPayload = await userRes.json().catch(() => ({}))
+      if (!userRes.ok || userPayload?.success === false) {
+        throw new Error(userPayload?.error || userPayload?.message || "Failed to save user profile")
+      }
 
-      if (error) throw error
+      const ownerRes = await fetch(`${API_BASE_URL}/owner/me`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          company_name: profile.company,
+          full_name: fullName,
+          phone: profile.phone,
+        }),
+      })
+      const ownerPayload = await ownerRes.json().catch(() => ({}))
+      if (!ownerRes.ok || ownerPayload?.success === false) {
+        throw new Error(ownerPayload?.error || ownerPayload?.message || "Failed to save owner profile")
+      }
 
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
@@ -254,9 +301,31 @@ function SettingsContent() {
     }
   }
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (password.new !== password.confirm) {
       alert("Passwords do not match")
+      return
+    }
+    if (!password.current || !password.new) {
+      alert("Please fill in all password fields")
+      return
+    }
+    const token = getAuthToken()
+    if (!token) return
+    const response = await fetch(`${API_BASE_URL}/user/me/password`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        currentPassword: password.current,
+        newPassword: password.new,
+      }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok || payload?.success === false) {
+      alert(payload?.error || payload?.message || "Failed to change password")
       return
     }
     setSaveSuccess(true)
@@ -270,31 +339,58 @@ function SettingsContent() {
 
   const handleFieldSave = async (field: string, value: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      // Map field names to database column names
-      const fieldMap: { [key: string]: string } = {
-        firstName: 'first_name',
-        lastName: 'last_name',
-        email: 'email',
-        phone: 'phone',
-        company: 'company_name',
-        bio: 'bio',
+      if (field === "bio" || field === "email") {
+        alert("This field is not supported by the current API yet.")
+        return
       }
 
-      const dbField = fieldMap[field]
-      if (!dbField) return
+      const token = getAuthToken()
+      if (!token) return
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          [dbField]: value,
-          updated_at: new Date().toISOString(),
+      const fullName =
+        field === "firstName" || field === "lastName"
+          ? [
+              field === "firstName" ? value : profile.firstName,
+              field === "lastName" ? value : profile.lastName,
+            ]
+              .filter(Boolean)
+              .join(" ")
+          : [profile.firstName, profile.lastName].filter(Boolean).join(" ")
+
+      if (field === "company") {
+        const ownerRes = await fetch(`${API_BASE_URL}/owner/me`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            company_name: value,
+            full_name: fullName,
+            phone: profile.phone,
+          }),
         })
-        .eq('id', user.id)
-
-      if (error) throw error
+        const ownerPayload = await ownerRes.json().catch(() => ({}))
+        if (!ownerRes.ok || ownerPayload?.success === false) {
+          throw new Error(ownerPayload?.error || ownerPayload?.message || "Failed to save changes")
+        }
+      } else {
+        const userRes = await fetch(`${API_BASE_URL}/user/me`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            full_name: fullName,
+            phone: field === "phone" ? value : profile.phone,
+          }),
+        })
+        const userPayload = await userRes.json().catch(() => ({}))
+        if (!userRes.ok || userPayload?.success === false) {
+          throw new Error(userPayload?.error || userPayload?.message || "Failed to save changes")
+        }
+      }
 
       setProfile((prev) => ({ ...prev, [field]: value }))
       setEditingField(null)

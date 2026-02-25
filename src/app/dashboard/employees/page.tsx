@@ -15,7 +15,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   LayoutDashboard,
@@ -71,9 +71,13 @@ function EmployeesContent() {
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null)
+  const [apiError, setApiError] = useState<string | null>(null)
   const [departmentFilter, setDepartmentFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [newEmployee, setNewEmployee] = useState({
+    username: "",
+    password: "",
+    employeeCode: "",
     name: "",
     email: "",
     phone: "",
@@ -83,44 +87,36 @@ function EmployeesContent() {
     joinDate: "",
   })
 
-  // Fetch employee data from Supabase
+  // Fetch employee data from API
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
         setLoading(true)
-        
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          console.log("No user found")
-          setLoading(false)
-          return
-        }
-        
-        console.log("Fetching employees for user:", user.id)
-
-        // Fetch employees for this landlord
-        const { data: employeesData, error } = await supabase
-          .from('employees')
-          .select('*')
-          .eq('owner_id', user.id)
-
-        if (error) {
-          console.error('Error fetching employees:', error)
+        const token = getAuthToken()
+        if (!token) {
+          setApiError("Not authenticated")
           setLoading(false)
           return
         }
 
-        console.log("Employees data fetched:", employeesData)
+        const response = await fetch(`${API_BASE_URL}/employees`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok || payload?.success === false) {
+          throw new Error(payload?.error || payload?.message || "Failed to load employees")
+        }
 
-        // Transform data to Employee format
+        const employeesData = payload?.data?.employees || []
+
         const transformedEmployees: Employee[] = (employeesData || []).map((emp: any) => {
           return {
             id: emp.id,
-            name: emp.name || "Employee",
+            name: emp.full_name || emp.name || "Employee",
             email: emp.email || "employee@bms.com",
             phone: emp.phone || "+251900000000",
-            position: emp.position || emp.job_title || "Staff",
+            position: emp.designation || emp.position || emp.job_title || "Staff",
             department: emp.department || "Maintenance",
             salary: emp.salary || 0,
             joinDate: emp.join_date ? new Date(emp.join_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -132,8 +128,9 @@ function EmployeesContent() {
         })
 
         setEmployees(transformedEmployees)
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading employees:', err)
+        setApiError(err?.message || "Failed to load employees")
       } finally {
         setLoading(false)
       }
@@ -194,10 +191,19 @@ function EmployeesContent() {
   ]
 
   const handleLogout = () => {
+    const token = getAuthToken()
+    if (token) {
+      fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined)
+    }
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
     document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     router.push("/auth/signin")
   }
 
@@ -212,51 +218,43 @@ function EmployeesContent() {
   }
 
   const handleAddEmployee = async () => {
-    if (!newEmployee.name || !newEmployee.email || !newEmployee.position) {
+    if (!newEmployee.name || !newEmployee.email || !newEmployee.position || !newEmployee.password || !newEmployee.username) {
       alert("Please fill in all required fields")
       return
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const token = getAuthToken()
+      if (!token) return
 
-      // Generate a proper UUID v4 for employee
-      const newEmployeeId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0
-        const v = c === 'x' ? r : (r & 0x3 | 0x8)
-        return v.toString(16)
+      const response = await fetch(`${API_BASE_URL}/employees`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: newEmployee.username,
+          email: newEmployee.email,
+          password: newEmployee.password,
+          full_name: newEmployee.name,
+          employee_code: newEmployee.employeeCode || `EMP-${Date.now()}`,
+          salary: newEmployee.salary,
+          designation: newEmployee.position,
+          department: newEmployee.department,
+          join_date: newEmployee.joinDate || new Date().toISOString().split('T')[0],
+        }),
       })
 
-      // Create employee record directly
-      const employeeData = {
-        id: newEmployeeId,
-        owner_id: user.id,
-        name: newEmployee.name,
-        email: newEmployee.email,
-        phone: newEmployee.phone,
-        position: newEmployee.position,
-        job_title: newEmployee.position, // Sync job_title with position
-        department: newEmployee.department,
-        salary: newEmployee.salary,
-        join_date: newEmployee.joinDate || new Date().toISOString().split('T')[0],
-        status: 'Active',
-        attendance_rate: 100,
-        last_attendance: new Date().toISOString(),
-      }
-
-      const { error: employeeError } = await supabase
-        .from('employees')
-        .insert(employeeData)
-
-      if (employeeError) {
-        console.error("Employee error:", employeeError)
-        throw employeeError
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.message || "Failed to add employee")
       }
 
       // Add to local state
+      const createdEmployee = payload?.data?.employee || {}
       const newEmp: Employee = {
-        id: newEmployeeId,
+        id: createdEmployee.id || `${Date.now()}`,
         name: newEmployee.name,
         email: newEmployee.email,
         phone: newEmployee.phone,
@@ -273,6 +271,9 @@ function EmployeesContent() {
       setEmployees([...employees, newEmp])
       setAddModalOpen(false)
       setNewEmployee({
+        username: "",
+        password: "",
+        employeeCode: "",
         name: "",
         email: "",
         phone: "",
@@ -315,22 +316,24 @@ function EmployeesContent() {
     }
 
     try {
-      const { error } = await supabase
-        .from('employees')
-        .update({
-          name: newEmployee.name,
-          email: newEmployee.email,
-          phone: newEmployee.phone,
-          position: newEmployee.position,
-          job_title: newEmployee.position, // Sync job_title with position
-          department: newEmployee.department,
-          salary: newEmployee.salary,
-          join_date: newEmployee.joinDate || new Date().toISOString().split('T')[0],
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', selectedEmployee.id)
+      const token = getAuthToken()
+      if (!token) return
 
-      if (error) throw error
+      const response = await fetch(`${API_BASE_URL}/employees/${selectedEmployee.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          salary: newEmployee.salary,
+          designation: newEmployee.position,
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.message || "Failed to update employee")
+      }
 
       // Update local state
       const updatedEmployees = employees.map(emp =>
@@ -352,6 +355,9 @@ function EmployeesContent() {
       setAddModalOpen(false)
       setSelectedEmployee(null)
       setNewEmployee({
+        username: "",
+        password: "",
+        employeeCode: "",
         name: "",
         email: "",
         phone: "",
@@ -375,6 +381,20 @@ function EmployeesContent() {
 
   const confirmDelete = () => {
     if (employeeToDelete) {
+      const token = getAuthToken()
+      if (token) {
+        fetch(`${API_BASE_URL}/employees/${employeeToDelete}/terminate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            termination_date: new Date().toISOString().split("T")[0],
+            notes: "Terminated by owner",
+          }),
+        }).catch(() => undefined)
+      }
       setEmployees(employees.filter((e) => e.id !== employeeToDelete))
       setDeleteDialogOpen(false)
       setEmployeeToDelete(null)
@@ -560,6 +580,11 @@ function EmployeesContent() {
 
         <main className="p-6">
           <div className="max-w-7xl mx-auto space-y-6">
+            {apiError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                {apiError}
+              </div>
+            )}
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="rounded-2xl p-6 border-0" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
@@ -891,6 +916,40 @@ function EmployeesContent() {
 
           <ScrollArea className="flex-1 pr-4">
             <div className="space-y-4 pr-4">
+              <div className="space-y-2">
+                <Label htmlFor="username" className="text-sm font-medium">Username *</Label>
+                <Input
+                  id="username"
+                  placeholder="Enter username"
+                  value={newEmployee.username}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, username: e.target.value })}
+                  className="border border-border rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Set a temporary password"
+                  value={newEmployee.password}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                  className="border border-border rounded-lg"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="employeeCode" className="text-sm font-medium">Employee Code</Label>
+                <Input
+                  id="employeeCode"
+                  placeholder="Optional (auto-generated if empty)"
+                  value={newEmployee.employeeCode}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, employeeCode: e.target.value })}
+                  className="border border-border rounded-lg"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
                 <Input

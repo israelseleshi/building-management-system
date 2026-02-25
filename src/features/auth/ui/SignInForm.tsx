@@ -64,8 +64,8 @@ export function SignInForm() {
 
       const user = payload?.data?.user ?? payload?.user ?? null
       const token = payload?.data?.token ?? payload?.token ?? null
-      const effectiveDbRole = user?.role || "tenant"
-      const appRole = effectiveDbRole === "owner" ? "landlord" : "tenant"
+      const effectiveDbRole = (user?.role || "tenant").toString().toLowerCase()
+      const appRole = effectiveDbRole === "tenant" ? "tenant" : "landlord"
 
       // Persist simple auth/role cookies for existing client-side guards
       document.cookie = `isAuthenticated=true; path=/; max-age=86400`

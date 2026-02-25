@@ -169,11 +169,30 @@ function ChatContent() {
 
   useEffect(() => {
     const loadData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const { data, error } = await supabase.auth.getUser()
+      const user = data?.user ?? null
+
+      if (error) {
+        const anyErr = error as any
+        const hasUsefulDetails =
+          typeof anyErr?.message === "string" && anyErr.message.trim().length > 0
+        if (hasUsefulDetails) {
+          console.error("Error loading current user", error)
+        }
+      }
 
       if (!user) {
+        try {
+          localStorage.removeItem("authToken")
+          localStorage.removeItem("isAuthenticated")
+          localStorage.removeItem("userRole")
+          document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+          document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+          document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+        } catch {
+          // ignore
+        }
+        router.push("/auth/signin")
         return
       }
 
