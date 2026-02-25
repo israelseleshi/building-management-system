@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { Building2, CheckCircle, Loader2 } from "lucide-react"
 import { LayoutDashboard, PlusCircle, MessageSquare, CreditCard, TrendingUp, Settings, Users } from "lucide-react"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 
 export default function CreateListing() {
   return (
@@ -29,7 +29,6 @@ function CreateListingContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [formData, setFormData] = useState({
     title: "",
@@ -41,15 +40,6 @@ function CreateListingContent() {
     status: "draft",
   })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-
-  // Get current user on mount
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) setCurrentUserId(user.id)
-    }
-    getUser()
-  }, [])
 
   const navItems = [
     {
@@ -103,10 +93,19 @@ function CreateListingContent() {
   ]
 
   const handleLogout = () => {
+    const token = getAuthToken()
+    if (token) {
+      fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined)
+    }
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
     document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     router.push("/auth/signin")
   }
 
@@ -182,7 +181,8 @@ function CreateListingContent() {
         return
       }
 
-      if (!currentUserId) {
+      const token = getAuthToken()
+      if (!token) {
         toast({
           title: "Error",
           description: "User not authenticated",
@@ -192,65 +192,59 @@ function CreateListingContent() {
         return
       }
 
-      let imageUrl: string | null = null
-
-      // Upload image to Supabase Storage if provided
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop()
-        const fileName = `${Date.now()}.${fileExt}`
-        const filePath = `properties/${currentUserId}/${fileName}`
-
-        const { error: uploadError } = await supabase.storage
-          .from('images')
-          .upload(filePath, imageFile)
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError)
-          toast({
-            title: "Upload Error",
-            description: "Failed to upload image",
-            variant: "destructive",
-          })
-          setIsSubmitting(false)
-          return
-        }
-
-        // Get public URL
-        const { data } = supabase.storage
-          .from('images')
-          .getPublicUrl(filePath)
-        imageUrl = data.publicUrl
+        toast({
+          title: "Image upload not available",
+          description: "Image upload is not supported by the current API.",
+          variant: "destructive",
+        })
       }
 
-      // Insert property into database
-      const { error } = await supabase
-        .from('properties')
-        .insert([
-          {
-            landlord_id: currentUserId,
-            title: formData.title,
-            description: formData.description,
-            address_line1: formData.addressLine1,
-            city: formData.city,
-            country: formData.country,
-            monthly_rent: parseFloat(formData.monthlyRent),
-            status: formData.status,
-            is_active: true,
-            image_url: imageUrl,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        ])
-
-      if (error) {
-        console.error('Database error:', error)
+      const buildingRes = await fetch(`${API_BASE_URL}/buildings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: formData.title,
+          address: formData.addressLine1,
+          description: formData.description,
+          image_url: null,
+        }),
+      })
+      const buildingPayload = await buildingRes.json().catch(() => ({}))
+      if (!buildingRes.ok || buildingPayload?.success === false) {
         toast({
           title: "Error",
-          description: "Failed to create listing",
+          description: buildingPayload?.error || buildingPayload?.message || "Failed to create building",
           variant: "destructive",
         })
         setIsSubmitting(false)
         return
+      }
+
+      const buildingId = buildingPayload?.data?.building?.id
+      if (buildingId) {
+        const unitStatus =
+          formData.status === "occupied"
+            ? "occupied"
+            : formData.status === "inactive"
+              ? "maintenance"
+              : "vacant"
+
+        await fetch(`${API_BASE_URL}/buildings/${buildingId}/units`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            unit_number: "1",
+            rent_amount: parseFloat(formData.monthlyRent),
+            status: unitStatus,
+          }),
+        }).catch(() => undefined)
       }
 
       toast({

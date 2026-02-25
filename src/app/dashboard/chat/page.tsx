@@ -83,7 +83,7 @@ function ChatContent() {
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
+        (payload: any) => {
           const row = payload.new as any
           if (!row) return
           if (row.sender_id === userId) return
@@ -169,11 +169,30 @@ function ChatContent() {
 
   useEffect(() => {
     const loadData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const { data, error } = await supabase.auth.getUser()
+      const user = data?.user ?? null
+
+      if (error) {
+        const anyErr = error as any
+        const hasUsefulDetails =
+          typeof anyErr?.message === "string" && anyErr.message.trim().length > 0
+        if (hasUsefulDetails) {
+          console.error("Error loading current user", error)
+        }
+      }
 
       if (!user) {
+        try {
+          localStorage.removeItem("authToken")
+          localStorage.removeItem("isAuthenticated")
+          localStorage.removeItem("userRole")
+          document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+          document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+          document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+        } catch {
+          // ignore
+        }
+        router.push("/auth/signin")
         return
       }
 
@@ -192,7 +211,7 @@ function ChatContent() {
 
       if (leases && leases.length > 0) {
         // If leases exist, use them
-        tenantIds = Array.from(new Set(leases.map((l) => l.tenant_id)))
+        tenantIds = Array.from(new Set(leases.map((l: any) => l.tenant_id)))
         console.log("Loaded tenant IDs from leases:", tenantIds)
       } else {
         // Fallback: If no leases, load all tenants from profiles
@@ -205,7 +224,7 @@ function ChatContent() {
         if (allTenantsError) {
           console.error("Error loading all tenants", allTenantsError)
         } else {
-          tenantIds = (allTenants || []).map((t) => t.id)
+          tenantIds = (allTenants || []).map((t: any) => t.id)
           console.log("Loaded tenant IDs from profiles:", tenantIds)
         }
       }
@@ -312,7 +331,7 @@ function ChatContent() {
         return
       }
 
-      const builtMessages: MessageItem[] = (messageRows || []).map((m) => ({
+      const builtMessages: MessageItem[] = (messageRows || []).map((m: any) => ({
         id: m.id as string,
         senderId: m.sender_id as string,
         message: m.content as string,
@@ -356,7 +375,7 @@ function ChatContent() {
       return
     }
 
-    const builtMessages: MessageItem[] = (messageRows || []).map((m) => ({
+    const builtMessages: MessageItem[] = (messageRows || []).map((m: any) => ({
       id: m.id as string,
       senderId: m.sender_id as string,
       message: m.content as string,

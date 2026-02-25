@@ -9,7 +9,7 @@ test("calls login endpoint on submit", async () => {
     json: async () => ({ data: { user: { role: "tenant" }, token: "t" } }),
   });
 
-  // @ts-expect-error - override for test
+  // @ts-ignore - override for test
   global.fetch = fetchMock;
 
   render(<SignInForm />);

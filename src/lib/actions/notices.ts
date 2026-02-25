@@ -16,6 +16,9 @@ export async function getGlobalNotices() {
     .eq("is_global", true)
     .order("created_at", { ascending: false })
 
+  if (error?.message === "Supabase is not configured") {
+    return []
+  }
   if (error) {
     throw new Error(JSON.stringify(error));
   }
@@ -29,6 +32,7 @@ export async function deleteGlobalNotice(id: string) {
   'use server'
   const supabase = await createServerSupabase()
   const { error } = await supabase.from('notifications').delete().eq('id', id)
+  if (error?.message === "Supabase is not configured") return
   if (error) throw new Error(JSON.stringify(error))
 }
 
@@ -55,6 +59,9 @@ export async function createGlobalNotice(formData: FormData): Promise<void> {
     data: { user },
     error: userErr,
   } = await supabase.auth.getUser();
+  if (userErr?.message === "Supabase is not configured") {
+    throw new Error(JSON.stringify({ code: 'NOT_CONFIGURED', message: 'Notices are not available.' }));
+  }
   if (userErr) throw new Error(JSON.stringify(userErr));
   if (!user) {
     throw new Error(JSON.stringify({ code: 'NO_USER', message: 'Auth session missing – please sign in again.' }));
@@ -71,6 +78,9 @@ export async function createGlobalNotice(formData: FormData): Promise<void> {
     priority,
     is_global: true,
   })
+  if (error?.message === "Supabase is not configured") {
+    throw new Error(JSON.stringify({ code: 'NOT_CONFIGURED', message: 'Notices are not available.' }));
+  }
   if (error) throw new Error(JSON.stringify(error));
 }
 
@@ -98,5 +108,8 @@ export async function updateGlobalNotice(id: string, formData: FormData): Promis
     .update({ title, message, priority })
     .eq('id', id)
 
+  if (error?.message === "Supabase is not configured") {
+    throw new Error(JSON.stringify({ code: 'NOT_CONFIGURED', message: 'Notices are not available.' }));
+  }
   if (error) throw new Error(JSON.stringify(error));
 }

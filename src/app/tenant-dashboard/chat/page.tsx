@@ -75,7 +75,7 @@ function ChatContent() {
           table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
-        (payload) => {
+        (payload: any) => {
           const row = payload.new as any
           if (!row) return
           // Ignore our own inserts; we already added them optimistically
@@ -132,11 +132,30 @@ function ChatContent() {
 
   useEffect(() => {
     const loadData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const { data, error } = await supabase.auth.getUser()
+      const user = data?.user ?? null
+
+      if (error) {
+        const anyErr = error as any
+        const hasUsefulDetails =
+          typeof anyErr?.message === "string" && anyErr.message.trim().length > 0
+        if (hasUsefulDetails) {
+          console.error("Error loading current user", error)
+        }
+      }
 
       if (!user) {
+        try {
+          localStorage.removeItem("authToken")
+          localStorage.removeItem("isAuthenticated")
+          localStorage.removeItem("userRole")
+          document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+          document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+          document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+        } catch {
+          // ignore
+        }
+        router.push("/auth/signin")
         return
       }
 
@@ -203,7 +222,7 @@ function ChatContent() {
       if (siblingsError && (siblingsError as any).code !== "PGRST116") {
         console.error("Error loading sibling leases", siblingsError)
       } else if (siblingLeases && siblingLeases.length > 0) {
-        const tenantIds = siblingLeases.map((l) => l.tenant_id)
+        const tenantIds = siblingLeases.map((l: { tenant_id: string }) => l.tenant_id)
 
         const { data: otherTenants, error: tenantsError } = await supabase
           .from("profiles")
@@ -257,7 +276,7 @@ function ChatContent() {
         return
       }
 
-      const builtMessages: MessageItem[] = (messageRows || []).map((m) => ({
+      const builtMessages: MessageItem[] = (messageRows || []).map((m: any) => ({
         id: m.id as string,
         senderId: m.sender_id as string,
         message: m.content as string,
@@ -301,7 +320,7 @@ function ChatContent() {
       return
     }
 
-    const builtMessages: MessageItem[] = (messageRows || []).map((m) => ({
+    const builtMessages: MessageItem[] = (messageRows || []).map((m: any) => ({
       id: m.id as string,
       senderId: m.sender_id as string,
       message: m.content as string,
