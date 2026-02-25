@@ -19,6 +19,7 @@ export function proxy(request: NextRequest) {
 
   // Get authentication status from cookies
   const isAuthenticated = request.cookies.get('isAuthenticated')?.value === 'true'
+  const userRole = request.cookies.get('userRole')?.value || ""
 
   // Redirect unauthenticated users from protected routes to sign-in
   if (isProtectedRoute && !isAuthenticated) {
@@ -27,10 +28,17 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(signInUrl)
   }
 
-  // Redirect authenticated users from auth routes to dashboard
+  // Redirect authenticated users from auth routes to their dashboard
   if (isAuthRoute && isAuthenticated) {
-    const dashboardUrl = new URL('/dashboard', request.url)
-    return NextResponse.redirect(dashboardUrl)
+    if (userRole.toLowerCase() === "tenant") {
+      const tenantUrl = new URL('/tenant-dashboard', request.url)
+      return NextResponse.redirect(tenantUrl)
+    }
+    if (userRole) {
+      const dashboardUrl = new URL('/dashboard', request.url)
+      return NextResponse.redirect(dashboardUrl)
+    }
+    // If role is missing, allow auth route to render so user can re-auth
   }
 
   // Role-based protection (example: only landlords can access certain routes)

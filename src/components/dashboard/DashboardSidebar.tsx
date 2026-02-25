@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/collapsible"
 import { LogOut, Menu, ChevronDown } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseClient"
 import { usePathname } from "next/navigation"
 import { getLandlordNavGroups, getTenantNavGroups, NavItem } from "@/constants/navItems"
 import { useState } from "react"
@@ -70,11 +69,6 @@ export function DashboardSidebar({
     clearClientAuth()
     router.replace("/auth/signin")
     router.refresh()
-
-    // Fire-and-forget cleanup (do not block navigation)
-    Promise.resolve()
-      .then(() => supabase.auth.signOut())
-      .catch(() => {})
 
     Promise.resolve()
       .then(() => onLogout())

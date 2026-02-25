@@ -10,7 +10,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { ListingDetailView } from "@/components/tenant/ListingDetailView"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import {
   LayoutDashboard,
   MessageSquare,
@@ -56,6 +56,26 @@ interface Unit {
   listed: string
   status: string
   buildingId: string
+}
+
+interface Building {
+  id: string
+  name: string
+  address: string
+  total_floors?: number
+  description?: string
+  image_url?: string
+}
+
+interface ApiUnit {
+  id: string
+  unit_number: string
+  floor_number?: number
+  bedrooms?: number
+  bathrooms?: number
+  size_sqm?: number
+  rent_amount: number
+  status?: string
 }
 
 function ListingsContent() {
@@ -109,36 +129,58 @@ function ListingsContent() {
     "https://images.unsplash.com/photo-1493857671505-72967e2e2760?w=400&h=250&fit=crop",
   ]
 
-  // Fetch listings from Supabase
+  // Fetch listings from API
   useEffect(() => {
     const fetchListings = async () => {
       try {
         setLoading(true)
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('is_active', true)
+        const token = getAuthToken()
+        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        const buildingsPayload = await buildingsRes.json().catch(() => ({}))
+        if (!buildingsRes.ok || buildingsPayload?.success === false) {
+          throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
+        }
 
-        if (error) throw error
+        const buildings = (buildingsPayload?.data?.buildings || []) as Building[]
+        const selectedBuilding = buildings[0]
 
-        const transformedUnits: Unit[] = (data || []).map((property: any, index: number) => ({
-          id: property.id.toString(),
-          title: property.title,
-          location: `${property.address_line1}, ${property.city}`,
-          price: property.monthly_rent,
+        if (!selectedBuilding) {
+          setAllUnits([])
+          return
+        }
+
+        const unitsRes = await fetch(`${API_BASE_URL}/buildings/${selectedBuilding.id}/units`, {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        const unitsPayload = await unitsRes.json().catch(() => ({}))
+        if (!unitsRes.ok || unitsPayload?.success === false) {
+          throw new Error(unitsPayload?.error || unitsPayload?.message || "Failed to load units")
+        }
+
+        const units = (unitsPayload?.data?.units || []) as ApiUnit[]
+
+        const transformedUnits: Unit[] = (units || []).map((unit: ApiUnit, index: number) => ({
+          id: unit.id?.toString() || `${selectedBuilding.id}-${unit.unit_number}`,
+          title: `Unit ${unit.unit_number}`,
+          location: selectedBuilding.address,
+          price: unit.rent_amount,
           currency: 'ETB',
           period: 'monthly',
-          capacity: 4,
+          capacity: (unit.bedrooms || 1) * 2,
           parking: 1,
-          area: 80 + (index % 50),
+          area: unit.size_sqm || 80 + (index % 50),
           rating: (4.3 + (index % 5) * 0.1).toFixed(1),
           reviews: 10 + (index % 20),
           image: mockImages[index % mockImages.length],
           featured: index < 3,
           type: 'apartment',
-          listed: new Date(property.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-          status: 'active',
-          buildingId: property.id.toString()
+          listed: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          status: unit.status || 'active',
+          buildingId: selectedBuilding.id.toString()
         }))
 
         setAllUnits(transformedUnits)

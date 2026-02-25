@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { API_BASE_URL, getAuthToken } from '@/lib/apiClient'
 
 export interface Notification {
   id: string
@@ -25,20 +25,29 @@ export function useNotifications() {
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      const token = getAuthToken()
+      if (!API_BASE_URL || !token) {
+        setNotifications([])
+        setUnreadCount(0)
+        return
+      }
 
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20)
+      const response = await fetch(`${API_BASE_URL}/notifications`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        // Notifications endpoint is not defined in the API spec yet.
+        setNotifications([])
+        setUnreadCount(0)
+        return
+      }
 
-      setNotifications(data || [])
-      setUnreadCount((data || []).filter(n => !n.is_read).length)
+      const payload = await response.json().catch(() => ({}))
+      const data = payload?.data?.notifications || []
+      setNotifications(data)
+      setUnreadCount(data.filter((n: Notification) => !n.is_read).length)
     } catch (err) {
       console.error('Error fetching notifications:', err)
     } finally {
@@ -48,50 +57,19 @@ export function useNotifications() {
 
   // Subscribe to real-time notifications
   useEffect(() => {
-    const setupSubscription = async () => {
-      fetchNotifications()
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const channel = supabase
-        .channel(`notifications-${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            const newNotification = payload.new as Notification
-            setNotifications((prev) => [newNotification, ...prev])
-            setUnreadCount((prev) => prev + 1)
-          }
-        )
-        .subscribe()
-
-      return () => {
-        supabase.removeChannel(channel)
-      }
-    }
-
-    setupSubscription()
+    fetchNotifications()
   }, [fetchNotifications])
 
   // Mark notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString(),
-        })
-        .eq('id', notificationId)
-
-      if (error) throw error
+      const token = getAuthToken()
+      if (API_BASE_URL && token) {
+        await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => undefined)
+      }
 
       setNotifications((prev) =>
         prev.map((n) =>
@@ -107,19 +85,13 @@ export function useNotifications() {
   // Mark all as read
   const markAllAsRead = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { error } = await supabase
-        .from('notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id)
-        .eq('is_read', false)
-
-      if (error) throw error
+      const token = getAuthToken()
+      if (API_BASE_URL && token) {
+        await fetch(`${API_BASE_URL}/notifications/read-all`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => undefined)
+      }
 
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
       setUnreadCount(0)
@@ -131,12 +103,13 @@ export function useNotifications() {
   // Delete notification
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId)
-
-      if (error) throw error
+      const token = getAuthToken()
+      if (API_BASE_URL && token) {
+        await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => undefined)
+      }
 
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
     } catch (err) {
@@ -160,10 +133,15 @@ export function useNotifications() {
       }
     ) => {
       try {
-        const { error } = await supabase
-          .from('notifications')
-          .insert([
-            {
+        const token = getAuthToken()
+        if (API_BASE_URL && token) {
+          await fetch(`${API_BASE_URL}/notifications`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
               user_id: userId,
               title,
               message,
@@ -173,10 +151,9 @@ export function useNotifications() {
               icon: options?.icon,
               related_entity_type: options?.related_entity_type,
               related_entity_id: options?.related_entity_id,
-            },
-          ])
-
-        if (error) throw error
+            }),
+          }).catch(() => undefined)
+        }
       } catch (err) {
         console.error('Error creating notification:', err)
       }

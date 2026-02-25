@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Mail, Lock, ArrowLeft } from "lucide-react"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL } from "@/lib/apiClient"
 
 const forgotPasswordSchema = z.object({
   email: z.string().email({
@@ -35,14 +35,16 @@ type ResetPasswordValues = z.infer<typeof resetPasswordSchema>
 interface ForgotPasswordModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  initialStep?: "email" | "reset"
+  initialStep?: "email" | "otp" | "reset"
 }
 
 export function ForgotPasswordModal({ open, onOpenChange, initialStep }: ForgotPasswordModalProps) {
-  const [step, setStep] = useState<"email" | "reset">(initialStep ?? "email")
+  const [step, setStep] = useState<"email" | "otp" | "reset">(initialStep ?? "email")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [otp, setOtp] = useState("")
+  const [email, setEmail] = useState("")
 
   const emailForm = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -65,18 +67,85 @@ export function ForgotPasswordModal({ open, onOpenChange, initialStep }: ForgotP
     setSuccess("")
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: values.email }),
       })
 
-      if (error) {
-        setError(error.message || "Failed to send reset email. Please try again.")
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok || payload?.success === false) {
+        setError(payload?.error || payload?.message || "Failed to send OTP. Please try again.")
         return
       }
 
-      setSuccess("Password reset email sent! Check your inbox for instructions.")
+      setEmail(values.email)
+      setStep("otp")
+      setSuccess("OTP sent! Check your inbox for the code.")
     } catch (error) {
       console.error("Forgot password error:", error)
+      setError("An error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function onOtpSubmit() {
+    setIsLoading(true)
+    setError("")
+    setSuccess("")
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          otp,
+          type: "password_reset",
+        }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok || payload?.success === false) {
+        setError(payload?.error || payload?.message || "Invalid OTP. Please try again.")
+        return
+      }
+
+      setStep("reset")
+      setSuccess("OTP verified. Please set a new password.")
+    } catch (error) {
+      console.error("OTP verification error:", error)
+      setError("An error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function onResendOtp() {
+    setIsLoading(true)
+    setError("")
+    setSuccess("")
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, type: "password_reset" }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok || payload?.success === false) {
+        setError(payload?.error || payload?.message || "Failed to resend OTP. Please try again.")
+        return
+      }
+
+      setSuccess("New OTP sent! Check your inbox.")
+    } catch (error) {
+      console.error("Resend OTP error:", error)
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
@@ -89,12 +158,19 @@ export function ForgotPasswordModal({ open, onOpenChange, initialStep }: ForgotP
     setSuccess("")
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: values.password,
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          newPassword: values.password,
+        }),
       })
 
-      if (error) {
-        setError(error.message || "Failed to reset password. Please try again.")
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok || payload?.success === false) {
+        setError(payload?.error || payload?.message || "Failed to reset password. Please try again.")
         return
       }
 
@@ -104,6 +180,8 @@ export function ForgotPasswordModal({ open, onOpenChange, initialStep }: ForgotP
         setStep("email")
         emailForm.reset()
         resetForm.reset()
+        setOtp("")
+        setEmail("")
       }, 2000)
     } catch (error) {
       console.error("Reset password error:", error)
@@ -120,6 +198,8 @@ export function ForgotPasswordModal({ open, onOpenChange, initialStep }: ForgotP
       resetForm.reset()
       setError("")
       setSuccess("")
+      setOtp("")
+      setEmail("")
     }
     onOpenChange(newOpen)
   }
@@ -134,12 +214,14 @@ export function ForgotPasswordModal({ open, onOpenChange, initialStep }: ForgotP
       >
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-foreground">
-            {step === "email" ? "Reset Password" : "Create New Password"}
+            {step === "email" ? "Reset Password" : step === "otp" ? "Verify OTP" : "Create New Password"}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {step === "email" 
               ? "Enter your email address and we'll send you instructions to reset your password"
-              : "Enter your new password twice to confirm"}
+              : step === "otp"
+                ? "Enter the OTP sent to your email"
+                : "Enter your new password twice to confirm"}
           </DialogDescription>
         </DialogHeader>
 
@@ -188,10 +270,66 @@ export function ForgotPasswordModal({ open, onOpenChange, initialStep }: ForgotP
                 }}
                 disabled={isLoading}
               >
-                {isLoading ? "Sending..." : "Send Reset Link"}
+                {isLoading ? "Sending..." : "Send OTP"}
               </Button>
             </form>
           </Form>
+        ) : step === "otp" ? (
+          <div className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="rounded-md bg-green-500/15 p-3 text-sm text-green-600">
+                {success}
+              </div>
+            )}
+            <div className="space-y-2">
+              <FormLabel>OTP Code</FormLabel>
+              <Input
+                placeholder="Enter the OTP from your email"
+                value={otp}
+                onChange={(event) => setOtp(event.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-10 rounded-xl border-muted-foreground/20"
+                onClick={() => setStep("email")}
+                disabled={isLoading}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <Button 
+                type="button" 
+                className="flex-1 h-10 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
+                style={{ 
+                  backgroundColor: '#7D8B6F', 
+                  color: '#FFFFFF',
+                  boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
+                }}
+                onClick={onOtpSubmit}
+                disabled={isLoading || !otp}
+              >
+                {isLoading ? "Verifying..." : "Verify OTP"}
+              </Button>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-10 rounded-xl border-muted-foreground/20"
+              onClick={onResendOtp}
+              disabled={isLoading}
+            >
+              Resend OTP
+            </Button>
+          </div>
         ) : (
           <Form {...resetForm}>
             <form onSubmit={resetForm.handleSubmit(onResetSubmit)} className="space-y-4">

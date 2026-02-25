@@ -12,7 +12,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <ForgotPasswordModal open={true} onOpenChange={handleClose} initialStep="reset" />
+      <ForgotPasswordModal open={true} onOpenChange={handleClose} initialStep="email" />
     </div>
   )
 }
