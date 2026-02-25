@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Heading, Text } from "@/components/ui/typography"
 import { Eye, EyeOff, Lock, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabaseBrowser"
+import { API_BASE_URL } from "@/lib/apiClient"
 import { ForgotPasswordModal } from "./ForgotPasswordModal"
 
 const signInSchema = z.object({
@@ -46,37 +46,34 @@ export function SignInForm() {
     setError("")
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: values.email,
+          password: values.password,
+        }),
       })
 
-      if (error || !data.session) {
-        setError(error?.message || "Invalid email or password. Please try again.")
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok || payload?.success === false) {
+        setError(payload?.error || payload?.message || "Invalid email or password. Please try again.")
         return
       }
-      const userId = data.user?.id
 
-      let dbRole: string | null = null
-
-      if (userId) {
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userId)
-          .single()
-
-        if (!profileError && profile?.role) {
-          dbRole = profile.role
-        }
-      }
-
-      const effectiveDbRole = dbRole || "tenant"
+      const user = payload?.data?.user ?? payload?.user ?? null
+      const token = payload?.data?.token ?? payload?.token ?? null
+      const effectiveDbRole = user?.role || "tenant"
       const appRole = effectiveDbRole === "owner" ? "landlord" : "tenant"
 
       // Persist simple auth/role cookies for existing client-side guards
       document.cookie = `isAuthenticated=true; path=/; max-age=86400`
       document.cookie = `userRole=${appRole}; path=/; max-age=86400`
+      if (token) {
+        document.cookie = `authToken=${token}; path=/; max-age=86400`
+        localStorage.setItem("authToken", token)
+      }
       
       // Also update localStorage to prevent stale data conflicts
       localStorage.setItem("isAuthenticated", "true")

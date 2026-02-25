@@ -8,7 +8,7 @@ import { Text, Heading } from "@/components/ui/typography"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import {
   LayoutDashboard,
@@ -30,36 +30,18 @@ import {
 interface Lease {
   id: string
   tenant_id: string
-  property_id: string
-  landlord_id: string
-  monthly_rent: number
+  unit_id: string
+  rent_amount: number
   status: "pending" | "active" | "inactive" | "expired"
   start_date: string
   end_date: string
-  is_active: boolean
   created_at: string
-}
-
-interface Property {
-  id: string
-  title: string
-  address_line1: string
-  city: string
-  monthly_rent: number
-}
-
-interface Landlord {
-  id: string
-  full_name: string
-  email: string
 }
 
 function TenantLeasesContent() {
   const router = useRouter()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [leases, setLeases] = useState<Lease[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
-  const [landlords, setLandlords] = useState<Landlord[]>([])
   const [loading, setLoading] = useState(true)
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [selectedLease, setSelectedLease] = useState<Lease | null>(null)
@@ -101,39 +83,18 @@ function TenantLeasesContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        const token = getAuthToken()
+        const response = await fetch(`${API_BASE_URL}/leases`, {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        const payload = await response.json().catch(() => ({}))
 
-        // Fetch leases for this tenant
-        const { data: leasesData } = await supabase
-          .from("leases")
-          .select("*")
-          .eq("tenant_id", user.id)
-          .order("created_at", { ascending: false })
-
-        // Fetch properties
-        const propertyIds = leasesData?.map(l => l.property_id) || []
-        if (propertyIds.length > 0) {
-          const { data: propertiesData } = await supabase
-            .from("properties")
-            .select("id, title, address_line1, city, monthly_rent")
-            .in("id", propertyIds)
-
-          setProperties(propertiesData || [])
+        if (!response.ok || payload?.success === false) {
+          throw new Error(payload?.error || payload?.message || "Failed to load leases")
         }
 
-        // Fetch landlords
-        const landlordIds = leasesData?.map(l => l.landlord_id) || []
-        if (landlordIds.length > 0) {
-          const { data: landlordsData } = await supabase
-            .from("profiles")
-            .select("id, full_name, email")
-            .in("id", landlordIds)
-
-          setLandlords(landlordsData || [])
-        }
-
-        setLeases(leasesData || [])
+        setLeases(payload?.data?.leases || [])
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
@@ -187,7 +148,7 @@ function TenantLeasesContent() {
     },
     {
       title: "Monthly Rent",
-      value: `ETB ${(leases.filter(l => l.status === "active").reduce((sum, l) => sum + l.monthly_rent, 0) / 1000).toFixed(1)}K`,
+      value: `ETB ${(leases.filter(l => l.status === "active").reduce((sum, l) => sum + l.rent_amount, 0) / 1000).toFixed(1)}K`,
       icon: <DollarSign className="w-8 h-8" />,
       color: "text-purple-600",
     },
@@ -200,7 +161,17 @@ function TenantLeasesContent() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    const token = getAuthToken()
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
+    document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     router.push("/")
   }
 
@@ -286,8 +257,6 @@ function TenantLeasesContent() {
                 </div>
               ) : (
                 leases.map((lease) => {
-                  const property = properties.find(p => p.id === lease.property_id)
-                  const landlord = landlords.find(l => l.id === lease.landlord_id)
                   const daysRemaining = Math.ceil(
                     (new Date(lease.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
                   )
@@ -308,9 +277,9 @@ function TenantLeasesContent() {
                             <Home className="w-5 h-5" />
                           </div>
                           <div className="flex-1">
-                            <Text className="font-semibold line-clamp-1">{property?.title}</Text>
+                            <Text className="font-semibold line-clamp-1">{`Unit ${lease.unit_id}`}</Text>
                             <Text className="text-xs text-muted-foreground line-clamp-1">
-                              {property?.address_line1}
+                              {`Lease ID: ${lease.id}`}
                             </Text>
                           </div>
                         </div>
@@ -323,24 +292,10 @@ function TenantLeasesContent() {
                       {/* Divider */}
                       <div className="h-px bg-border mb-4"></div>
 
-                      {/* Landlord Info */}
-                      <div className="mb-4">
-                        <Text className="text-xs font-semibold text-muted-foreground uppercase mb-2">Landlord</Text>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-semibold">
-                            {landlord?.full_name?.charAt(0) || "L"}
-                          </div>
-                          <div className="flex-1">
-                            <Text className="text-sm font-medium">{landlord?.full_name}</Text>
-                            <Text className="text-xs text-muted-foreground">{landlord?.email}</Text>
-                          </div>
-                        </div>
-                      </div>
-
                       {/* Rent Info */}
                       <div className="mb-4">
                         <Text className="text-xs font-semibold text-muted-foreground uppercase mb-2">Monthly Rent</Text>
-                        <Text className="text-2xl font-bold text-emerald-600">ETB {lease.monthly_rent.toLocaleString()}</Text>
+                        <Text className="text-2xl font-bold text-emerald-600">ETB {lease.rent_amount.toLocaleString()}</Text>
                       </div>
 
                       {/* Dates */}
@@ -402,49 +357,30 @@ function TenantLeasesContent() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
-              {/* Property Info */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Property</Text>
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white flex-shrink-0">
-                    <Home className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <Text className="font-semibold">{properties.find(p => p.id === selectedLease.property_id)?.title}</Text>
-                    <Text className="text-sm text-muted-foreground">
-                      {properties.find(p => p.id === selectedLease.property_id)?.address_line1}
-                    </Text>
-                    <Text className="text-sm text-muted-foreground">
-                      {properties.find(p => p.id === selectedLease.property_id)?.city}
-                    </Text>
-                  </div>
-                </div>
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
+                      {/* Property Info */}
+                      <div className="space-y-2">
+                        <Text className="text-xs font-semibold text-muted-foreground uppercase">Property</Text>
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white flex-shrink-0">
+                            <Home className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <Text className="font-semibold">{`Unit ${selectedLease.unit_id}`}</Text>
+                            <Text className="text-sm text-muted-foreground">
+                              {`Lease ID: ${selectedLease.id}`}
+                            </Text>
+                          </div>
+                        </div>
+                      </div>
 
-              {/* Landlord Info */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Landlord</Text>
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                    {landlords.find(l => l.id === selectedLease.landlord_id)?.full_name?.charAt(0) || "L"}
-                  </div>
-                  <div>
-                    <Text className="font-semibold">{landlords.find(l => l.id === selectedLease.landlord_id)?.full_name}</Text>
-                    <Text className="text-sm text-muted-foreground">
-                      {landlords.find(l => l.id === selectedLease.landlord_id)?.email}
-                    </Text>
-                  </div>
-                </div>
-              </div>
-
-              {/* Monthly Rent */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Monthly Rent</Text>
-                <Text className="text-2xl font-bold text-emerald-600">
-                  ETB {selectedLease.monthly_rent.toLocaleString()}
-                </Text>
-              </div>
+                      {/* Monthly Rent */}
+                      <div className="space-y-2">
+                        <Text className="text-xs font-semibold text-muted-foreground uppercase">Monthly Rent</Text>
+                        <Text className="text-2xl font-bold text-emerald-600">
+                          ETB {selectedLease.rent_amount.toLocaleString()}
+                        </Text>
+                      </div>
 
               {/* Status */}
               <div className="space-y-2">
@@ -485,7 +421,7 @@ function TenantLeasesContent() {
               <div className="space-y-2">
                 <Text className="text-xs font-semibold text-muted-foreground uppercase">Total Value</Text>
                 <Text className="text-xl font-bold text-purple-600">
-                  ETB {(selectedLease.monthly_rent * Math.ceil((new Date(selectedLease.end_date).getTime() - new Date(selectedLease.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))).toLocaleString()}
+                  ETB {(selectedLease.rent_amount * Math.ceil((new Date(selectedLease.end_date).getTime() - new Date(selectedLease.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))).toLocaleString()}
                 </Text>
               </div>
 

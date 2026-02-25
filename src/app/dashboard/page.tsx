@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { RevenueChart } from "@/components/dashboard/RevenueChart"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -68,21 +68,37 @@ function DashboardContent() {
   ])
   const [loading, setLoading] = useState(true)
 
-  // Fetch dashboard metrics from Supabase
+  // Fetch dashboard metrics from API
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
         setLoading(true)
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('is_active', true)
+        const token = getAuthToken()
+        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        const buildingsPayload = await buildingsRes.json().catch(() => ({}))
+        if (!buildingsRes.ok || buildingsPayload?.success === false) {
+          throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
+        }
 
-        if (error) throw error
+        const buildings = buildingsPayload?.data?.buildings || []
+        const units: any[] = []
 
-        const properties = data || []
-        const totalRevenue = properties.reduce((sum: number, prop: any) => sum + (prop.monthly_rent || 0), 0)
-        const activeListings = properties.length
+        for (const building of buildings) {
+          const unitsRes = await fetch(`${API_BASE_URL}/buildings/${building.id}/units`, {
+            method: "GET",
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          })
+          const unitsPayload = await unitsRes.json().catch(() => ({}))
+          if (unitsRes.ok && unitsPayload?.success !== false) {
+            units.push(...(unitsPayload?.data?.units || []))
+          }
+        }
+
+        const activeListings = units.length
+        const totalRevenue = units.reduce((sum: number, unit: any) => sum + (unit.rent_amount || 0), 0)
 
         setMetrics([
           {

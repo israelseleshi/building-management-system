@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import {
   LayoutDashboard,
   MessageSquare,
@@ -71,24 +71,28 @@ function SettingsContent() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        const token = getAuthToken()
+        const response = await fetch(`${API_BASE_URL}/user/me`, {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok || payload?.success === false) {
+          throw new Error(payload?.error || payload?.message || "Failed to load profile")
+        }
 
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-
-        if (error) throw error
+        const data = payload?.data?.user || {}
+        const fullName = data?.full_name || ""
+        const [firstName, ...rest] = fullName.split(" ")
+        const lastName = rest.join(" ")
 
         setProfile({
-          firstName: data.first_name || "",
-          lastName: data.last_name || "",
+          firstName: firstName || "",
+          lastName: lastName || "",
           email: data.email || "",
           phone: data.phone || "",
-          address: data.address || "",
-          bio: data.bio || "",
+          address: "",
+          bio: "",
         })
       } catch (err) {
         console.error('Error fetching profile:', err)
@@ -159,10 +163,17 @@ function SettingsContent() {
   ]
 
   const handleLogout = () => {
+    const token = getAuthToken()
+    fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }).catch(() => undefined)
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
     document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     router.push("/auth/signin")
   }
 
@@ -190,23 +201,23 @@ function SettingsContent() {
 
   const handleSaveProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: profile.firstName,
-          last_name: profile.lastName,
-          email: profile.email,
+      const token = getAuthToken()
+      const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ")
+      const response = await fetch(`${API_BASE_URL}/user/me`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          full_name: fullName,
           phone: profile.phone,
-          address: profile.address,
-          bio: profile.bio,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id)
-
-      if (error) throw error
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.message || "Failed to save profile changes")
+      }
 
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
@@ -216,9 +227,30 @@ function SettingsContent() {
     }
   }
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (password.new !== password.confirm) {
       alert("Passwords do not match")
+      return
+    }
+    if (!password.current || !password.new) {
+      alert("Please fill in all password fields")
+      return
+    }
+    const token = getAuthToken()
+    const response = await fetch(`${API_BASE_URL}/user/me/password`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        currentPassword: password.current,
+        newPassword: password.new,
+      }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok || payload?.success === false) {
+      alert(payload?.error || payload?.message || "Failed to change password")
       return
     }
     setSaveSuccess(true)
@@ -232,31 +264,35 @@ function SettingsContent() {
 
   const handleFieldSave = async (field: string, value: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      // Map field names to database column names
-      const fieldMap: { [key: string]: string } = {
-        firstName: 'first_name',
-        lastName: 'last_name',
-        email: 'email',
-        phone: 'phone',
-        address: 'address',
-        bio: 'bio',
+      if (["email", "address", "bio"].includes(field)) {
+        alert("This field is not supported by the current API yet.")
+        return
       }
 
-      const dbField = fieldMap[field]
-      if (!dbField) return
+      const token = getAuthToken()
+      const fullName = field === "firstName" || field === "lastName"
+        ? [field === "firstName" ? value : profile.firstName, field === "lastName" ? value : profile.lastName]
+            .filter(Boolean)
+            .join(" ")
+        : [profile.firstName, profile.lastName].filter(Boolean).join(" ")
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          [dbField]: value,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id)
+      const body: Record<string, string> = {
+        full_name: fullName,
+        phone: field === "phone" ? value : profile.phone,
+      }
 
-      if (error) throw error
+      const response = await fetch(`${API_BASE_URL}/user/me`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || payload?.message || "Failed to save changes")
+      }
 
       setProfile((prev) => ({ ...prev, [field]: value }))
       setEditingField(null)
