@@ -6,6 +6,8 @@ import { Text, Heading } from "@/components/ui/typography"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import { TenantDocumentUpload, DocumentList } from "@/components/documents"
 import {
   LayoutDashboard,
@@ -87,6 +89,19 @@ function TenantDocumentsContent() {
       try {
         setLoading(true)
         const token = getAuthToken()
+        if (!token) {
+          router.push("/auth/signin")
+          return
+        }
+
+        // Fetch user info for currentUserId
+        const userResponse = await fetch(`${API_BASE_URL}/user/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const userData = await userResponse.json()
+        if (userData.success) {
+          setCurrentUserId(userData.data.user.user_id)
+        }
         
         // Fetch document types
         const typesPayload = await fetch(`${API_BASE_URL}/document/document-types`, {

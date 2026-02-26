@@ -158,3 +158,6 @@ storybook-static
 
 # Lock files (keep package-lock.json but ignore others)
 yarn.lock
+
+# Backend directory (separate repo)
+/BmsBackend

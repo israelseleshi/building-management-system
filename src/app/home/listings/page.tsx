@@ -68,30 +68,53 @@ function ListingsPageContent() {
     const fetchListings = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`${API_BASE_URL}/buildings`)
-        const payload = await response.json()
+        const url = `${API_BASE_URL}/public/listings`
+        const response = await fetch(url)
+        const contentType = response.headers.get("content-type") || ""
+        const isJson = contentType.includes("application/json")
 
-        if (!response.ok) throw new Error(payload.message || "Failed to fetch listings")
+        const payload = isJson ? await response.json().catch(() => ({})) : null
+        const rawText = !isJson ? await response.text().catch(() => "") : ""
+
+        if (!response.ok) {
+          const backendMessage = (payload as any)?.message || (payload as any)?.error
+          const preview = rawText ? rawText.slice(0, 120) : ""
+          throw new Error(
+            backendMessage ||
+              `Failed to fetch listings (${response.status}). ${preview ? `Response: ${preview}` : `URL: ${url}`}`
+          )
+        }
 
         // Transform database records to listing format
-        const transformedListings: Listing[] = (payload.data?.buildings || []).map((property: any, index: number) => ({
-          id: property.id.toString(),
-          title: property.name, // API uses 'name' not 'title'
-          location: property.address, // API uses 'address'
-          price: property.rent_amount || 0,
+        const transformedListings: Listing[] = (((payload as any)?.data?.units as any[]) || []).map((row: any, index: number) => {
+          const unit = row
+          const building = row?.building
+          const buildingName = building?.name || "Building"
+          const unitNumber = unit?.unit_number?.toString?.() || "Unit"
+          const title = `${buildingName} - ${unitNumber}`
+          const location = building?.address || building?.city || ""
+          const amenitiesRaw = building?.amenities
+          const amenities = Array.isArray(amenitiesRaw) ? amenitiesRaw : []
+
+          return {
+            id: (unit?.unit_id ?? unit?.id ?? `${index}`).toString(),
+            title,
+            location,
+            price: Number(unit?.base_rent || 0),
           currency: 'ETB',
           period: 'monthly',
           capacity: 20, 
           parking: 10,
-          area: 150,
+          area: Number(unit?.sqft || 0) || 150,
           rating: 4.5 + (index % 5) * 0.1,
           reviews: 10 + (index % 20),
-          image: property.image_url || `https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop&t=${index}`,
+          image: `https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop&t=${index}`,
           featured: index < 3,
-          amenities: ['Air Conditioning', 'Security', 'Parking', 'Storage'],
-          type: property.description?.includes('Office') ? 'office' : property.description?.includes('Retail') ? 'retail' : 'commercial',
-          listed: new Date(property.created_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-        }))
+          amenities: amenities.length > 0 ? amenities : ['Security', 'Parking'],
+          type: 'commercial',
+          listed: new Date(building?.created_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+          }
+        })
 
         setAllListings(transformedListings)
         setError(null)

@@ -135,38 +135,23 @@ function ListingsContent() {
       try {
         setLoading(true)
         const token = getAuthToken()
-        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
+        
+        // Use public listings endpoint - accessible to all users including tenants
+        const listingsRes = await fetch(`${API_BASE_URL}/public/listings`, {
           method: "GET",
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
-        const buildingsPayload = await buildingsRes.json().catch(() => ({}))
-        if (!buildingsRes.ok || buildingsPayload?.success === false) {
-          throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
+        const listingsPayload = await listingsRes.json().catch(() => ({}))
+        if (!listingsRes.ok || listingsPayload?.success === false) {
+          throw new Error(listingsPayload?.error || listingsPayload?.message || "Failed to load listings")
         }
 
-        const buildings = (buildingsPayload?.data?.buildings || []) as Building[]
-        const selectedBuilding = buildings[0]
+        const units = (listingsPayload?.data?.units || []) as any[]
 
-        if (!selectedBuilding) {
-          setAllUnits([])
-          return
-        }
-
-        const unitsRes = await fetch(`${API_BASE_URL}/buildings/${selectedBuilding.id}/units`, {
-          method: "GET",
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        })
-        const unitsPayload = await unitsRes.json().catch(() => ({}))
-        if (!unitsRes.ok || unitsPayload?.success === false) {
-          throw new Error(unitsPayload?.error || unitsPayload?.message || "Failed to load units")
-        }
-
-        const units = (unitsPayload?.data?.units || []) as ApiUnit[]
-
-        const transformedUnits: Unit[] = (units || []).map((unit: ApiUnit, index: number) => ({
-          id: unit.id?.toString() || `${selectedBuilding.id}-${unit.unit_number}`,
+        const transformedUnits: Unit[] = (units || []).map((unit: any, index: number) => ({
+          id: unit.unit_id?.toString() || `${unit.building?.building_id}-${unit.unit_number}`,
           title: `Unit ${unit.unit_number}`,
-          location: selectedBuilding.address,
+          location: unit.building?.address || 'Unknown location',
           price: unit.rent_amount,
           currency: 'ETB',
           period: 'monthly',
@@ -179,31 +164,13 @@ function ListingsContent() {
           featured: index < 3,
           type: 'apartment',
           listed: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-          status: unit.status || 'active',
-          buildingId: selectedBuilding.id.toString()
+          status: unit.status || 'vacant',
+          buildingId: unit.building?.building_id?.toString() || ''
         }))
 
         setAllUnits(transformedUnits)
       } catch (err) {
         console.error('Error fetching listings:', err)
-        // If backend denies access (expired/missing token or insufficient role),
-        // clear local auth state and force re-auth.
-        if (err instanceof Error) {
-          const msg = err.message.toLowerCase()
-          if (msg.includes("permission") || msg.includes("unauthorized") || msg.includes("forbidden")) {
-            try {
-              localStorage.removeItem("authToken")
-              localStorage.removeItem("isAuthenticated")
-              localStorage.removeItem("userRole")
-              document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-              document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-              document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-            } catch {
-              // ignore
-            }
-            router.push("/auth/signin")
-          }
-        }
         setAllUnits([])
       } finally {
         setLoading(false)
@@ -455,7 +422,7 @@ function ListingsContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="flex items-baseline">
-                            <Large className="text-primary">{unit.price.toLocaleString()}</Large>
+                            <Large className="text-primary">{unit.price?.toLocaleString() || '0'}</Large>
                             <Text size="sm" className="text-muted-foreground ml-1">
                               {unit.currency}/{unit.period}
                             </Text>
@@ -577,7 +544,7 @@ function ListingsContent() {
                         </div>
                         <div className="text-right">
                           <div className="flex items-baseline">
-                            <Large className="text-primary">{unit.price.toLocaleString()}</Large>
+                            <Large className="text-primary">{unit.price?.toLocaleString() || '0'}</Large>
                             <Text size="sm" className="text-muted-foreground ml-1">
                               {unit.currency}/{unit.period}
                             </Text>

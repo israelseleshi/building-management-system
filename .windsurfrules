@@ -1,0 +1,11 @@
+# Workspace Context
+
+- **Backend Location**: All backend source code is located in the `c:/Users/hp/Documents/BMS - Project/abel-push/building-management-system/BmsBackend` folder.
+- **Database Schema**: The authoritative database schema is defined in `c:/Users/hp/Documents/BMS - Project/abel-push/building-management-system/BmsBackend/prisma/schema.prisma`.
+- **Frontend Location**: The frontend Next.js application is located in the root `src` folder.
+
+# Development Rules
+
+- **Schema First**: Always refer to `BmsBackend/prisma/schema.prisma` before making any changes to backend controllers or frontend data fetching logic to ensure field name consistency.
+- **API Consistency**: Ensure that frontend requests in `src/app` align with the field names and types expected by the backend controllers in `BmsBackend/src/controllers`.
+- **Permission Checks**: When working on backend logic, always verify the user role and linked profile (e.g., `owner_id`) from `req.user` (populated by `authMiddleware.js`).

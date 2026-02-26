@@ -17,7 +17,7 @@ export async function getGlobalNotices() {
       headers: {
         "Content-Type": "application/json",
       },
-      next: { revalidate: 0 } // Disable caching for fresh data
+      cache: "no-store"
     })
 
     if (!response.ok) {
@@ -98,7 +98,6 @@ export async function updateGlobalNotice(id: string, formData: FormData): Promis
 
   const title = formData.get('title') as string
   const message = formData.get('message') as string
-  const priority = (formData.get('priority') as string) || 'normal'
 
   const response = await fetch(`${API_BASE_URL}/maintenance/${id}/status`, {
     method: "PUT",

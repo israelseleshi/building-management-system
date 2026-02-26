@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { Combobox } from "@/components/ui/combobox"
 import {
   LayoutDashboard,
   Building2,
@@ -28,17 +29,36 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function ChatPage() {
   return (
-    <ProtectedRoute requiredRole="landlord">
+    <ProtectedRoute requiredRole="owner">
       <ChatContent />
     </ProtectedRoute>
   )
 }
 
-type PersonItem = {
-  id: string
-  name: string
-  avatar: string | null
-  unread: number
+type ContactItem = {
+  user_id: number
+  full_name: string
+  username: string
+  profile_picture: string | null
+  role: string
+  building_id: number
+  building_name: string
+  unit_id: number | null
+  unit_number: string | null
+  floor: number | null
+}
+
+type ConversationItem = {
+  conversation_id: number
+  participants: Array<{
+    user: {
+      user_id: number
+      full_name: string
+      profile_picture: string | null
+      role: string
+    }
+  }>
+  unreadCount?: number
 }
 
 type MessageItem = {
@@ -55,12 +75,20 @@ function ChatContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [chatSearch, setChatSearch] = useState("")
   const [selectedPersonIndex, setSelectedPersonIndex] = useState(0)
-  const [people, setPeople] = useState<PersonItem[]>([])
+  const [contacts, setContacts] = useState<ContactItem[]>([])
+  const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [messages, setMessages] = useState<MessageItem[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Building/Floor filters
+  const [buildings, setBuildings] = useState<Array<{ value: string; label: string }>>([])
+  const [floors, setFloors] = useState<Array<{ value: string; label: string }>>([])
+  const [selectedBuilding, setSelectedBuilding] = useState<string>("all")
+  const [selectedFloor, setSelectedFloor] = useState<string>("all")
+  const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
 
   // Top 15 used emojis
   const topEmojis = ["😀", "😂", "❤️", "👍", "🔥", "😍", "🎉", "✨", "😢", "😡", "👏", "🙏", "💯", "🚀", "😎"]
@@ -122,6 +150,15 @@ function ChatContent() {
     },
   ]
 
+  // Local search filtering
+  const filteredContacts = (contacts || []).filter(contact => {
+    if (!contact) return false;
+    return !chatSearch || 
+      (contact.full_name && contact.full_name.toLowerCase().includes(chatSearch.toLowerCase())) ||
+      (contact.username && contact.username.toLowerCase().includes(chatSearch.toLowerCase()))
+  })
+
+  // Load contacts and conversations on mount
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -131,81 +168,145 @@ function ChatContent() {
           return
         }
 
-        // Fetch user info for currentUserId
+        // Fetch user info
         const userResponse = await fetch(`${API_BASE_URL}/user/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         const userData = await userResponse.json()
         if (userData.success) {
-          setCurrentUserId(userData.data.user.user_id)
+          setCurrentUserId(String(userData.data.user.user_id))
         }
 
-        // Fetch conversations
+        // Fetch user's buildings and floors for filters
+        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const buildingsData = await buildingsRes.json()
+        if (buildingsData.success) {
+          const formattedBuildings = buildingsData.data.buildings.map((b: any) => ({
+            value: String(b.building_id),
+            label: b.name
+          }))
+          setBuildings([{ value: "all", label: "All Buildings" }, ...formattedBuildings])
+          
+          const allFloors = new Set<number>()
+          buildingsData.data.buildings.forEach((b: any) => {
+            if (b.number_of_floors) {
+              for (let i = 1; i <= b.number_of_floors; i++) {
+                allFloors.add(i)
+              }
+            }
+          })
+          const formattedFloors = Array.from(allFloors)
+            .sort((a, b) => a - b)
+            .map(f => ({ value: String(f), label: `Floor ${f}` }))
+          setFloors([{ value: "all", label: "All Floors" }, ...formattedFloors])
+        }
+
+        // Fetch existing conversations
         const convsResponse = await fetch(`${API_BASE_URL}/conversations`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         const convsData = await convsResponse.json()
-        
-        if (convsData.success && convsData.data.conversations.length > 0) {
-          const formattedPeople = convsData.data.conversations.map((c: any) => ({
-            id: c.conversation_id,
-            name: c.participants.find((p: any) => p.user.user_id !== userData.data.user.user_id)?.user.full_name || "User",
-            avatar: c.participants.find((p: any) => p.user.user_id !== userData.data.user.user_id)?.user.profile_picture || null,
-            unread: c.unreadCount || 0
-          }))
-          setPeople(formattedPeople)
-          setSelectedPersonIndex(0)
-          await loadMessagesForConversation(convsData.data.conversations[0].conversation_id, token)
+        if (convsData.success) {
+          setConversations(convsData.data.conversations)
         }
       } catch (error) {
-        console.error("Error loading chat data:", error)
-      }
-    }
-
-    const loadMessagesForConversation = async (conversationId: string, token: string) => {
-      try {
-        const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const msgsData = await msgsResponse.json()
-        
-        if (msgsData.success) {
-          const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
-            id: m.message_id,
-            senderId: m.sender_id,
-            message: m.content,
-            timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            isOwn: m.sender_id === currentUserId
-          }))
-          setMessages(builtMessages)
-        }
-      } catch (error) {
-        console.error("Error loading messages:", error)
+        console.error("Error loading initial data:", error)
       }
     }
 
     loadData()
-  }, [currentUserId])
+  }, [router])
 
-  const handlePersonClick = async (index: number) => {
-    setSelectedPersonIndex(index)
-    const person = people[index]
+  // Fetch contacts whenever filters change
+  useEffect(() => {
+    const fetchContacts = async () => {
+      const token = getAuthToken()
+      if (!token) return
+
+      try {
+        const queryParams = new URLSearchParams()
+        if (selectedBuilding !== "all") queryParams.append("buildingId", selectedBuilding)
+        if (selectedFloor !== "all") queryParams.append("floor", selectedFloor)
+
+        const contactsRes = await fetch(`${API_BASE_URL}/conversations/contacts?${queryParams.toString()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const contactsData = await contactsRes.json()
+        if (contactsData.success) {
+          setContacts(contactsData.data.contacts)
+        }
+      } catch (error) {
+        console.error("Error fetching contacts:", error)
+      }
+    }
+
+    fetchContacts()
+  }, [selectedBuilding, selectedFloor])
+
+  // Start conversation with a contact
+  const startConversationWithContact = async (contact: ContactItem) => {
     const token = getAuthToken()
-    if (!person || !token) return
+    if (!token) return
 
     try {
-      const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${person.id}/messages`, {
+      // Check if conversation already exists
+      const existingConv = conversations.find(conv => 
+        conv.participants.some(p => p.user.user_id === contact.user_id)
+      )
+
+      if (existingConv) {
+        setActiveConversationId(existingConv.conversation_id)
+        await loadMessagesForConversation(existingConv.conversation_id, token)
+        return
+      }
+
+      // Create new conversation
+      const response = await fetch(`${API_BASE_URL}/conversations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ participantIds: [contact.user_id] }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        const newConvId = data.data.conversation?.conversation_id || data.data.conversationId
+        setActiveConversationId(newConvId)
+        
+        // Refresh conversations list
+        const convsResponse = await fetch(`${API_BASE_URL}/conversations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const convsData = await convsResponse.json()
+        if (convsData.success) {
+          setConversations(convsData.data.conversations)
+        }
+
+        await loadMessagesForConversation(newConvId, token)
+      }
+    } catch (error) {
+      console.error("Error starting conversation:", error)
+    }
+  }
+
+  const loadMessagesForConversation = async (conversationId: number, token: string) => {
+    try {
+      const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const msgsData = await msgsResponse.json()
-      
+
       if (msgsData.success) {
         const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
-          id: m.message_id,
-          senderId: m.sender_id,
+          id: String(m.message_id),
+          senderId: String(m.sender_id),
           message: m.content,
           timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          isOwn: m.sender_id === currentUserId
+          isOwn: String(m.sender_id) === currentUserId
         }))
         setMessages(builtMessages)
       }
@@ -214,18 +315,25 @@ function ChatContent() {
     }
   }
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return
+  const handlePersonClick = async (index: number) => {
+    setSelectedPersonIndex(index)
+    const contact = filteredContacts[index]
+    if (!contact) return
 
-    const person = people[selectedPersonIndex]
+    await startConversationWithContact(contact)
+  }
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !activeConversationId) return
+
     const token = getAuthToken()
-    if (!person || !token) return
+    if (!token) return
 
     const content = newMessage.trim()
     setNewMessage("")
 
     try {
-      const response = await fetch(`${API_BASE_URL}/conversations/${person.id}/messages`, {
+      const response = await fetch(`${API_BASE_URL}/conversations/${activeConversationId}/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -237,7 +345,7 @@ function ChatContent() {
       const data = await response.json()
       if (data.success) {
         setMessages((prev) => [...prev, {
-          id: data.data.message.message_id,
+          id: String(data.data.message.message_id),
           senderId: currentUserId || "",
           message: content,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -284,7 +392,7 @@ function ChatContent() {
     }
   }
 
-  const currentPerson = people[selectedPersonIndex]
+  const currentPerson = filteredContacts[selectedPersonIndex]
 
   return (
     <div className="min-h-screen flex">
@@ -305,73 +413,97 @@ function ChatContent() {
           onSearchChange={setSearchQuery}
         />
 
-        {/* Chat Container */}
-        <div className="flex-1 flex overflow-hidden" style={{ backgroundColor: '#F5EFE7' }}>
+        {/* Chat Container with padding gap */}
+        <div className="flex-1 p-4 flex overflow-hidden" style={{ backgroundColor: '#F5EFE7' }}>
           {/* Conversations Sidebar */}
-          <div className="w-96 border-r border-border flex flex-col" style={{ backgroundColor: '#F5EFE7' }}>
-            {/* Search Bar */}
-            <div className="p-4 border-b border-border">
+          <div className="w-96 border border-border rounded-lg overflow-hidden flex flex-col mr-4" style={{ backgroundColor: '#F5EFE7' }}>
+            {/* Filters */}
+            <div className="p-4 border-b border-border space-y-3">
+              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Chats search..."
+                  placeholder="Search contacts..."
                   value={chatSearch}
                   onChange={(e) => setChatSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
+
+              {/* Building Filter */}
+              <Combobox
+                options={buildings}
+                value={selectedBuilding}
+                onValueChange={setSelectedBuilding}
+                placeholder="All Buildings"
+                className="w-full"
+              />
+
+              {/* Floor Filter */}
+              <Combobox
+                options={floors}
+                value={selectedFloor}
+                onValueChange={setSelectedFloor}
+                placeholder="All Floors"
+                className="w-full"
+              />
             </div>
 
-            {/* Tenants list */}
+            {/* Contacts list */}
             <div className="flex-1 overflow-y-auto">
-              {people.map((person, idx) => (
-                <button
-                  key={person.id}
-                  onClick={() => handlePersonClick(idx)}
-                  className={`w-full px-4 py-3 border-b border-border text-left transition-all duration-200 transform hover:scale-[1.02] hover:shadow-md ${
-                    selectedPersonIndex === idx ? 'bg-white/60 shadow-sm' : 'hover:bg-white/40'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative">
-                      <Avatar className="w-10 h-10">
-                        {person.avatar && <AvatarImage src={person.avatar} />}
-                        <AvatarFallback>{person.name[0]}</AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-foreground text-sm">{person.name}</h3>
-                        <span className="text-xs text-muted-foreground">Tenant</span>
+              {filteredContacts.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  No contacts found
+                </div>
+              ) : (
+                filteredContacts.map((contact, idx) => (
+                  <button
+                    key={contact.user_id}
+                    onClick={() => handlePersonClick(idx)}
+                    className={`w-full px-4 py-3 border-b border-border text-left transition-all duration-200 transform hover:scale-[1.02] hover:shadow-md ${
+                      selectedPersonIndex === idx ? 'bg-white/60 shadow-sm' : 'hover:bg-white/40'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="relative">
+                        <Avatar className="w-10 h-10">
+                          {contact.profile_picture && <AvatarImage src={contact.profile_picture} />}
+                          <AvatarFallback>{contact.full_name[0]}</AvatarFallback>
+                        </Avatar>
                       </div>
-                      {/* last message preview could be added with an extra query */}
-                    </div>
-                    {person.unread > 0 && (
-                      <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {person.unread}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-medium text-foreground text-sm">{contact.full_name}</h3>
+                          <span className="text-xs text-muted-foreground capitalize">{contact.role}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {contact.building_name} {contact.floor !== null && `• Floor ${contact.floor}`}
+                        </p>
                       </div>
-                    )}
-                  </div>
-                </button>
-              ))}
+                    </div>
+                  </button>
+                ))
+              )}
             </div>
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 flex flex-col" style={{ backgroundColor: '#F5EFE7' }}>
+          <div className="flex-1 border border-border rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: '#F5EFE7' }}>
             {/* Chat Header */}
             <div className="border-b border-border px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
-                  {currentPerson?.avatar && <AvatarImage src={currentPerson.avatar} />}
-                  <AvatarFallback>{currentPerson?.name[0]}</AvatarFallback>
+                  {currentPerson?.profile_picture && <AvatarImage src={currentPerson.profile_picture} />}
+                  <AvatarFallback>{currentPerson?.full_name?.[0]}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-semibold text-foreground">{currentPerson?.name}</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Online
-                  </p>
+                  <h2 className="font-semibold text-foreground">{currentPerson?.full_name || "Select a contact"}</h2>
+                  {currentPerson && (
+                    <p className="text-xs text-muted-foreground">
+                      {currentPerson.building_name} {currentPerson.floor !== null && `• Floor ${currentPerson.floor}`}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -389,32 +521,38 @@ function ChatContent() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
-                >
-                  <div className={`flex items-end gap-2 max-w-md ${msg.isOwn ? 'flex-row-reverse' : ''}`}>
-                    {!msg.isOwn && currentPerson && (
-                      <Avatar className="w-8 h-8 flex-shrink-0">
-                        <AvatarFallback>{currentPerson.name[0]}</AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div className={`${msg.isOwn ? 'text-right' : 'text-left'}`}>
-                      <div
-                        className={`px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-md ${
-                          msg.isOwn
-                            ? 'bg-gray-200 text-foreground rounded-br-none'
-                            : 'bg-gray-100 text-foreground rounded-bl-none'
-                        }`}
-                      >
-                        <p className="text-sm">{msg.message}</p>
+              {!activeConversationId ? (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  Select a contact to start messaging
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+                  >
+                    <div className={`flex items-end gap-2 max-w-md ${msg.isOwn ? 'flex-row-reverse' : ''}`}>
+                      {!msg.isOwn && currentPerson && (
+                        <Avatar className="w-8 h-8 flex-shrink-0">
+                          <AvatarFallback>{currentPerson.full_name[0]}</AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div className={`${msg.isOwn ? 'text-right' : 'text-left'}`}>
+                        <div
+                          className={`px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-md ${
+                            msg.isOwn
+                              ? 'bg-gray-200 text-foreground rounded-br-none'
+                              : 'bg-gray-100 text-foreground rounded-bl-none'
+                          }`}
+                        >
+                          <p className="text-sm">{msg.message}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{msg.timestamp}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">{msg.timestamp}</p>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* Message Input */}
@@ -468,17 +606,19 @@ function ChatContent() {
 
                 <input
                   type="text"
-                  placeholder="Enter message..."
+                  placeholder={activeConversationId ? "Enter message..." : "Select a contact first"}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="flex-1 px-4 py-2 rounded-lg border border-border bg-white/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all duration-200"
+                  disabled={!activeConversationId}
+                  className="flex-1 px-4 py-2 rounded-lg border border-border bg-white/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all duration-200 disabled:opacity-50"
                 />
                 <Button
                   onClick={handleSendMessage}
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95"
+                  disabled={!activeConversationId}
+                  className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95 disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                 </Button>

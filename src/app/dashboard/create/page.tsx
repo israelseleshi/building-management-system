@@ -1,17 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { Heading } from "@/components/ui/typography"
 import { Toaster } from "@/components/ui/toaster"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { Combobox } from "@/components/ui/combobox"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { Building2, CheckCircle, Loader2 } from "lucide-react"
+import { Building2, Loader2 } from "lucide-react"
 import { LayoutDashboard, PlusCircle, MessageSquare, CreditCard, TrendingUp, Settings, Users } from "lucide-react"
 import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 
@@ -29,17 +28,45 @@ function CreateListingContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [imageFile, setImageFile] = useState<File | null>(null)
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    addressLine1: "",
-    city: "Addis Ababa",
-    country: "Ethiopia",
+    unitNumber: "1",
+    floorNumber: "",
+    bedrooms: "",
+    bathrooms: "",
+    sizeSqm: "",
     monthlyRent: "",
-    status: "draft",
+    status: "vacant",
   })
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [buildings, setBuildings] = useState<any[]>([])
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>("")
+  const [isLoadingBuildings, setIsLoadingBuildings] = useState(true)
+
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      const token = getAuthToken()
+      if (!token) return
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/buildings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const payload = await res.json()
+        if (res.ok && payload.success) {
+          const buildingsList = payload.data.buildings || []
+          setBuildings(buildingsList)
+          if (buildingsList.length > 0) {
+            setSelectedBuildingId((buildingsList[0].building_id || buildingsList[0].id).toString())
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch buildings:", error)
+      } finally {
+        setIsLoadingBuildings(false)
+      }
+    }
+
+    fetchBuildings()
+  }, [])
 
   const navItems = [
     {
@@ -113,64 +140,22 @@ function CreateListingContent() {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Image must be less than 10MB",
-          variant: "destructive",
-        })
-        return
-      }
-
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload an image file",
-          variant: "destructive",
-        })
-        return
-      }
-
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!selectedBuildingId) {
+      toast({
+        title: "Selection Error",
+        description: "Please select a building first",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
       // Validation
-      if (!formData.title.trim()) {
-        toast({
-          title: "Validation Error",
-          description: "Please enter a property title",
-          variant: "destructive",
-        })
-        setIsSubmitting(false)
-        return
-      }
-
-      if (!formData.addressLine1.trim()) {
-        toast({
-          title: "Validation Error",
-          description: "Please enter an address",
-          variant: "destructive",
-        })
-        setIsSubmitting(false)
-        return
-      }
-
       if (!formData.monthlyRent) {
         toast({
           title: "Validation Error",
@@ -192,86 +177,42 @@ function CreateListingContent() {
         return
       }
 
-      if (imageFile) {
-        toast({
-          title: "Image upload not available",
-          description: "Image upload is not supported by the current API.",
-          variant: "destructive",
-        })
+      const unitData = {
+        unit_number: formData.unitNumber || "1",
+        floor_number: formData.floorNumber ? parseInt(formData.floorNumber) : undefined,
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
+        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : undefined,
+        size_sqm: formData.sizeSqm ? parseFloat(formData.sizeSqm) : undefined,
+        rent_amount: parseFloat(formData.monthlyRent),
+        status: formData.status,
       }
 
-      const buildingRes = await fetch(`${API_BASE_URL}/buildings`, {
+      const unitRes = await fetch(`${API_BASE_URL}/buildings/${selectedBuildingId}/units`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: formData.title,
-          address: formData.addressLine1,
-          description: formData.description,
-          image_url: null,
-        }),
+        body: JSON.stringify(unitData),
       })
-      const buildingPayload = await buildingRes.json().catch(() => ({}))
-      if (!buildingRes.ok || buildingPayload?.success === false) {
-        toast({
-          title: "Error",
-          description: buildingPayload?.error || buildingPayload?.message || "Failed to create building",
-          variant: "destructive",
-        })
-        setIsSubmitting(false)
-        return
-      }
-
-      const buildingId = buildingPayload?.data?.building?.id
-      if (buildingId) {
-        const unitStatus =
-          formData.status === "occupied"
-            ? "occupied"
-            : formData.status === "inactive"
-              ? "maintenance"
-              : "vacant"
-
-        await fetch(`${API_BASE_URL}/buildings/${buildingId}/units`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            unit_number: "1",
-            rent_amount: parseFloat(formData.monthlyRent),
-            status: unitStatus,
-          }),
-        }).catch(() => undefined)
+      
+      const unitPayload = await unitRes.json().catch(() => ({}))
+      
+      if (!unitRes.ok) {
+        throw new Error(unitPayload.error || unitPayload.message || "Failed to create unit")
       }
 
       toast({
         title: "Success",
-        description: `Property "${formData.title}" has been created successfully!`,
-      })
-      
-      // Reset form
-      setFormData({
-        title: "",
-        description: "",
-        addressLine1: "",
-        city: "Addis Ababa",
-        country: "Ethiopia",
-        monthlyRent: "",
-        status: "draft",
-      })
-      setImagePreview(null)
-      setImageFile(null)
+        description: "Unit created successfully!",
+      });
 
-      // Redirect to listings
       router.push("/dashboard/listings")
-    } catch (error) {
-      console.error('Submit error:', error)
+    } catch (error: any) {
+      console.error("handleSubmit error:", error)
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       })
     } finally {
@@ -292,7 +233,7 @@ function CreateListingContent() {
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
           title="Create Listing"
-          subtitle="Add a new property to your portfolio"
+          subtitle="Create a unit with essential details"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
@@ -309,119 +250,107 @@ function CreateListingContent() {
               }}
             >
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Property Title */}
+                {/* Building Selection Section */}
                 <div>
                   <label className="text-sm font-semibold text-foreground block mb-2">
-                    Property Title <span className="text-red-600">*</span>
+                    Select Building <span className="text-red-600">*</span>
                   </label>
-                  <Input
-                    type="text"
-                    name="title"
-                    placeholder="e.g., Nano Computing ICT Solutions"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    disabled={isSubmitting}
+                  <Combobox
+                    options={buildings.map(b => ({
+                      value: (b.building_id || b.id).toString(),
+                      label: b.name
+                    }))}
+                    value={selectedBuildingId}
+                    onValueChange={setSelectedBuildingId}
+                    placeholder={isLoadingBuildings ? "Loading buildings..." : "Select a building"}
+                    className="w-full"
+                    disabled={isSubmitting || isLoadingBuildings}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">The name of your property or business</p>
+                  {buildings.length === 0 && !isLoadingBuildings && (
+                    <p className="text-xs text-red-500 mt-1">No buildings found. Please create a building first.</p>
+                  )}
                 </div>
 
-                {/* Description */}
-                <div>
-                  <label className="text-sm font-semibold text-foreground block mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    placeholder="Describe your property..."
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
-                    rows={3}
-                    disabled={isSubmitting}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Add details about your property</p>
-                </div>
-
-                {/* Image Upload */}
-                <div>
-                  <label className="text-sm font-semibold text-foreground block mb-2">
-                    Property Image
-                  </label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer bg-background/50">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                      id="image-upload"
-                      disabled={isSubmitting}
-                    />
-                    <label htmlFor="image-upload" className="cursor-pointer block">
-                      {imagePreview ? (
-                        <div className="space-y-2">
-                          <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-lg mx-auto" />
-                          <p className="text-xs text-muted-foreground">Click to change image</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Building2 className="w-8 h-8 text-muted-foreground mx-auto" />
-                          <p className="text-sm font-medium text-foreground">Click to upload image</p>
-                          <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
-                        </div>
-                      )}
-                    </label>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Upload a photo of your property (optional)</p>
-                </div>
-
-                {/* Address */}
-                <div>
-                  <label className="text-sm font-semibold text-foreground block mb-2">
-                    Address <span className="text-red-600">*</span>
-                  </label>
-                  <Input
-                    type="text"
-                    name="addressLine1"
-                    placeholder="e.g., Bole Road, Building A"
-                    value={formData.addressLine1}
-                    onChange={(e) => setFormData(prev => ({ ...prev, addressLine1: e.target.value }))}
-                    className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    disabled={isSubmitting}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Street address of your property</p>
-                </div>
-
-                {/* City and Country */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold text-foreground block mb-2">
-                      City
-                    </label>
-                    <Input
-                      type="text"
-                      name="city"
-                      placeholder="e.g., Addis Ababa"
-                      value={formData.city}
-                      onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                      className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      disabled={isSubmitting}
-                    />
+                {/* Unit Details Section */}
+                <div className="pt-4 border-t border-border">
+                  <h3 className="text-sm font-bold text-foreground mb-4">Unit Details</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-2">
+                        Unit Number <span className="text-red-600">*</span>
+                      </label>
+                      <Input
+                        type="text"
+                        name="unitNumber"
+                        placeholder="e.g., 101"
+                        value={formData.unitNumber}
+                        onChange={(e) => setFormData(prev => ({ ...prev, unitNumber: e.target.value }))}
+                        className="w-full px-4 py-3 border border-border rounded-lg bg-background"
+                        disabled={isSubmitting}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-2">
+                        Floor Number
+                      </label>
+                      <Input
+                        type="number"
+                        name="floorNumber"
+                        placeholder="e.g., 1"
+                        value={formData.floorNumber}
+                        onChange={(e) => setFormData(prev => ({ ...prev, floorNumber: e.target.value }))}
+                        className="w-full px-4 py-3 border border-border rounded-lg bg-background"
+                        disabled={isSubmitting}
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-semibold text-foreground block mb-2">
-                      Country
-                    </label>
-                    <Input
-                      type="text"
-                      name="country"
-                      placeholder="e.g., Ethiopia"
-                      value={formData.country}
-                      onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                      className="w-full px-4 py-3 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      disabled={isSubmitting}
-                    />
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-1">
+                        Bedrooms
+                      </label>
+                      <Input
+                        type="number"
+                        name="bedrooms"
+                        placeholder="0"
+                        value={formData.bedrooms}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bedrooms: e.target.value }))}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-1">
+                        Bathrooms
+                      </label>
+                      <Input
+                        type="number"
+                        name="bathrooms"
+                        placeholder="0"
+                        value={formData.bathrooms}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bathrooms: e.target.value }))}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-foreground block mb-1">
+                        Size (sqm)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        name="sizeSqm"
+                        placeholder="0.0"
+                        value={formData.sizeSqm}
+                        onChange={(e) => setFormData(prev => ({ ...prev, sizeSqm: e.target.value }))}
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background"
+                        disabled={isSubmitting}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -448,10 +377,9 @@ function CreateListingContent() {
                     </label>
                     <Combobox
                       options={[
-                        { value: "draft", label: "Draft" },
-                        { value: "listed", label: "Listed" },
+                        { value: "vacant", label: "Vacant" },
                         { value: "occupied", label: "Occupied" },
-                        { value: "inactive", label: "Inactive" },
+                        { value: "maintenance", label: "Maintenance" },
                       ]}
                       value={formData.status}
                       onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
@@ -489,38 +417,7 @@ function CreateListingContent() {
               </form>
             </div>
 
-            {/* Info Section */}
-            <div className="mt-8 space-y-4">
-              <div 
-                className="rounded-2xl p-6 border-0"
-                style={{ 
-                  backgroundColor: 'var(--card)', 
-                  boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                }}
-              >
-                <Heading level={3} className="text-lg font-semibold text-foreground mb-4">
-                  Tips for Creating a Property Listing
-                </Heading>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">Use a clear and descriptive property title that reflects your property's purpose</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">Upload a high-quality image of your property for better visibility</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">Set a competitive monthly rent based on market rates in your area</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-foreground">You can edit your listing details anytime from the My Listings page</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <div className="mt-8" />
           </div>
         </main>
       </div>
