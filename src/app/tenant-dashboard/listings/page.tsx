@@ -58,26 +58,6 @@ interface Unit {
   buildingId: string
 }
 
-interface Building {
-  id: string
-  name: string
-  address: string
-  total_floors?: number
-  description?: string
-  image_url?: string
-}
-
-interface ApiUnit {
-  id: string
-  unit_number: string
-  floor_number?: number
-  bedrooms?: number
-  bathrooms?: number
-  size_sqm?: number
-  rent_amount: number
-  status?: string
-}
-
 function ListingsContent() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
