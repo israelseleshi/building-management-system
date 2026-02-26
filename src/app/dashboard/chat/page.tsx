@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -23,9 +23,8 @@ import {
   Paperclip,
   Users,
 } from "lucide-react"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { supabase } from "@/lib/supabaseClient"
-import { getOrCreateConversation } from "@/lib/chat"
 
 export default function ChatPage() {
   return (
@@ -52,7 +51,6 @@ type MessageItem = {
 
 function ChatContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [chatSearch, setChatSearch] = useState("")
@@ -62,53 +60,10 @@ function ChatContent() {
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  const messagesChannelRef = useRef<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Top 15 used emojis
   const topEmojis = ["😀", "😂", "❤️", "👍", "🔥", "😍", "🎉", "✨", "😢", "😡", "👏", "🙏", "💯", "🚀", "😎"]
-
-  const subscribeToMessages = (conversationId: string, userId: string) => {
-    if (messagesChannelRef.current) {
-      supabase.removeChannel(messagesChannelRef.current)
-    }
-
-    const channel = supabase
-      .channel(`messages-conv-${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload: any) => {
-          const row = payload.new as any
-          if (!row) return
-          if (row.sender_id === userId) return
-
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: row.id as string,
-              senderId: row.sender_id as string,
-              message: row.content as string,
-              timestamp: row.created_at
-                ? new Date(row.created_at as string).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "",
-              isOwn: row.sender_id === userId,
-            },
-          ])
-        }
-      )
-      .subscribe()
-
-    messagesChannelRef.current = channel
-  }
 
   const navItems = [
     {
@@ -169,272 +124,129 @@ function ChatContent() {
 
   useEffect(() => {
     const loadData = async () => {
-      const { data, error } = await supabase.auth.getUser()
-      const user = data?.user ?? null
-
-      if (error) {
-        const anyErr = error as any
-        const hasUsefulDetails =
-          typeof anyErr?.message === "string" && anyErr.message.trim().length > 0
-        if (hasUsefulDetails) {
-          console.error("Error loading current user", error)
+      try {
+        const token = getAuthToken()
+        if (!token) {
+          router.push("/auth/signin")
+          return
         }
-      }
 
-      if (!user) {
-        try {
-          localStorage.removeItem("authToken")
-          localStorage.removeItem("isAuthenticated")
-          localStorage.removeItem("userRole")
-          document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-          document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-          document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
-        } catch {
-          // ignore
+        // Fetch user info for currentUserId
+        const userResponse = await fetch(`${API_BASE_URL}/user/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const userData = await userResponse.json()
+        if (userData.success) {
+          setCurrentUserId(userData.data.user.user_id)
         }
-        router.push("/auth/signin")
-        return
-      }
 
-      setCurrentUserId(user.id)
-
-      const peopleList: PersonItem[] = []
-
-      // First, try to load tenants from leases
-      const { data: leases } = await supabase
-        .from("leases")
-        .select("tenant_id")
-        .eq("landlord_id", user.id)
-        .in("status", ["active", "pending"])
-
-      let tenantIds: string[] = []
-
-      if (leases && leases.length > 0) {
-        // If leases exist, use them
-        tenantIds = Array.from(new Set(leases.map((l: any) => l.tenant_id)))
-        console.log("Loaded tenant IDs from leases:", tenantIds)
-      } else {
-        // Fallback: If no leases, load all tenants from profiles
-        console.log("No leases found, loading all tenants from profiles")
-        const { data: allTenants, error: allTenantsError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("role", "tenant")
-
-        if (allTenantsError) {
-          console.error("Error loading all tenants", allTenantsError)
-        } else {
-          tenantIds = (allTenants || []).map((t: any) => t.id)
-          console.log("Loaded tenant IDs from profiles:", tenantIds)
+        // Fetch conversations
+        const convsResponse = await fetch(`${API_BASE_URL}/conversations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const convsData = await convsResponse.json()
+        
+        if (convsData.success && convsData.data.conversations.length > 0) {
+          const formattedPeople = convsData.data.conversations.map((c: any) => ({
+            id: c.conversation_id,
+            name: c.participants.find((p: any) => p.user.user_id !== userData.data.user.user_id)?.user.full_name || "User",
+            avatar: c.participants.find((p: any) => p.user.user_id !== userData.data.user.user_id)?.user.profile_picture || null,
+            unread: c.unreadCount || 0
+          }))
+          setPeople(formattedPeople)
+          setSelectedPersonIndex(0)
+          await loadMessagesForConversation(convsData.data.conversations[0].conversation_id, token)
         }
-      }
-
-      // Now fetch the full tenant profiles
-      if (tenantIds.length > 0) {
-        const { data: tenants, error: tenantsError } = await supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url")
-          .in("id", tenantIds)
-          .order("full_name")
-
-        if (tenantsError) {
-          console.error("Error loading tenant profiles", tenantsError)
-        } else {
-          for (const t of tenants || []) {
-            peopleList.push({
-              id: t.id as string,
-              name: t.full_name || "Tenant",
-              avatar:
-                t.avatar_url ||
-                (t.full_name
-                  ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-                      t.full_name
-                    )}`
-                  : null),
-              unread: 0,
-            })
-          }
-        }
-      }
-
-      console.log("People list:", peopleList)
-      setPeople(peopleList)
-
-      // Handle deep-linking from reports: tenantId, prefill, warning, autoSend
-      const tenantIdFromQuery = searchParams?.get("tenantId")
-      const prefillFromQuery = searchParams?.get("prefill") || ""
-      const autoSendFromQuery = searchParams?.get("autoSend") === "1"
-
-      const targetIndex = tenantIdFromQuery
-        ? peopleList.findIndex((p) => p.id === tenantIdFromQuery)
-        : 0
-
-      if (peopleList.length > 0 && targetIndex >= 0) {
-        setSelectedPersonIndex(targetIndex)
-        const targetPerson = peopleList[targetIndex]
-        const conv = await getOrCreateConversation(user.id, targetPerson.id)
-        await loadMessagesForConversation(conv.id, user.id)
-
-        if (prefillFromQuery) {
-          setNewMessage(prefillFromQuery)
-          if (autoSendFromQuery) {
-            // Optimistically send the message using the same logic as handleSendMessage
-            const content = prefillFromQuery.trim()
-            if (content) {
-              const optimistic: MessageItem = {
-                id: `temp-${Date.now()}`,
-                senderId: user.id,
-                message: content,
-                timestamp: new Date().toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }),
-                isOwn: true,
-              }
-              setMessages((prev) => [...prev, optimistic])
-              setNewMessage("")
-
-              const { error: insertError } = await supabase.from("messages").insert({
-                conversation_id: conv.id,
-                sender_id: user.id,
-                content,
-              })
-
-              if (!insertError) {
-                await supabase
-                  .from("conversations")
-                  .update({
-                    last_message: content,
-                    last_message_at: new Date().toISOString(),
-                    last_message_sender_id: user.id,
-                  })
-                  .eq("id", conv.id)
-              }
-            }
-          }
-        }
+      } catch (error) {
+        console.error("Error loading chat data:", error)
       }
     }
 
-    const loadMessagesForConversation = async (
-      conversationId: string,
-      userId: string
-    ) => {
-      const { data: messageRows, error: msgError } = await supabase
-        .from("messages")
-        .select("id, sender_id, content, created_at")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true })
-
-      if (msgError) {
-        console.error("Error loading messages", msgError)
-        return
+    const loadMessagesForConversation = async (conversationId: string, token: string) => {
+      try {
+        const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const msgsData = await msgsResponse.json()
+        
+        if (msgsData.success) {
+          const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
+            id: m.message_id,
+            senderId: m.sender_id,
+            message: m.content,
+            timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isOwn: m.sender_id === currentUserId
+          }))
+          setMessages(builtMessages)
+        }
+      } catch (error) {
+        console.error("Error loading messages:", error)
       }
-
-      const builtMessages: MessageItem[] = (messageRows || []).map((m: any) => ({
-        id: m.id as string,
-        senderId: m.sender_id as string,
-        message: m.content as string,
-        timestamp: m.created_at
-          ? new Date(m.created_at as string).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : "",
-        isOwn: m.sender_id === userId,
-      }))
-
-      setMessages(builtMessages)
-      subscribeToMessages(conversationId, userId)
     }
 
     loadData()
-
-    return () => {
-      if (messagesChannelRef.current) {
-        supabase.removeChannel(messagesChannelRef.current)
-      }
-    }
-  }, [searchParams])
+  }, [currentUserId])
 
   const handlePersonClick = async (index: number) => {
     setSelectedPersonIndex(index)
     const person = people[index]
-    if (!person || !currentUserId) return
+    const token = getAuthToken()
+    if (!person || !token) return
 
-    const conv = await getOrCreateConversation(currentUserId, person.id)
-
-    const { data: messageRows, error: msgError } = await supabase
-      .from("messages")
-      .select("id, sender_id, content, created_at")
-      .eq("conversation_id", conv.id)
-      .order("created_at", { ascending: true })
-
-    if (msgError) {
-      console.error("Error loading messages", msgError)
-      return
+    try {
+      const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${person.id}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const msgsData = await msgsResponse.json()
+      
+      if (msgsData.success) {
+        const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
+          id: m.message_id,
+          senderId: m.sender_id,
+          message: m.content,
+          timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          isOwn: m.sender_id === currentUserId
+        }))
+        setMessages(builtMessages)
+      }
+    } catch (error) {
+      console.error("Error loading messages:", error)
     }
-
-    const builtMessages: MessageItem[] = (messageRows || []).map((m: any) => ({
-      id: m.id as string,
-      senderId: m.sender_id as string,
-      message: m.content as string,
-      timestamp: m.created_at
-        ? new Date(m.created_at as string).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : "",
-      isOwn: m.sender_id === currentUserId,
-    }))
-
-    setMessages(builtMessages)
-    subscribeToMessages(conv.id, currentUserId)
   }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !currentUserId) return
+    if (!newMessage.trim()) return
 
     const person = people[selectedPersonIndex]
-    if (!person) return
-
-    const conv = await getOrCreateConversation(currentUserId, person.id)
-    if (!conv) return
+    const token = getAuthToken()
+    if (!person || !token) return
 
     const content = newMessage.trim()
     setNewMessage("")
 
-    const optimistic: MessageItem = {
-      id: `temp-${Date.now()}`,
-      senderId: currentUserId,
-      message: content,
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      isOwn: true,
-    }
-    setMessages((prev) => [...prev, optimistic])
-
-    const { error: insertError } = await supabase.from("messages").insert({
-      conversation_id: conv.id,
-      sender_id: currentUserId,
-      content,
-    })
-
-    if (insertError) {
-      console.error("Error sending message", insertError)
-      return
-    }
-
-    await supabase
-      .from("conversations")
-      .update({
-        last_message: content,
-        last_message_at: new Date().toISOString(),
-        last_message_sender_id: currentUserId,
+    try {
+      const response = await fetch(`${API_BASE_URL}/conversations/${person.id}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content }),
       })
-      .eq("id", conv.id)
+      
+      const data = await response.json()
+      if (data.success) {
+        setMessages((prev) => [...prev, {
+          id: data.data.message.message_id,
+          senderId: currentUserId || "",
+          message: content,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          isOwn: true
+        }])
+      }
+    } catch (error) {
+      console.error("Error sending message:", error)
+    }
   }
 
   const handleLogout = () => {

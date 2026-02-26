@@ -6,9 +6,7 @@ import { Text, Heading } from "@/components/ui/typography"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { TenantDocumentUpload, DocumentList } from "@/components/documents"
-import { supabase } from "@/lib/supabaseBrowser"
 import {
   LayoutDashboard,
   Building2,
@@ -88,34 +86,19 @@ function TenantDocumentsContent() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          router.push("/auth/signin")
-          return
-        }
-
-        setCurrentUserId(user.id)
-
+        const token = getAuthToken()
+        
         // Fetch document types
-        const { data: typesData, error: typesError } = await supabase
-          .from("document_types")
-          .select("*")
-          .order("name")
-
-        if (typesError) {
-          console.error("Error fetching document types:", typesError)
-        }
-
-        setDocumentTypes(typesData || [])
+        const typesPayload = await fetch(`${API_BASE_URL}/document/document-types`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }).then(res => res.json())
+        setDocumentTypes(typesPayload.data || [])
 
         // Fetch tenant's documents
-        const { data: docsData } = await supabase
-          .from("tenant_documents")
-          .select("*, document_type:document_types(*)")
-          .eq("tenant_id", user.id)
-          .order("created_at", { ascending: false })
-
-        setDocuments(docsData || [])
+        const docsPayload = await fetch(`${API_BASE_URL}/document/tenant-documents`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }).then(res => res.json())
+        setDocuments(docsPayload.data || [])
 
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -125,43 +108,28 @@ function TenantDocumentsContent() {
     }
 
     fetchData()
-  }, [router])
+  }, [])
 
   const handleUploadSuccess = async () => {
-    // Refresh documents list
-    if (!currentUserId) return
-
+    const token = getAuthToken()
     try {
-      const { data: docsData } = await supabase
-        .from("tenant_documents")
-        .select("*, document_type:document_types(*)")
-        .eq("tenant_id", currentUserId)
-        .order("created_at", { ascending: false })
-
-      setDocuments(docsData || [])
+      const docsPayload = await fetch(`${API_BASE_URL}/document/tenant-documents`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }).then(res => res.json())
+      setDocuments(docsPayload.data || [])
     } catch (error) {
       console.error("Error refreshing documents:", error)
     }
   }
 
   const handleDeleteDocument = async (documentId: string) => {
+    const token = getAuthToken()
     try {
-      // Get document details
-      const document = documents.find((d) => d.id === documentId)
-      if (!document) return
-
-      // Delete from storage
-      await supabase.storage
-        .from("tenant-documents")
-        .remove([document.file_path])
-
-      // Delete from database
-      await supabase
-        .from("tenant_documents")
-        .delete()
-        .eq("id", documentId)
-
-      // Update local state
+      const response = await fetch(`${API_BASE_URL}/document/tenant-documents/${documentId}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!response.ok) throw new Error("Failed to delete")
       setDocuments(documents.filter((d) => d.id !== documentId))
     } catch (error) {
       console.error("Error deleting document:", error)
@@ -169,15 +137,21 @@ function TenantDocumentsContent() {
     }
   }
 
-  const handleDownloadDocument = async (filePath: string) => {
+  const handleDownloadDocument = async (documentId: string) => {
+    const token = getAuthToken()
     try {
-      const { data } = await supabase.storage
-        .from("tenant-documents")
-        .createSignedUrl(filePath, 3600) // 1 hour expiry
-
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, "_blank")
-      }
+      const response = await fetch(`${API_BASE_URL}/document/tenant-documents/${documentId}/download`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+      if (!response.ok) throw new Error("Failed to download")
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "document"
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error("Error downloading document:", error)
       throw error
@@ -185,13 +159,18 @@ function TenantDocumentsContent() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    const token = getAuthToken()
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
     
-    // Clear local storage and cookies
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
     document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     
     router.push("/")
   }

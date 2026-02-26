@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 
 interface TenantIncident {
   id: string
@@ -42,7 +42,22 @@ function TenantReportsContent() {
   const [message, setMessage] = useState("")
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    try {
+      const token = getAuthToken()
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+    } catch (err) {
+      console.error("Logout error:", err)
+    }
+    
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
+    document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     router.push("/")
   }
 

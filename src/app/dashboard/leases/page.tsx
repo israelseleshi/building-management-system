@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import {
   LayoutDashboard,
@@ -164,33 +164,38 @@ function LeasesContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        const token = getAuthToken()
+        if (!token) return
 
-        setCurrentUserId(user.id)
+        // Fetch user to get ID
+        const userRes = await fetch(`${API_BASE_URL}/user/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const userPayload = await userRes.json()
+        if (!userPayload.success) return
+        setCurrentUserId(userPayload.data.user.user_id)
 
         // Fetch leases
-        const { data: leasesData } = await supabase
-          .from("leases")
-          .select("*")
-          .eq("landlord_id", user.id)
-          .order("created_at", { ascending: false })
+        const leasesRes = await fetch(`${API_BASE_URL}/leases`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const leasesPayload = await leasesRes.json()
+        setLeases(leasesPayload.data?.leases || [])
 
-        // Fetch tenants
-        const { data: tenantsData } = await supabase
-          .from("profiles")
-          .select("id, full_name, email")
-          .eq("role", "tenant")
+        // Fetch tenants (Search/List all)
+        const tenantsRes = await fetch(`${API_BASE_URL}/tenants/search?q=`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const tenantsPayload = await tenantsRes.json()
+        setTenants(tenantsPayload.data?.tenants || [])
 
-        // Fetch properties
-        const { data: propertiesData } = await supabase
-          .from("properties")
-          .select("id, title, monthly_rent, address_line1")
-          // .eq("landlord_id", user.id) // Removing explicit filter to match listings page logic
+        // Fetch properties (Listings)
+        const propertiesRes = await fetch(`${API_BASE_URL}/buildings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const propertiesPayload = await propertiesRes.json()
+        setProperties(propertiesPayload.data?.buildings || [])
 
-        setLeases(leasesData || [])
-        setTenants(tenantsData || [])
-        setProperties(propertiesData || [])
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
@@ -205,27 +210,33 @@ function LeasesContent() {
     if (!currentUserId || !formData.tenant_id || !formData.property_id) return
 
     try {
-      const { error } = await supabase.from("leases").insert({
-        tenant_id: formData.tenant_id,
-        property_id: formData.property_id,
-        landlord_id: currentUserId,
-        monthly_rent: formData.monthly_rent,
-        status: formData.status,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
-        is_active: formData.status === "active",
+      const token = getAuthToken()
+      const response = await fetch(`${API_BASE_URL}/leases`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          unit_id: formData.property_id, // Map property to unit_id
+          tenant_id: formData.tenant_id,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
+          rent_amount: formData.monthly_rent,
+          security_deposit: 0, // Placeholder
+        })
       })
 
-      if (error) throw error
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.message || "Failed to create lease")
 
       // Refresh leases
-      const { data: updatedLeases } = await supabase
-        .from("leases")
-        .select("*")
-        .eq("landlord_id", currentUserId)
-        .order("created_at", { ascending: false })
+      const updatedLeasesRes = await fetch(`${API_BASE_URL}/leases`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const updatedLeasesPayload = await updatedLeasesRes.json()
+      setLeases(updatedLeasesPayload.data?.leases || [])
 
-      setLeases(updatedLeases || [])
       setCreateModalOpen(false)
       setFormData({
         tenant_id: "",
@@ -245,12 +256,13 @@ function LeasesContent() {
     if (!selectedLease) return
 
     try {
-      const { error } = await supabase
-        .from("leases")
-        .delete()
-        .eq("id", selectedLease.id)
+      const token = getAuthToken()
+      const response = await fetch(`${API_BASE_URL}/leases/${selectedLease.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error("Failed to delete lease")
 
       setLeases(leases.filter(l => l.id !== selectedLease.id))
       setDeleteConfirmOpen(false)
@@ -262,15 +274,20 @@ function LeasesContent() {
 
   const handleUpdateStatus = async (leaseId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from("leases")
-        .update({ status: newStatus, is_active: newStatus === "active" })
-        .eq("id", leaseId)
+      const token = getAuthToken()
+      const response = await fetch(`${API_BASE_URL}/leases/${leaseId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
 
-      if (error) throw error
+      if (!response.ok) throw new Error("Failed to update status")
 
       setLeases(leases.map(l => 
-        l.id === leaseId ? { ...l, status: newStatus as "pending" | "active" | "inactive" | "expired", is_active: newStatus === "active" } : l
+        l.id === leaseId ? { ...l, status: newStatus as "pending" | "active" | "inactive" | "expired" } : l
       ))
     } catch (error) {
       console.error("Error updating lease:", error)
@@ -349,7 +366,18 @@ function LeasesContent() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    const token = getAuthToken()
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
+    document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     router.push("/")
   }
 

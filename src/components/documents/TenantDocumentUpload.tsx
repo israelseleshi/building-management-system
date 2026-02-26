@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Text, Heading } from "@/components/ui/typography"
 import { Upload, X, AlertCircle, CheckCircle } from "lucide-react"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 
 interface DocumentType {
   id: string
@@ -75,8 +75,8 @@ export function TenantDocumentUpload({
       formData.append("documentTypeId", selectedDocumentType)
       formData.append("tenantId", tenantId)
 
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !sessionData.session?.access_token) {
+      const token = getAuthToken()
+      if (!token) {
         setError("Unauthorized. Please sign in again.")
         setUploading(false)
         return
@@ -92,16 +92,7 @@ export function TenantDocumentUpload({
       })
 
       xhr.addEventListener("load", () => {
-        // Helpful diagnostics
         const ok = xhr.status >= 200 && xhr.status < 300
-        if (!ok) {
-          console.error("[documents/upload] failed", {
-            status: xhr.status,
-            statusText: xhr.statusText,
-            responseText: xhr.responseText,
-          })
-        }
-
         if (ok) {
           setSuccess(true)
           setSelectedFile(null)
@@ -111,19 +102,14 @@ export function TenantDocumentUpload({
             fileInputRef.current.value = ""
           }
           onUploadSuccess?.()
-          
-          // Reset success message after 3 seconds
           setTimeout(() => setSuccess(false), 3000)
         } else {
           let message = "Upload failed"
           try {
             const response = JSON.parse(xhr.responseText || "{}")
             message = response.error || message
-            if (response.debug) {
-              console.error("[documents/upload] server debug:", response.debug)
-            }
           } catch {
-            // keep fallback
+            // fallback
           }
           setError(message)
         }
@@ -131,13 +117,12 @@ export function TenantDocumentUpload({
       })
 
       xhr.addEventListener("error", () => {
-        console.error("[documents/upload] network error")
         setError("Upload failed. Please try again.")
         setUploading(false)
       })
 
-      xhr.open("POST", "/api/documents/upload")
-      xhr.setRequestHeader("Authorization", `Bearer ${sessionData.session.access_token}`)
+      xhr.open("POST", `${API_BASE_URL}/document/tenant-documents/upload`)
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`)
       xhr.send(formData)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed")

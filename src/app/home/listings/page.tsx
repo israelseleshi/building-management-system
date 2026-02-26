@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Heading, Text, Large } from "@/components/ui/typography"
 import { Header } from "@/components/home/Header"
 import { ListingDetailView } from "@/components/home/ListingDetailView"
-import { supabase } from "@/lib/supabaseClient"
+import { API_BASE_URL } from "@/lib/apiClient"
 import { 
   Building, 
   Search, 
@@ -63,45 +63,40 @@ function ListingsPageContent() {
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
-  // Fetch listings from Supabase
+  // Fetch listings from backend
   useEffect(() => {
     const fetchListings = async () => {
       try {
         setLoading(true)
-        const { data, error: fetchError } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('is_active', true)
+        const response = await fetch(`${API_BASE_URL}/buildings`)
+        const payload = await response.json()
 
-        if (fetchError) throw fetchError
+        if (!response.ok) throw new Error(payload.message || "Failed to fetch listings")
 
         // Transform database records to listing format
-        const transformedListings: Listing[] = (data || []).map((property: any, index: number) => ({
+        const transformedListings: Listing[] = (payload.data?.buildings || []).map((property: any, index: number) => ({
           id: property.id.toString(),
-          title: property.title,
-          location: `${property.address_line1}, ${property.city}`,
-          price: property.monthly_rent,
+          title: property.name, // API uses 'name' not 'title'
+          location: property.address, // API uses 'address'
+          price: property.rent_amount || 0,
           currency: 'ETB',
           period: 'monthly',
-          capacity: 20, // Default values since DB doesn't have these
+          capacity: 20, 
           parking: 10,
           area: 150,
-          rating: 4.5 + (index % 5) * 0.1, // Vary ratings
+          rating: 4.5 + (index % 5) * 0.1,
           reviews: 10 + (index % 20),
           image: property.image_url || `https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop&t=${index}`,
-          featured: index < 3, // First 3 are featured
+          featured: index < 3,
           amenities: ['Air Conditioning', 'Security', 'Parking', 'Storage'],
           type: property.description?.includes('Office') ? 'office' : property.description?.includes('Retail') ? 'retail' : 'commercial',
-          listed: new Date(property.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+          listed: new Date(property.created_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
         }))
 
         setAllListings(transformedListings)
         setError(null)
       } catch (err: any) {
         console.error('Error fetching listings:', err)
-        console.error('Error message:', err?.message)
-        console.error('Error details:', err?.details)
-        console.error('Full error:', JSON.stringify(err, null, 2))
         setError('Failed to load listings. Please try again.')
         setAllListings([])
       } finally {

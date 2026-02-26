@@ -6,9 +6,9 @@ import { Text, Heading } from "@/components/ui/typography"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { LandlordDocumentReview } from "@/components/documents"
-import { supabase } from "@/lib/supabaseBrowser"
 import {
   LayoutDashboard,
   Building2,
@@ -111,27 +111,19 @@ function LandlordDocumentsContent() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        const token = getAuthToken()
+        if (!token) {
           router.push("/auth/signin")
           return
         }
 
-        // Fetch all documents for this landlord's tenants.
-        // NOTE: Avoid joining profiles here because profiles RLS can block the join and make the
-        // whole query fail/return empty even when tenant_documents are present.
-        const { data: docsData, error: docsError } = await supabase
-          .from("tenant_documents")
-          .select("*, document_type:document_types(*)")
-          .eq("landlord_id", user.id)
-          .order("created_at", { ascending: false })
-
-        if (docsError) {
-          console.error("Error fetching landlord documents:", docsError)
-        }
-
-        // tenant_name is optional; we can add it later if profiles RLS permits.
-        setDocuments((docsData as any) || [])
+        // In the new API, landlord documents might be under a different endpoint or handled via a filter
+        // Assuming /document/tenant-documents with admin/owner role access
+        const response = await fetch(`${API_BASE_URL}/document/tenant-documents`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const payload = await response.json()
+        setDocuments(payload.data || [])
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
@@ -140,14 +132,17 @@ function LandlordDocumentsContent() {
     }
 
     fetchData()
-  }, [router])
+  }, [])
 
   const handleApproveDocument = async (documentId: string) => {
     try {
-      await supabase
-        .from("tenant_documents")
-        .update({ status: "approved", updated_at: new Date().toISOString() })
-        .eq("id", documentId)
+      const token = getAuthToken()
+      const response = await fetch(`${API_BASE_URL}/document/tenant-documents/${documentId}/approve`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (!response.ok) throw new Error("Failed to approve")
 
       // Update local state
       setDocuments(
@@ -163,14 +158,17 @@ function LandlordDocumentsContent() {
 
   const handleRejectDocument = async (documentId: string, reason: string) => {
     try {
-      await supabase
-        .from("tenant_documents")
-        .update({
-          status: "rejected",
-          rejection_reason: reason,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", documentId)
+      const token = getAuthToken()
+      const response = await fetch(`${API_BASE_URL}/document/tenant-documents/${documentId}/reject`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` 
+        },
+        body: JSON.stringify({ comment: reason })
+      })
+
+      if (!response.ok) throw new Error("Failed to reject")
 
       // Update local state
       setDocuments(
@@ -186,15 +184,17 @@ function LandlordDocumentsContent() {
     }
   }
 
-  const handleDownloadDocument = async (filePath: string) => {
+  const handleDownloadDocument = async (documentId: string) => {
     try {
-      const { data } = await supabase.storage
-        .from("tenant-documents")
-        .createSignedUrl(filePath, 3600) // 1 hour expiry
-
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, "_blank")
-      }
+      const token = getAuthToken()
+      const response = await fetch(`${API_BASE_URL}/document/tenant-documents/${documentId}/download`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!response.ok) throw new Error("Failed to download")
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      window.open(url, "_blank")
     } catch (error) {
       console.error("Error downloading document:", error)
       throw error
@@ -202,7 +202,18 @@ function LandlordDocumentsContent() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    const token = getAuthToken()
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("userRole")
+    localStorage.removeItem("authToken")
+    document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
+    document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
     router.push("/")
   }
 
