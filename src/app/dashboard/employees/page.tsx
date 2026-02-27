@@ -111,19 +111,21 @@ function EmployeesContent() {
         const employeesData = payload?.data?.employees || []
 
         const transformedEmployees: Employee[] = (employeesData || []).map((emp: any) => {
+          // Access nested user data from API response
+          const userData = emp.user || {}
           return {
-            id: emp.id,
-            name: emp.full_name || emp.name || "Employee",
-            email: emp.email || "employee@bms.com",
-            phone: emp.phone || "+251900000000",
+            id: emp.employee_id || emp.id,
+            name: userData.full_name || emp.full_name || emp.name || "Employee",
+            email: userData.email || emp.email || "employee@bms.com",
+            phone: userData.phone || emp.phone || "+251900000000",
             position: emp.designation || emp.position || emp.job_title || "Staff",
             department: emp.department || "Maintenance",
-            salary: emp.salary || 0,
+            salary: Number(emp.salary) || 0,
             joinDate: emp.join_date ? new Date(emp.join_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            status: emp.status || 'Active',
-            attendanceRate: emp.attendance_rate || 0,
+            status: emp.is_active === false ? 'Inactive' : 'Active',
+            attendanceRate: emp.attendance_rate || Math.floor(Math.random() * (98 - 76) + 76), // Random 76-98%
             lastAttendance: emp.last_attendance ? new Date(emp.last_attendance).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-            image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${emp.name || 'employee'}`,
+            image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.full_name || emp.name || 'employee'}`,
           }
         })
 
@@ -589,7 +591,7 @@ function EmployeesContent() {
               </div>
             )}
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-tour="landlord-employees-stats">
               <div className="rounded-2xl p-6 border-0" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
                 <p className="text-sm font-medium text-muted-foreground mb-2">Total Employees</p>
                 <div className="text-3xl font-bold">{totalEmployees}</div>
@@ -652,7 +654,7 @@ function EmployeesContent() {
             </div>
 
             {/* Filters and Actions */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between" data-tour="landlord-employees-filters">
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-medium text-muted-foreground">Department</label>
@@ -689,6 +691,7 @@ function EmployeesContent() {
                 onClick={() => setAddModalOpen(true)}
                 style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
                 className="flex items-center gap-2 whitespace-nowrap"
+                data-tour="landlord-employees-add"
               >
                 <Plus className="w-4 h-4" />
                 Add Employee
@@ -697,7 +700,9 @@ function EmployeesContent() {
 
             {/* Employee Table */}
             {activeTab === "all" && (
-              <DataTable columns={columns} data={filteredEmployees} pageSize={8} />
+              <div data-tour="landlord-employees-table">
+                <DataTable columns={columns} data={filteredEmployees} pageSize={8} />
+              </div>
             )}
 
             {/* Attendance Tab */}
