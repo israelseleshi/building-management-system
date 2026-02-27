@@ -96,23 +96,33 @@ function ListingsPageContent() {
           const amenitiesRaw = building?.amenities
           const amenities = Array.isArray(amenitiesRaw) ? amenitiesRaw : []
 
+          // Professional empty room/modern office images
+          const roomImages = [
+            "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80", // Modern office
+            "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80", // Bright conference
+            "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800&q=80", // Minimalist workspace
+            "https://images.unsplash.com/photo-1416339442236-8ceb164046f8?w=800&q=80", // Industrial loft
+            "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80", // Luxury empty room
+            "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80", // Clean modern interior
+          ]
+
           return {
             id: (unit?.unit_id ?? unit?.id ?? `${index}`).toString(),
             title,
             location,
             price: Number(unit?.base_rent || 0),
-          currency: 'ETB',
-          period: 'monthly',
-          capacity: 20, 
-          parking: 10,
-          area: Number(unit?.sqft || 0) || 150,
-          rating: 4.5 + (index % 5) * 0.1,
-          reviews: 10 + (index % 20),
-          image: `https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=250&fit=crop&t=${index}`,
-          featured: index < 3,
-          amenities: amenities.length > 0 ? amenities : ['Security', 'Parking'],
-          type: 'commercial',
-          listed: new Date(building?.created_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+            currency: 'ETB',
+            period: 'monthly',
+            capacity: 20, 
+            parking: 10,
+            area: Number(unit?.sqft || 0) || 150,
+            rating: 4.5 + (index % 5) * 0.1,
+            reviews: 10 + (index % 20),
+            image: roomImages[index % roomImages.length],
+            featured: index < 3,
+            amenities: amenities.length > 0 ? amenities : ['Security', 'Parking'],
+            type: 'commercial',
+            listed: new Date(building?.created_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
           }
         })
 

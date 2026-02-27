@@ -39,20 +39,16 @@ export function FeatureCard({ icon, title, desc, index = 0 }: FeatureCardProps) 
       type="button"
       className={[
         "group relative w-full text-left",
-        "rounded-2xl border bg-card/80 backdrop-blur-sm",
-        "border-border/60 dark:border-slate-700/80",
+        "rounded-2xl border bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl",
+        "border-white/40 dark:border-slate-800/40",
         "px-5 py-6 sm:px-7 sm:py-8",
         "transition-all duration-300 ease-out",
-        "shadow-md hover:shadow-2xl hover:shadow-emerald-300/40",
-        "hover:-translate-y-1 hover:scale-[1.05]",
+        "shadow-lg hover:shadow-2xl hover:shadow-emerald-500/10",
+        "hover:-translate-y-1 hover:scale-[1.02]",
         isActive
-          ? "scale-[1.04] ring-2 ring-emerald-400/80 ring-offset-2 ring-offset-emerald-50 dark:ring-offset-slate-950"
+          ? "scale-[1.01] ring-2 ring-emerald-400/80 ring-offset-2 ring-offset-emerald-50 dark:ring-offset-slate-950"
           : "",
         "overflow-hidden",
-        "bg-gradient-to-br from-slate-50/80 via-white to-slate-50/70",
-        "dark:from-slate-900/90 dark:via-slate-950 dark:to-slate-900/80",
-        "hover:from-emerald-50/80 hover:via-white hover:to-emerald-50/60",
-        "dark:hover:from-emerald-900/40 dark:hover:via-slate-950 dark:hover:to-emerald-900/40",
       ]
         .filter(Boolean)
         .join(" ")}
