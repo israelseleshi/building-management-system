@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Text, Heading } from "@/components/ui/typography"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -38,6 +39,7 @@ interface Document {
 
 function TenantDocumentsContent() {
   const router = useRouter()
+  const t = useTranslations("Tenant")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([])
@@ -213,14 +215,14 @@ function TenantDocumentsContent() {
 
         <div className="flex-1 transition-all duration-300 ease-in-out">
           <DashboardHeader
-            title="Documents"
-            subtitle="Loading your documents..."
+            title={t("documents.loading.title")}
+            subtitle={t("documents.loading.subtitle")}
           />
 
           <main className="p-6 flex items-center justify-center min-h-96">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <Text className="text-muted-foreground">Loading documents...</Text>
+              <Text className="text-muted-foreground">{t("documents.loading.message")}</Text>
             </div>
           </main>
         </div>
@@ -240,8 +242,9 @@ function TenantDocumentsContent() {
 
       <div className="flex-1 flex flex-col">
         <DashboardHeader
-          title="My Documents"
-          subtitle="Upload and manage your documents"
+          title={t("documents.header.title")}
+          subtitle={t("documents.header.subtitle")}
+          searchPlaceholder={t("header.searchPlaceholder")}
         />
 
         <ScrollArea className="flex-1">
@@ -256,7 +259,7 @@ function TenantDocumentsContent() {
                 }}
               >
                 <Text className="text-sm text-muted-foreground mb-1">
-                  Total Documents
+                  {t("documents.stats.total")}
                 </Text>
                 <Heading level={3} className="text-2xl font-bold text-blue-600">
                   {documents.length}
@@ -271,7 +274,7 @@ function TenantDocumentsContent() {
                 }}
               >
                 <Text className="text-sm text-muted-foreground mb-1">
-                  Approved
+                  {t("documents.stats.approved")}
                 </Text>
                 <Heading level={3} className="text-2xl font-bold text-emerald-600">
                   {documents.filter((d) => d.status === "approved").length}
@@ -286,7 +289,7 @@ function TenantDocumentsContent() {
                 }}
               >
                 <Text className="text-sm text-muted-foreground mb-1">
-                  Pending Review
+                  {t("documents.stats.pending")}
                 </Text>
                 <Heading level={3} className="text-2xl font-bold text-yellow-600">
                   {documents.filter((d) => d.status === "pending").length}
@@ -297,7 +300,7 @@ function TenantDocumentsContent() {
             {/* Upload Section */}
             <div className="mb-8">
               <Heading level={2} className="mb-6">
-                Upload New Document
+                {t("documents.upload.title")}
               </Heading>
               {currentUserId && (
                 <TenantDocumentUpload
@@ -311,7 +314,7 @@ function TenantDocumentsContent() {
             {/* Documents List */}
             <div>
               <Heading level={2} className="mb-6">
-                Your Documents
+                {t("documents.list.title")}
               </Heading>
               <DocumentList
                 documents={documents}

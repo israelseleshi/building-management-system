@@ -14,6 +14,7 @@ import InvoiceTemplate from "@/components/dashboard/InvoiceTemplate"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 export default function InvoicesPage() {
   return (
@@ -28,6 +29,30 @@ function InvoicesContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
+  const t = useTranslations("Tenant")
+
+  const invoiceLabels = {
+    title: t("invoices.pdf.title"),
+    subtitle: t("invoices.pdf.subtitle"),
+    dateIssued: t("invoices.pdf.dateIssued"),
+    dueDate: t("invoices.pdf.dueDate"),
+    billFrom: t("invoices.pdf.billFrom"),
+    billTo: t("invoices.pdf.billTo"),
+    description: t("invoices.pdf.description"),
+    quantity: t("invoices.pdf.quantity"),
+    unitPrice: t("invoices.pdf.unitPrice"),
+    total: t("invoices.pdf.total"),
+    subtotal: t("invoices.pdf.subtotal"),
+    tax: t("invoices.pdf.tax"),
+    totalLabel: t("invoices.pdf.totalLabel"),
+    footerLine1: t("invoices.pdf.footerLine1"),
+    footerLine2: t("invoices.pdf.footerLine2"),
+    status: {
+      Paid: t("invoices.status.paid"),
+      Pending: t("invoices.status.pending"),
+      Overdue: t("invoices.status.overdue"),
+    }
+  }
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed)
@@ -50,16 +75,16 @@ function InvoicesContent() {
   const columns: ColumnDef<Invoice>[] = [
     {
       accessorKey: "invoiceNumber",
-      header: "Invoice #",
+      header: t("invoices.table.invoiceNumber"),
       cell: ({ row }) => <span className="font-medium">{row.getValue("invoiceNumber")}</span>,
     },
     {
       accessorKey: "date",
-      header: "Date",
+      header: t("invoices.table.date"),
     },
     {
       accessorKey: "total",
-      header: "Amount",
+      header: t("invoices.table.amount"),
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("total"))
         return <span className="font-medium">ETB {amount.toLocaleString('en-ET', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -67,9 +92,11 @@ function InvoicesContent() {
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("invoices.table.status"),
       cell: ({ row }) => {
         const status = row.getValue("status") as string
+        const statusKey = status.toLowerCase()
+        const statusLabel = t(`invoices.status.${statusKey}` as any)
         let className = ""
         
         if (status === "Paid") className = "bg-emerald-500 hover:bg-emerald-600 text-white border-0"
@@ -78,7 +105,7 @@ function InvoicesContent() {
 
         return (
             <Badge variant="outline" className={className}>
-                {status}
+                {statusLabel}
             </Badge>
         )
       },
@@ -96,17 +123,17 @@ function InvoicesContent() {
               className="h-8 w-8 p-0"
             >
               <Eye className="h-4 w-4" />
-              <span className="sr-only">View</span>
+              <span className="sr-only">{t("invoices.actions.view")}</span>
             </Button>
             
             <PDFDownloadLink
-              document={<InvoiceTemplate invoice={invoice} />}
+              document={<InvoiceTemplate invoice={invoice} labels={invoiceLabels} />}
               fileName={`${invoice.invoiceNumber}.pdf`}
             >
               {({ loading }) => (
                 <Button variant="outline" size="sm" disabled={loading} className="h-8 w-8 p-0">
                   <Download className="h-4 w-4" />
-                  <span className="sr-only">Download</span>
+                  <span className="sr-only">{t("invoices.actions.download")}</span>
                 </Button>
               )}
             </PDFDownloadLink>
@@ -133,10 +160,11 @@ function InvoicesContent() {
 
       <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title="Invoices"
-          subtitle="View and manage your invoices"
+          title={t("invoices.header.title")}
+          subtitle={t("invoices.header.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          searchPlaceholder={t("header.searchPlaceholder")}
         />
 
         <main className="flex-1 overflow-auto p-6">
@@ -147,12 +175,12 @@ function InvoicesContent() {
       <Dialog open={!!selectedInvoice} onOpenChange={(open) => !open && setSelectedInvoice(null)}>
         <DialogContent className="max-w-4xl h-[90vh] bg-white flex flex-col p-0">
           <DialogHeader className="p-4 pb-2">
-            <DialogTitle>Invoice Preview: {selectedInvoice?.invoiceNumber}</DialogTitle>
+            <DialogTitle>{t("invoices.dialog.title", { number: selectedInvoice?.invoiceNumber || "" })}</DialogTitle>
           </DialogHeader>
           <div className="flex-1 w-full overflow-hidden bg-gray-100">
             {selectedInvoice && (
               <PDFViewer width="100%" height="100%" className="w-full h-full border-none">
-                <InvoiceTemplate invoice={selectedInvoice} />
+                <InvoiceTemplate invoice={selectedInvoice} labels={invoiceLabels} />
               </PDFViewer>
             )}
           </div>

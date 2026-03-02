@@ -1,0 +1,428 @@
+{
+  "Tenant": {
+    "nav": {
+      "home": "መነሻ",
+      "about": "ስለ እኛ",
+      "services": "አገልግሎቶች",
+      "contact": "ያግኙን",
+      "overview": "አጠቃላይ",
+      "dashboard": "ዳሽቦርድ",
+      "properties": "ንብረቶች",
+      "listings": "ዝርዝሮች",
+      "management": "አስተዳደር",
+      "myRents": "የኪራዮቼ",
+      "documents": "ሰነዶች",
+      "communication": "ግንኙነት",
+      "chat": "ውይይት",
+      "insights": "ግንዛቤ",
+      "reports": "ሪፖርቶች",
+      "settings": "ቅንብሮች",
+      "logout": "ውጣ"
+    },
+    "auth": {
+      "signIn": "ግባ",
+      "registerOwner": "እንደ ባለቤት ተመዝገብ"
+    },
+    "header": {
+      "searchPlaceholder": "ፈልግ..."
+    },
+    "dashboard": {
+      "title": "ዳሽቦርድ",
+      "subtitle": "ወደ ተከራይ ዳሽቦርድዎ እንኳን ደህና መጣ",
+      "welcome": "ወደ ተከራይ ዳሽቦርድዎ እንኳን ደህና መጣ",
+      "noticeBoard": "የማስታወቂያ ሰሌዳ",
+      "noNotices": "በአሁኑ ጊዜ ምንም ማስታወቂያ የለም።",
+      "loadingNotices": "ማስታወቂያዎችን በመጫን ላይ...",
+      "failedNotices": "ማስታወቂያዎችን መጫን አልተሳካም",
+      "retry": "እንደገና ሞክር"
+    },
+    "home": {
+      "hero": {
+        "trusted": "ከ10,000+ በላይ ተከራዮች እና አከራዮች የታመነ",
+        "title": "ትክክለኛውን የኪራይ",
+        "titleAccent": "ንብረት ያግኙ",
+        "subtitle1": "በእኛ",
+        "subtitle2": "ብልጥ መድረክ",
+        "subtitle3": "የህልምዎን ቤት ያግኙ። ከተረጋገጡ አከራዮች ጋር ይገናኙ፣ ምናባዊ ጉብኝቶችን ያድርጉ እና የኪራይ ውሎችን በዲጂታል ይፈርሙ - ሁሉም በአንድ",
+        "subtitle4": "ቆንጆ ልምድ",
+        "browseButton": "ንብረቶችን ይፈልጉ",
+        "listButton": "ንብረትዎን ያስመዝግቡ",
+        "searchPlaceholder": "በቦታ ይፈልጉ..."
+      },
+      "features": {
+        "title": "ለቤት አስተዳደር የሚያስፈልጉዎት",
+        "titleAccent": "ሁሉም ነገሮች",
+        "subtitle": "ከከፍተኛ ፍለጋ እስከ ዲጂታል ውሎች፣ ስኬታማ ለመሆን የሚያስፈልጉዎትን መሳሪያዎች ሁሉ አዘጋጅተናል",
+        "advancedSearch": {
+          "title": "ከፍተኛ ፍለጋ",
+          "desc": "በዘመናዊ ማጣሪያዎች እና ብልጥ ጥቆማዎች ትክክለኛውን ንብረት ያግኙ"
+        },
+        "messaging": {
+          "title": "የውስጥ መልዕክት",
+          "desc": "በደህንነቱ የተጠበቀ የመልዕክት ስርዓታችን አማካኝነት ከአከራዮች እና ተከራዮች ጋር በቀጥታ ይገናኙ"
+        },
+        "payments": {
+          "title": "የመስመር ላይ ክፍያዎች",
+          "desc": "ደህንነቱ የተጠበቀ የመስመር ላይ የኪራይ ክፍያዎች እና ለአከራዮች አውቶማቲክ ክፍያ"
+        },
+        "verified": {
+          "title": "የተረጋገጡ ዝርዝሮች",
+          "desc": "እውነተኛነትን እና ጥራትን ለማረጋገጥ ሁሉም ንብረቶች በቡድናችን የተረጋገጡ ናቸው"
+        },
+        "virtualTours": {
+          "title": "ምናባዊ ጉብኝቶች",
+          "desc": "ቤትዎ ሆነው የንብረቶችን ምናባዊ ጉብኝት ያድርጉ"
+        },
+        "eSignature": {
+          "title": "ዲጂታል ፊርማ",
+          "desc": "የኪራይ ውሎችን በዲጂታል እና ደህንነቱ በተጠበቀ ሁኔታ ይፈርሙ"
+        }
+      }
+    },
+    "footer": {
+      "description": "ለተከራዮች እና ለአከራዮች ዘመናዊ የንብረት አስተዳደር መፍትሄ።",
+      "quickLinks": "ፈጣን ሊንኮች",
+      "support": "ድጋፍ",
+      "legal": "ህጋዊ",
+      "rights": "መብቱ በህግ የተጠበቀ ነው።"
+    },
+    "listings": {
+      "header": {
+        "title": "ዝርዝሮች",
+        "subtitle": "ለእርስዎ ፍላጎት የሚሆኑ ቤቶችን ይፈልጉ"
+      },
+      "loading": {
+        "title": "በመጫን ላይ...",
+        "subtitle": "ዝርዝሮችን እያመጣን ነው",
+        "message": "እባክዎ ትንሽ ይጠብቁ..."
+      },
+      "details": {
+        "title": "የቤት ዝርዝር",
+        "subtitle": "ስለ ቤቱ ተጨማሪ መረጃ"
+      },
+      "results": {
+        "title": "{count} ዝርዝሮች ተገኝተዋል",
+        "subtitle": "ፍላጎትዎን የሚያሟሉ ቤቶች"
+      },
+      "view": {
+        "grid": "በመረብ እይታ",
+        "list": "በዝርዝር እይታ"
+      },
+      "badge": {
+        "featured": "ተለይቶ የቀረበ"
+      },
+      "stats": {
+        "capacity": "ሰው",
+        "parking": "ፓርኪንግ",
+        "areaUnit": "ካሬ ሜትር",
+        "reviews": "ግምገማዎች"
+      },
+      "actions": {
+        "view": "እይ",
+        "viewDetails": "ዝርዝር መረጃ"
+      },
+      "status": {
+        "available": "ክፍት",
+        "maintenance": "ጥገና ላይ"
+      },
+      "pagination": {
+        "previous": "ቀዳሚ",
+        "next": "ቀጣይ"
+      },
+      "empty": {
+        "title": "ምንም ውጤት አልተገኘም",
+        "subtitle": "በፈለጉት መስፈርት የሚገኝ ቤት የለም",
+        "clear": "ፍለጋውን አጽዳ"
+      },
+      "unitTitle": "ክፍል {number}"
+    },
+    "listingDetail": {
+      "breadcrumb": "ወደ ዝርዝሮች ተመለስ",
+      "backToListings": "ወደ ዝርዝሮች ተመለስ",
+      "featured": "ተለይቶ የቀረበ",
+      "available": "ክፍት",
+      "unavailable": "አይገኝም",
+      "monthlyRent": "የወር ኪራይ",
+      "reviews": "ግምገማዎች",
+      "capacity": "አቅም",
+      "people": "ሰው",
+      "parking": "ፓርኪንግ",
+      "spaces": "ቦታ",
+      "area": "ስፋት",
+      "areaUnit": "ካሬ ሜትር",
+      "type": "ዓይነት",
+      "aboutTitle": "ስለ ቤቱ",
+      "aboutLine1": "ይህ {type} በ {location} የሚገኝ ሲሆን {capacity} ሰዎችን የመያዝ አቅም አለው። እንዲሁም {parking} {parkingSuffix} ፓርኪንግ እና {area} ካሬ ሜትር ስፋት አለው።",
+      "aboutLine2": "ቤቱ በ {rating} ኮከብ የተመዘገበ ሲሆን በጣም ጥሩ አገልግሎት ይሰጣል።",
+      "contactTitle": "የባለቤት መረጃ",
+      "phone": "ስልክ ቁጥር",
+      "email": "ኢሜል",
+      "contactButton": "ባለቤቱን አግኝ"
+    },
+    "reports": {
+      "header": {
+        "title": "ሪፖርቶች",
+        "subtitle": "ችግሮችን ወይም ክስተቶችን ያሳውቁ"
+      },
+      "form": {
+        "title": "አዲስ ሪፖርት ያቅርቡ",
+        "subtitle": "ያጋጠመዎትን ችግር በዝርዝር ይግለጹ",
+        "propertyLabel": "ንብረት",
+        "propertyPlaceholder": "የንብረቱ ስም",
+        "categoryLabel": "ምድብ",
+        "categoryPlaceholder": "ምድብ ይምረጡ",
+        "categoryOtherPlaceholder": "ሌላ ምድብ ይጥቀሱ",
+        "severityLabel": "ክብደት",
+        "severityPlaceholder": "ክብደት ይምረጡ",
+        "messageLabel": "መልዕክት",
+        "messagePlaceholder": "ስለ ችግሩ ዝርዝር መረጃ እዚህ ይጻፉ...",
+        "submit": "ሪፖርት ላክ"
+      },
+      "categories": {
+        "noise": "ጩኸት",
+        "parking": "ፓርኪንግ",
+        "security": "ደህንነት",
+        "cleanliness": "ጽዳት",
+        "other": "ሌላ"
+      },
+      "severity": {
+        "low": "ዝቅተኛ",
+        "medium": "መካከለኛ",
+        "high": "ከፍተኛ"
+      },
+      "list": {
+        "title": "ያቀረቧቸው ሪፖርቶች",
+        "subtitle": "ያቀረቧቸው ሪፖርቶች ዝርዝር እና ሁኔታ",
+        "empty": "እስካሁን ምንም ሪፖርት አላቀረቡም"
+      },
+      "defaultPropertyTitle": "የእኔ ቤት",
+      "severityLine": "ክብደት: {severity}"
+    },
+    "documents": {
+      "header": {
+        "title": "ሰነዶች",
+        "subtitle": "ሰነዶችዎን እዚህ ያስተዳድሩ"
+      },
+      "loading": {
+        "title": "በመጫን ላይ...",
+        "subtitle": "ሰነዶችን እያመጣን ነው",
+        "message": "እባክዎ ትንሽ ይጠብቁ..."
+      },
+      "stats": {
+        "total": "ጠቅላላ ሰነዶች",
+        "approved": "የጸደቁ",
+        "pending": "በጥበቃ ላይ"
+      },
+      "upload": {
+        "title": "ሰነድ መጫኛ",
+        "heading": "አዲስ ሰነድ ይጫኑ",
+        "documentTypeLabel": "የሰነድ ዓይነት",
+        "selectType": "ዓይነት ይምረጡ",
+        "loadingTypes": "የሰነድ ዓይነቶችን በመጫን ላይ...",
+        "required": "አስፈላጊ",
+        "dropzone": "ለመጫን እዚህ ይጎትቱ ወይም ይጫኑ",
+        "fileHint": "PDF ብቻ (ከ10MB በታች)",
+        "button": "ሰነድ ይጫኑ",
+        "uploading": "በመጫን ላይ...",
+        "info": "የተጫኑ ሰነዶች በባለቤቱ ከመጽደቃቸው በፊት ይገመገማሉ",
+        "errorTitle": "ስህተት ተከስቷል",
+        "successTitle": "ተሳክቷል",
+        "successSubtitle": "ሰነዱ በተሳካ ሁኔታ ተጭኗል",
+        "errors": {
+          "onlyPdf": "PDF ፋይሎች ብቻ ይፈቀዳሉ",
+          "fileSize": "ፋይሉ ከ {size}MB በላይ መሆን የለበትም",
+          "missingFields": "እባክዎ ፋይል እና የሰነድ ዓይነት ይምረጡ",
+          "unauthorized": "እባክዎ መጀመሪያ ይግቡ",
+          "uploadFailed": "ፋይሉን መጫን አልተሳካም",
+          "uploadFailedTryAgain": "መጫን አልተሳካም፣ እባክዎ እንደገና ይሞክሩ"
+        },
+        "selectContactFirst": "እባክዎ በመጀመሪያ ግንኙነት ይምረጡ"
+      },
+      "list": {
+        "title": "የተጫኑ ሰነዶች",
+        "emptyTitle": "ምንም ሰነዶች አልተገኙም",
+        "emptyTenant": "እስካሁን ምንም ሰነድ አልጫኑም",
+        "emptyLandlord": "እስካሁን ምንም የተጫነ ሰነድ የለም",
+        "rejectionReason": "ውድቅ የተደረገበት ምክንያት",
+        "deleteTitle": "ሰነድ ሰርዝ",
+        "deleteDescription": "እርግጠኛ ነዎት '{name}' መሰረዝ ይፈልጋሉ? ይህ ድርጊት ሊመለስ አይችልም።"
+      },
+      "status": {
+        "approved": "የጸደቀ",
+        "pending": "በጥበቃ ላይ",
+        "rejected": "ውድቅ የተደረገ"
+      },
+      "actions": {
+        "cancel": "ሰርዝ",
+        "delete": "አጥፋ",
+        "deleting": "በማጥፋት ላይ..."
+      }
+    },
+    "chatPage": {
+      "header": {
+        "title": "ውይይት",
+        "subtitle": "ከባለቤቶች እና ሌሎች ተከራዮች ጋር ይነጋገሩ"
+      },
+      "searchPlaceholder": "ሰዎችን ፈልግ...",
+      "filters": {
+        "allBuildings": "ሁሉም ህንፃዎች",
+        "allFloors": "ሁሉም ፎቆች",
+        "buildingLabel": "ህንፃ {id}",
+        "floorLabel": "ፎቅ {floor}"
+      },
+      "noContacts": "ምንም ግንኙነቶች አልተገኙም",
+      "selectContact": "ግንኙነት ይምረጡ",
+      "selectToStart": "ውይይት ለመጀመር ግንኙነት ይምረጡ",
+      "inputPlaceholder": "መልዕክትዎን እዚህ ይጻፉ...",
+      "selectContactFirst": "እባክዎ በመጀመሪያ ግንኙነት ይምረጡ"
+    },
+    "leases": {
+      "header": {
+        "title": "የኪራይ ውሎች",
+        "subtitle": "የኪራይ ውልዎን ዝርዝር እዚህ ያግኙ"
+      },
+      "stats": {
+        "active": "ንቁ ውሎች",
+        "pending": "በጥበቃ ላይ",
+        "monthlyRent": "የወር ኪራይ"
+      },
+      "section": {
+        "title": "የኪራይ ውል ዝርዝር",
+        "subtitle": "የአሁኑ እና ያለፉ የኪራይ ውሎችዎ"
+      },
+      "empty": {
+        "title": "ምንም የኪራይ ውል አልተገኘም",
+        "subtitle": "እስካሁን ምንም ንቁ ወይም ያለፈ የኪራይ ውል የለዎትም"
+      },
+      "status": {
+        "active": "ንቁ",
+        "pending": "በጥበቃ ላይ",
+        "inactive": "ንቁ ያልሆነ",
+        "expired": "ጊዜው ያለፈበት"
+      },
+      "unitLabel": "ክፍል {id}",
+      "leaseIdLabel": "የውል መለያ: {id}",
+      "monthlyRent": "የወር ኪራይ",
+      "startDate": "መጀመሪያ ቀን",
+      "endDate": "መጨረሻ ቀን",
+      "daysRemaining": "ቀሪ ቀናት",
+      "daysCount": "{count} ቀናት ቀርተዋል",
+      "expired": "ጊዜው አልፏል",
+      "viewDetails": "ዝርዝር እይ",
+      "statusLabel": "ሁኔታ",
+      "duration": "ቆይታ",
+      "totalValue": "ጠቅላላ ዋጋ",
+      "created": "የተፈጠረበት ቀን",
+      "noteTitle": "ማስታወሻ:",
+      "noteBody": "ይህ በዲጂታል መልኩ የተፈረመ የኪራይ ውል ነው። ለህጋዊ ጉዳዮች ዋናውን ቅጂ ማውረድ ይችላሉ።",
+      "close": "ዝጋ",
+      "downloadPdf": "PDF አውርድ",
+      "dialog": {
+        "title": "የኪራይ ውል ዝርዝር",
+        "subtitle": "ስለ ኪራይ ውልዎ ሙሉ መረጃ",
+        "property": "ንብረት"
+      }
+    },
+    "settings": {
+      "title": "ቅንብሮች",
+      "subtitle": "የመለያዎን ቅንብሮች ያስተካክሉ",
+      "loading": "በመጫን ላይ...",
+      "success": "ለውጦች በተሳካ ሁኔታ ተቀምጠዋል!",
+      "page": {
+        "title": "ቅንብሮች",
+        "subtitle": "የመለያዎን ቅንብሮች ያስተካክሉ"
+      },
+      "tabs": {
+        "profile": "መገለጫ",
+        "security": "ደህንነት",
+        "notifications": "ማሳወቂያዎች",
+        "privacy": "ግላዊነት"
+      },
+      "profile": {
+        "title": "የመገለጫ መረጃ",
+        "subtitle": "የግል መረጃዎን እዚህ ያዘምኑ",
+        "fullName": "ሙሉ ስም",
+        "fullNamePlaceholder": "ሙሉ ስምዎ",
+        "email": {
+          "label": "የኢሜል አድራሻ",
+          "placeholder": "you@email.com"
+        },
+        "phone": {
+          "label": "ስልክ ቁጥር",
+          "placeholder": "+251 911 000 000"
+        },
+        "firstName": {
+          "label": "የመጀመሪያ ስም",
+          "placeholder": "የመጀመሪያ ስምዎን ያስገቡ"
+        },
+        "lastName": {
+          "label": "የአባት ስም",
+          "placeholder": "የአባት ስምዎን ያስገቡ"
+        },
+        "address": {
+          "label": "አድራሻ",
+          "placeholder": "አድራሻዎን ያስገቡ"
+        },
+        "bio": {
+          "label": "ስለ እኔ",
+          "placeholder": "ስለ እርስዎ ጥቂት ይንገሩን"
+        },
+        "save": "ለውጦችን አስቀምጥ"
+      },
+      "security": {
+        "title": "ደህንነት",
+        "subtitle": "የይለፍ ቃልዎን እና የደህንነት ቅንብሮችን ያስተካክሉ"
+      },
+      "password": {
+        "title": "የይለፍ ቃል ቀይር",
+        "current": "የአሁኑ የይለፍ ቃል",
+        "currentPlaceholder": "የአሁኑን የይለፍ ቃል ያስገቡ",
+        "new": "አዲስ የይለፍ ቃል",
+        "newPlaceholder": "አዲስ የይለፍ ቃል ያስገቡ",
+        "confirm": "የይለፍ ቃል አረጋግጥ",
+        "confirmPlaceholder": "አዲስ የይለፍ ቃል ያረጋግጡ",
+        "update": "የይለፍ ቃል አዘምን"
+      },
+      "notifications": {
+        "title": "የማሳወቂያ ምርጫዎች",
+        "emailTitle": "የኢሜል ማሳወቂያዎች",
+        "emailDesc": "በኢሜል ማዘመኖችን ይቀበሉ",
+        "chatTitle": "የውይይት መልዕክቶች",
+        "chatDesc": "አዲስ መልዕክቶችን ሲደርሱ ያውቁ",
+        "maintenanceTitle": "የጥገና ማሳወቂያዎች",
+        "maintenanceDesc": "የጥገና ማዘመኖችን ይቀበሉ",
+        "items": {
+          "messages": {
+            "label": "የውይይት መልዕክቶች",
+            "description": "አዲስ መልዕክቶችን ሲደርሱ ያውቁ"
+          },
+          "maintenance": {
+            "label": "የጥገና ማሳወቂያዎች",
+            "description": "የጥገና ማዘመኖችን ይቀበሉ"
+          },
+          "payments": {
+            "label": "የክፍያ ማሳወቂያዎች",
+            "description": "የክፍያ ማሳሰቢያዎችን ይቀበሉ"
+          },
+          "announcements": {
+            "label": "የንብረት ማስታወቂያዎች",
+            "description": "አስፈላጊ የንብረት ማስታወቂያዎችን ይቀበሉ"
+          },
+          "offers": {
+            "label": "ልዩ ቅናሾች",
+            "description": "ስለ ልዩ ቅናሾች ማሳወቂያዎችን ይቀበሉ"
+          }
+        }
+      },
+      "alerts": {
+        "loadProfileFailed": "መገለጫን መጫን አልተሳካም",
+        "saveProfileFailed": "መገለጫን ማስቀመጥ አልተሳካም",
+        "passwordMismatch": "የይለፍ ቃላቱ አይዛመዱም",
+        "passwordIncomplete": "እባክዎን ሁሉንም የይለፍ ቃል ቦታዎች ይሙሉ",
+        "changePasswordFailed": "የይለፍ ቃል መቀየር አልተሳካም",
+        "fieldNotSupported": "ይህ መረጃ መቀየር አይቻልም",
+        "saveChangesFailed": "ለውጦችን ማስቀመጥ አልተሳካም"
+      }
+    }
+  }
+}

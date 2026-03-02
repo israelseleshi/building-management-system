@@ -1,0 +1,428 @@
+{
+  "Tenant": {
+    "nav": {
+      "home": "Home",
+      "about": "About Us",
+      "services": "Services",
+      "contact": "Contact Us",
+      "overview": "Overview",
+      "dashboard": "Dashboard",
+      "properties": "Properties",
+      "listings": "Listings",
+      "management": "Management",
+      "myRents": "My Rents",
+      "documents": "Documents",
+      "communication": "Communication",
+      "chat": "Chat",
+      "insights": "Insights",
+      "reports": "Reports",
+      "settings": "Settings",
+      "logout": "Log Out"
+    },
+    "auth": {
+      "signIn": "Sign In",
+      "registerOwner": "Register as Owner"
+    },
+    "header": {
+      "searchPlaceholder": "Search..."
+    },
+    "home": {
+      "hero": {
+        "trusted": "Trusted by 10,000+ tenants & landlords",
+        "title": "Find Your Perfect",
+        "titleAccent": "Rental Property",
+        "subtitle1": "Discover your dream home with our",
+        "subtitle2": "intelligent platform",
+        "subtitle3": "Connect with verified landlords, take immersive virtual tours, and sign leases digitally — all in one",
+        "subtitle4": "beautiful experience",
+        "browseButton": "Browse Properties",
+        "listButton": "List Your Property",
+        "searchPlaceholder": "Search by location..."
+      },
+      "features": {
+        "title": "Everything You Need for",
+        "titleAccent": "Property Management",
+        "subtitle": "From advanced search to digital contracts, we've got all the tools you need to succeed",
+        "advancedSearch": {
+          "title": "Advanced Search",
+          "desc": "Find your perfect property with powerful filters and smart recommendations"
+        },
+        "messaging": {
+          "title": "In-App Messaging",
+          "desc": "Communicate directly with landlords and tenants through our secure messaging system"
+        },
+        "payments": {
+          "title": "Online Payments",
+          "desc": "Secure online rent payments and automated payout processing for landlords"
+        },
+        "verified": {
+          "title": "Verified Listings",
+          "desc": "All properties are verified by our team to ensure authenticity and quality"
+        },
+        "virtualTours": {
+          "title": "Virtual Tours",
+          "desc": "Take virtual tours of properties from the comfort of your home"
+        },
+        "eSignature": {
+          "title": "E-Signature",
+          "desc": "Sign leases digitally and securely with compliant e-signatures"
+        }
+      }
+    },
+    "footer": {
+      "description": "Modern property management solutions for tenants and landlords.",
+      "quickLinks": "Quick Links",
+      "support": "Support",
+      "legal": "Legal",
+      "rights": "All rights reserved."
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Welcome to your tenant dashboard",
+      "welcome": "Welcome to Your Tenant Dashboard",
+      "noticeBoard": "Notice Board",
+      "noNotices": "No notices at the moment.",
+      "loadingNotices": "Loading notices...",
+      "failedNotices": "Failed to load notices",
+      "retry": "Retry"
+    },
+    "listings": {
+      "header": {
+        "title": "Listings",
+        "subtitle": "Find the perfect home for you"
+      },
+      "loading": {
+        "title": "Loading...",
+        "subtitle": "Fetching listings",
+        "message": "Please wait a moment..."
+      },
+      "details": {
+        "title": "Property Details",
+        "subtitle": "More information about the property"
+      },
+      "results": {
+        "title": "{count} listings found",
+        "subtitle": "Properties that match your search"
+      },
+      "view": {
+        "grid": "Grid View",
+        "list": "List View"
+      },
+      "badge": {
+        "featured": "Featured"
+      },
+      "stats": {
+        "capacity": "people",
+        "parking": "Parking",
+        "areaUnit": "sqm",
+        "reviews": "reviews"
+      },
+      "actions": {
+        "view": "View",
+        "viewDetails": "View Details"
+      },
+      "status": {
+        "available": "Available",
+        "maintenance": "Under Maintenance"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "empty": {
+        "title": "No results found",
+        "subtitle": "No properties match your search criteria",
+        "clear": "Clear Search"
+      },
+      "unitTitle": "Unit {number}"
+    },
+    "listingDetail": {
+      "breadcrumb": "Back to Listings",
+      "backToListings": "Back to Listings",
+      "featured": "Featured",
+      "available": "Available",
+      "unavailable": "Unavailable",
+      "monthlyRent": "Monthly Rent",
+      "reviews": "reviews",
+      "capacity": "Capacity",
+      "people": "people",
+      "parking": "Parking",
+      "spaces": "spaces",
+      "area": "Area",
+      "areaUnit": "sqm",
+      "type": "Type",
+      "aboutTitle": "About this Property",
+      "aboutLine1": "This {type} in {location} can accommodate up to {capacity} people. It features {parking} {parkingSuffix} parking and has a total area of {area} sqm.",
+      "aboutLine2": "The property is rated {rating} stars and offers excellent amenities.",
+      "contactTitle": "Landlord Information",
+      "phone": "Phone Number",
+      "email": "Email Address",
+      "contactButton": "Contact Landlord"
+    },
+    "reports": {
+      "header": {
+        "title": "Reports",
+        "subtitle": "Report issues or incidents"
+      },
+      "form": {
+        "title": "Submit New Report",
+        "subtitle": "Describe the issue you've encountered",
+        "propertyLabel": "Property",
+        "propertyPlaceholder": "Property Name",
+        "categoryLabel": "Category",
+        "categoryPlaceholder": "Select category",
+        "categoryOtherPlaceholder": "Specify other category",
+        "severityLabel": "Severity",
+        "severityPlaceholder": "Select severity",
+        "messageLabel": "Message",
+        "messagePlaceholder": "Write more details about the issue here...",
+        "submit": "Submit Report"
+      },
+      "categories": {
+        "noise": "Noise",
+        "parking": "Parking",
+        "security": "Security",
+        "cleanliness": "Cleanliness",
+        "other": "Other"
+      },
+      "severity": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "list": {
+        "title": "Your Reports",
+        "subtitle": "List and status of your submitted reports",
+        "empty": "You haven't submitted any reports yet"
+      },
+      "defaultPropertyTitle": "My Home",
+      "severityLine": "Severity: {severity}"
+    },
+    "documents": {
+      "header": {
+        "title": "Documents",
+        "subtitle": "Manage your documents here"
+      },
+      "loading": {
+        "title": "Loading...",
+        "subtitle": "Fetching documents",
+        "message": "Please wait a moment..."
+      },
+      "stats": {
+        "total": "Total Documents",
+        "approved": "Approved",
+        "pending": "Pending"
+      },
+      "upload": {
+        "title": "Document Upload",
+        "heading": "Upload New Document",
+        "documentTypeLabel": "Document Type",
+        "selectType": "Select type",
+        "loadingTypes": "Loading document types...",
+        "required": "Required",
+        "dropzone": "Drag and drop or click to upload",
+        "fileHint": "PDF only (under 10MB)",
+        "button": "Upload Document",
+        "uploading": "Uploading...",
+        "info": "Uploaded documents will be reviewed by the landlord before approval",
+        "errorTitle": "An error occurred",
+        "successTitle": "Success",
+        "successSubtitle": "Document uploaded successfully",
+        "errors": {
+          "onlyPdf": "Only PDF files are allowed",
+          "fileSize": "File size must be under {size}MB",
+          "missingFields": "Please select a file and document type",
+          "unauthorized": "Please sign in first",
+          "uploadFailed": "Failed to upload file",
+          "uploadFailedTryAgain": "Upload failed, please try again"
+        },
+        "selectContactFirst": "Please select a contact first"
+      },
+      "list": {
+        "title": "Uploaded Documents",
+        "emptyTitle": "No documents found",
+        "emptyTenant": "You haven't uploaded any documents yet",
+        "emptyLandlord": "No documents have been uploaded yet",
+        "rejectionReason": "Rejection Reason",
+        "deleteTitle": "Delete Document",
+        "deleteDescription": "Are you sure you want to delete '{name}'? This action cannot be undone."
+      },
+      "status": {
+        "approved": "Approved",
+        "pending": "Pending",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "deleting": "Deleting..."
+      }
+    },
+    "chatPage": {
+      "header": {
+        "title": "Chat",
+        "subtitle": "Communicate with landlords and other tenants"
+      },
+      "searchPlaceholder": "Search people...",
+      "filters": {
+        "allBuildings": "All Buildings",
+        "allFloors": "All Floors",
+        "buildingLabel": "Building {id}",
+        "floorLabel": "Floor {floor}"
+      },
+      "noContacts": "No contacts found",
+      "selectContact": "Select a contact",
+      "selectToStart": "Select a contact to start a conversation",
+      "inputPlaceholder": "Type your message here...",
+      "selectContactFirst": "Please select a contact first"
+    },
+    "leases": {
+      "header": {
+        "title": "Leases",
+        "subtitle": "Access your lease details here"
+      },
+      "stats": {
+        "active": "Active Leases",
+        "pending": "Pending",
+        "monthlyRent": "Monthly Rent"
+      },
+      "section": {
+        "title": "Lease Details",
+        "subtitle": "Your current and past lease agreements"
+      },
+      "empty": {
+        "title": "No leases found",
+        "subtitle": "You don't have any active or past lease agreements yet"
+      },
+      "status": {
+        "active": "Active",
+        "pending": "Pending",
+        "inactive": "Inactive",
+        "expired": "Expired"
+      },
+      "unitLabel": "Unit {id}",
+      "leaseIdLabel": "Lease ID: {id}",
+      "monthlyRent": "Monthly Rent",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "daysRemaining": "Days Remaining",
+      "daysCount": "{count} days left",
+      "expired": "Expired",
+      "viewDetails": "View Details",
+      "statusLabel": "Status",
+      "duration": "Duration",
+      "totalValue": "Total Value",
+      "created": "Created At",
+      "noteTitle": "Note:",
+      "noteBody": "This is a digitally signed lease agreement. You can download the official PDF copy for legal purposes.",
+      "close": "Close",
+      "downloadPdf": "Download PDF",
+      "dialog": {
+        "title": "Lease Details",
+        "subtitle": "Full information about your lease agreement",
+        "property": "Property"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage your account settings",
+      "loading": "Loading...",
+      "success": "Changes saved successfully!",
+      "page": {
+        "title": "Settings",
+        "subtitle": "Manage your account settings"
+      },
+      "tabs": {
+        "profile": "Profile",
+        "security": "Security",
+        "notifications": "Notifications",
+        "privacy": "Privacy"
+      },
+      "profile": {
+        "title": "Profile Information",
+        "subtitle": "Update your personal information here",
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "Your full name",
+        "email": {
+          "label": "Email Address",
+          "placeholder": "your@email.com"
+        },
+        "phone": {
+          "label": "Phone Number",
+          "placeholder": "+1 (555) 000-0000"
+        },
+        "firstName": {
+          "label": "First Name",
+          "placeholder": "Enter your first name"
+        },
+        "lastName": {
+          "label": "Last Name",
+          "placeholder": "Enter your last name"
+        },
+        "address": {
+          "label": "Address",
+          "placeholder": "Enter your address"
+        },
+        "bio": {
+          "label": "Bio",
+          "placeholder": "Tell us a bit about yourself"
+        },
+        "save": "Save Changes"
+      },
+      "security": {
+        "title": "Security",
+        "subtitle": "Manage your password and security settings"
+      },
+      "password": {
+        "title": "Change Password",
+        "current": "Current Password",
+        "currentPlaceholder": "Enter current password",
+        "new": "New Password",
+        "newPlaceholder": "Enter new password",
+        "confirm": "Confirm Password",
+        "confirmPlaceholder": "Confirm new password",
+        "update": "Update Password"
+      },
+      "notifications": {
+        "title": "Notification Preferences",
+        "emailTitle": "Email Notifications",
+        "emailDesc": "Receive updates via email",
+        "chatTitle": "Chat Messages",
+        "chatDesc": "Get notified about new messages",
+        "maintenanceTitle": "Maintenance Alerts",
+        "maintenanceDesc": "Receive maintenance updates",
+        "items": {
+          "messages": {
+            "label": "Chat Messages",
+            "description": "Get notified when you receive new messages"
+          },
+          "maintenance": {
+            "label": "Maintenance Alerts",
+            "description": "Receive updates about maintenance requests"
+          },
+          "payments": {
+            "label": "Payment Reminders",
+            "description": "Get payment due date reminders"
+          },
+          "announcements": {
+            "label": "Property Announcements",
+            "description": "Receive important property announcements"
+          },
+          "offers": {
+            "label": "Special Offers",
+            "description": "Get notified about special offers and promotions"
+          }
+        }
+      },
+      "alerts": {
+        "loadProfileFailed": "Failed to load profile",
+        "saveProfileFailed": "Failed to save profile",
+        "passwordMismatch": "Passwords do not match",
+        "passwordIncomplete": "Please fill in all password fields",
+        "changePasswordFailed": "Failed to change password",
+        "fieldNotSupported": "This field is not currently editable",
+        "saveChangesFailed": "Failed to save changes"
+      }
+    }
+  }
+}

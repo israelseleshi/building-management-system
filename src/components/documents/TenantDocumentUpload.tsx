@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Text, Heading } from "@/components/ui/typography"
@@ -25,6 +26,7 @@ export function TenantDocumentUpload({
   onUploadSuccess,
   tenantId,
 }: TenantDocumentUploadProps) {
+  const t = useTranslations("Tenant")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>("")
   const [uploading, setUploading] = useState(false)
@@ -44,14 +46,15 @@ export function TenantDocumentUpload({
 
     // Validate file type
     if (file.type !== "application/pdf") {
-      setError("Only PDF files are allowed")
+      setError(t("documents.upload.errors.onlyPdf"))
       setSelectedFile(null)
       return
     }
 
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      setError(`File size must be less than 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+      const sizeMb = (file.size / 1024 / 1024).toFixed(2)
+      setError(t("documents.upload.errors.fileSize", { size: sizeMb }))
       setSelectedFile(null)
       return
     }
@@ -61,7 +64,7 @@ export function TenantDocumentUpload({
 
   const handleUpload = async () => {
     if (!selectedFile || !selectedDocumentType) {
-      setError("Please select both a document type and a file")
+      setError(t("documents.upload.errors.missingFields"))
       return
     }
 
@@ -77,7 +80,7 @@ export function TenantDocumentUpload({
 
       const token = getAuthToken()
       if (!token) {
-        setError("Unauthorized. Please sign in again.")
+        setError(t("documents.upload.errors.unauthorized"))
         setUploading(false)
         return
       }
@@ -104,7 +107,7 @@ export function TenantDocumentUpload({
           onUploadSuccess?.()
           setTimeout(() => setSuccess(false), 3000)
         } else {
-          let message = "Upload failed"
+          let message = t("documents.upload.errors.uploadFailed")
           try {
             const response = JSON.parse(xhr.responseText || "{}")
             message = response.error || message
@@ -117,7 +120,7 @@ export function TenantDocumentUpload({
       })
 
       xhr.addEventListener("error", () => {
-        setError("Upload failed. Please try again.")
+        setError(t("documents.upload.errors.uploadFailedTryAgain"))
         setUploading(false)
       })
 
@@ -125,7 +128,7 @@ export function TenantDocumentUpload({
       xhr.setRequestHeader("Authorization", `Bearer ${token}`)
       xhr.send(formData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed")
+      setError(err instanceof Error ? err.message : t("documents.upload.errors.uploadFailed"))
       setUploading(false)
     }
   }
@@ -155,15 +158,15 @@ export function TenantDocumentUpload({
     <div className="w-full max-w-2xl mx-auto">
       <div className="rounded-2xl p-6 border border-border" style={{ backgroundColor: "var(--card)" }}>
         <Heading level={3} className="mb-6">
-          Upload Document
+          {t("documents.upload.heading")}
         </Heading>
 
         {/* Document Type Selection */}
         <div className="mb-6">
-          <Label className="text-sm font-semibold mb-2 block">Document Type *</Label>
+          <Label className="text-sm font-semibold mb-2 block">{t("documents.upload.documentTypeLabel")}</Label>
           {documentTypes.length === 0 ? (
             <div className="w-full px-4 py-2 border border-border rounded-lg bg-red-50 text-red-700 text-sm">
-              Loading document types...
+              {t("documents.upload.loadingTypes")}
             </div>
           ) : (
             <select
@@ -172,10 +175,10 @@ export function TenantDocumentUpload({
               disabled={uploading}
               className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50"
             >
-              <option value="">Select a document type...</option>
+              <option value="">{t("documents.upload.selectType")}</option>
               {documentTypes.map((type) => (
                 <option key={type.id} value={type.id}>
-                  {type.name} {type.is_required ? "(Required)" : ""}
+                  {type.name} {type.is_required ? `(${t("documents.upload.required")})` : ""}
                 </option>
               ))}
             </select>
@@ -204,10 +207,10 @@ export function TenantDocumentUpload({
           >
             <Upload className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
             <Text className="font-semibold mb-1">
-              {selectedFile ? selectedFile.name : "Click to upload or drag and drop"}
+              {selectedFile ? selectedFile.name : t("documents.upload.dropzone")}
             </Text>
             <Text className="text-xs text-muted-foreground">
-              PDF files only, max 10MB
+              {t("documents.upload.fileHint")}
             </Text>
           </button>
         </div>
@@ -243,7 +246,7 @@ export function TenantDocumentUpload({
           <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
-              <Text className="font-semibold text-red-900">Upload Error</Text>
+              <Text className="font-semibold text-red-900">{t("documents.upload.errorTitle")}</Text>
               <Text className="text-sm text-red-700">{error}</Text>
             </div>
           </div>
@@ -254,8 +257,8 @@ export function TenantDocumentUpload({
           <div className="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 flex items-start gap-3">
             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
             <div>
-              <Text className="font-semibold text-green-900">Upload Successful</Text>
-              <Text className="text-sm text-green-700">Your document has been uploaded and is pending review</Text>
+              <Text className="font-semibold text-green-900">{t("documents.upload.successTitle")}</Text>
+              <Text className="text-sm text-green-700">{t("documents.upload.successSubtitle")}</Text>
             </div>
           </div>
         )}
@@ -264,7 +267,7 @@ export function TenantDocumentUpload({
         {uploading && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <Text className="text-sm font-semibold">Uploading...</Text>
+              <Text className="text-sm font-semibold">{t("documents.upload.uploading")}</Text>
               <Text className="text-sm text-muted-foreground">{uploadProgress}%</Text>
             </div>
             <div className="w-full bg-border rounded-full h-2">
@@ -285,19 +288,19 @@ export function TenantDocumentUpload({
           {uploading ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Uploading...
+              {t("documents.upload.uploading")}
             </>
           ) : (
             <>
               <Upload className="w-4 h-4 mr-2" />
-              Upload Document
+              {t("documents.upload.button")}
             </>
           )}
         </Button>
 
         {/* Info Text */}
         <Text className="text-xs text-muted-foreground mt-4 text-center">
-          Your document will be reviewed by the property owner. You'll be notified once it's approved or if changes are needed.
+          {t("documents.upload.info")}
         </Text>
       </div>
     </div>

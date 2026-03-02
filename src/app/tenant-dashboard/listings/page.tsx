@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -41,6 +42,7 @@ export default function TenantListings() {
 interface Unit {
   id: string
   title: string
+  unitNumber?: string
   location: string
   price: number
   currency: string
@@ -60,6 +62,8 @@ interface Unit {
 
 function ListingsContent() {
   const router = useRouter()
+  const t = useTranslations("Tenant")
+  const locale = useLocale()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -69,6 +73,14 @@ function ListingsContent() {
   const [allUnits, setAllUnits] = useState<Unit[]>([])
   const [loading, setLoading] = useState(true)
   const itemsPerPage = 6
+  const dateLocale = locale === "am" ? "am-ET" : "en-US"
+
+  const getUnitTitle = (unit: Unit) => {
+    if (unit.unitNumber) {
+      return t("listings.unitTitle", { number: unit.unitNumber })
+    }
+    return unit.title
+  }
 
   const navItems = [
     {
@@ -128,10 +140,13 @@ function ListingsContent() {
 
         const units = (listingsPayload?.data?.units || []) as any[]
 
-        const transformedUnits: Unit[] = (units || []).map((unit: any, index: number) => ({
-          id: unit.unit_id?.toString() || `${unit.building?.building_id}-${unit.unit_number}`,
-          title: `Unit ${unit.unit_number}`,
-          location: unit.building?.address || 'Unknown location',
+        const transformedUnits: Unit[] = (units || []).map((unit: any, index: number) => {
+          const unitNumber = unit.unit_number?.toString() || ""
+          return {
+            id: unit.unit_id?.toString() || `${unit.building?.building_id}-${unit.unit_number}`,
+            title: unitNumber ? `Unit ${unitNumber}` : "Unit",
+            unitNumber,
+            location: unit.building?.address || 'Unknown location',
           price: unit.rent_amount,
           currency: 'ETB',
           period: 'monthly',
@@ -143,10 +158,11 @@ function ListingsContent() {
           image: mockImages[index % mockImages.length],
           featured: index < 3,
           type: 'apartment',
-          listed: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+          listed: new Date().toLocaleDateString(dateLocale, { year: 'numeric', month: 'short', day: 'numeric' }),
           status: unit.status || 'vacant',
           buildingId: unit.building?.building_id?.toString() || ''
-        }))
+          }
+        })
 
         setAllUnits(transformedUnits)
       } catch (err) {
@@ -158,7 +174,7 @@ function ListingsContent() {
     }
 
     fetchListings()
-  }, [])
+  }, [dateLocale])
 
   // Filter listings
   const filteredListings = allUnits.filter(unit => {
@@ -221,16 +237,17 @@ function ListingsContent() {
 
         <div className="flex-1 transition-all duration-300 ease-in-out">
           <DashboardHeader
-            title="Available Units"
-            subtitle="Loading units..."
+            title={t("listings.loading.title")}
+            subtitle={t("listings.loading.subtitle")}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            searchPlaceholder={t("header.searchPlaceholder")}
           />
 
           <main className="p-6 flex items-center justify-center min-h-96">
             <div className="flex flex-col items-center gap-3">
               <Loader className="w-8 h-8 text-primary animate-spin" />
-              <Text className="text-muted-foreground">Loading available units...</Text>
+              <Text className="text-muted-foreground">{t("listings.loading.message")}</Text>
             </div>
           </main>
         </div>
@@ -253,10 +270,11 @@ function ListingsContent() {
         {/* Main Content */}
         <div className="flex-1 transition-all duration-300 ease-in-out">
           <DashboardHeader
-            title="Unit Details"
-            subtitle="View detailed information about this unit"
+            title={t("listings.details.title")}
+            subtitle={t("listings.details.subtitle")}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            searchPlaceholder={t("header.searchPlaceholder")}
           />
 
           {/* Detail Content */}
@@ -286,10 +304,11 @@ function ListingsContent() {
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title="Available Units"
-          subtitle="Browse all available rental units"
+          title={t("listings.header.title")}
+          subtitle={t("listings.header.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          searchPlaceholder={t("header.searchPlaceholder")}
         />
 
         {/* Listings Content */}
@@ -298,9 +317,9 @@ function ListingsContent() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <Heading level={3} className="text-foreground">
-                {filteredListings.length} Units Available
+                {t("listings.results.title", { count: filteredListings.length })}
               </Heading>
-              <MutedText className="mt-1">Browse and save your favorite units</MutedText>
+              <MutedText className="mt-1">{t("listings.results.subtitle")}</MutedText>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -310,7 +329,7 @@ function ListingsContent() {
                 className="gap-2"
               >
                 <Grid className="w-4 h-4" />
-                Grid
+                {t("listings.view.grid")}
               </Button>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'outline'}
@@ -319,7 +338,7 @@ function ListingsContent() {
                 className="gap-2"
               >
                 <List className="w-4 h-4" />
-                List
+                {t("listings.view.list")}
               </Button>
             </div>
           </div>
@@ -344,7 +363,7 @@ function ListingsContent() {
                         <div className="absolute top-3 left-3 z-10">
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 gap-1 animate-pulse">
                             <Sparkles className="w-3 h-3" />
-                            Featured
+                            {t("listings.badge.featured")}
                           </Badge>
                         </div>
                       )}
@@ -363,7 +382,7 @@ function ListingsContent() {
                       </Button>
                       <img
                         src={unit.image}
-                        alt={unit.title}
+                        alt={getUnitTitle(unit)}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </div>
@@ -373,7 +392,7 @@ function ListingsContent() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <Heading level={3} className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-200">
-                            {unit.title}
+                            {getUnitTitle(unit)}
                           </Heading>
                           <div className="flex items-center text-muted-foreground text-sm">
                             <MapPin className="w-4 h-4 mr-1" />
@@ -385,15 +404,15 @@ function ListingsContent() {
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          <span>{unit.capacity} capacity</span>
+                          <span>{unit.capacity} {t("listings.stats.capacity")}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Car className="w-4 h-4" />
-                          <span>{unit.parking} parking</span>
+                          <span>{unit.parking} {t("listings.stats.parking")}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Square className="w-4 h-4" />
-                          <span>{unit.area} m²</span>
+                          <span>{unit.area} {t("listings.stats.areaUnit")}</span>
                         </div>
                       </div>
 
@@ -409,11 +428,11 @@ function ListingsContent() {
                           </div>
                           <div className="flex items-center text-xs text-muted-foreground mt-1">
                             <Star className="w-3 h-3 mr-1 text-yellow-500" />
-                            {unit.rating} ({unit.reviews} reviews) • {unit.listed}
+                            {unit.rating} ({unit.reviews} {t("listings.stats.reviews")}) • {unit.listed}
                           </div>
                         </div>
                         <Button size="sm" className="gap-2 transition-all duration-200 hover:scale-105" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
-                          View
+                          {t("listings.actions.view")}
                           <ArrowRight className="w-4 h-4" />
                         </Button>
                       </div>
@@ -433,7 +452,7 @@ function ListingsContent() {
                     className="gap-2"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    {t("listings.pagination.previous")}
                   </Button>
 
                   <div className="flex items-center gap-1">
@@ -458,7 +477,7 @@ function ListingsContent() {
                     disabled={currentPage === totalPages}
                     className="gap-2"
                   >
-                    Next
+                    {t("listings.pagination.next")}
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -483,7 +502,7 @@ function ListingsContent() {
                         <div className="absolute top-3 left-3 z-10">
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 gap-1 animate-pulse">
                             <Sparkles className="w-3 h-3" />
-                            Featured
+                            {t("listings.badge.featured")}
                           </Badge>
                         </div>
                       )}
@@ -502,7 +521,7 @@ function ListingsContent() {
                       </Button>
                       <img
                         src={unit.image}
-                        alt={unit.title}
+                        alt={getUnitTitle(unit)}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </div>
@@ -512,14 +531,16 @@ function ListingsContent() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <Heading level={3} className="text-xl font-semibold text-foreground mb-1 hover:text-primary transition-colors duration-200">
-                            {unit.title}
+                            {getUnitTitle(unit)}
                           </Heading>
                           <div className="flex items-center text-muted-foreground text-sm mb-2">
                             <MapPin className="w-4 h-4 mr-1" />
                             {unit.location}
                           </div>
                           <Badge variant="secondary" className="text-xs">
-                            {unit.status === 'Active' ? 'Available' : 'Maintenance'}
+                            {unit.status === 'Active'
+                              ? t("listings.status.available")
+                              : t("listings.status.maintenance")}
                           </Badge>
                         </div>
                         <div className="text-right">
@@ -531,7 +552,7 @@ function ListingsContent() {
                           </div>
                           <div className="flex items-center text-xs text-muted-foreground mt-1">
                             <Star className="w-3 h-3 mr-1 text-yellow-500" />
-                            {unit.rating} ({unit.reviews} reviews)
+                            {unit.rating} ({unit.reviews} {t("listings.stats.reviews")})
                           </div>
                         </div>
                       </div>
@@ -542,19 +563,19 @@ function ListingsContent() {
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            <span>{unit.capacity} capacity</span>
+                            <span>{unit.capacity} {t("listings.stats.capacity")}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Car className="w-4 h-4" />
-                            <span>{unit.parking} parking</span>
+                            <span>{unit.parking} {t("listings.stats.parking")}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Square className="w-4 h-4" />
-                            <span>{unit.area} m²</span>
+                            <span>{unit.area} {t("listings.stats.areaUnit")}</span>
                           </div>
                         </div>
                         <Button size="sm" className="gap-2 transition-all duration-200 hover:scale-105" style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}>
-                          View Details
+                          {t("listings.actions.viewDetails")}
                           <ArrowRight className="w-4 h-4" />
                         </Button>
                       </div>
@@ -574,7 +595,7 @@ function ListingsContent() {
                     className="gap-2"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    {t("listings.pagination.previous")}
                   </Button>
 
                   <div className="flex items-center gap-1">
@@ -599,7 +620,7 @@ function ListingsContent() {
                     disabled={currentPage === totalPages}
                     className="gap-2"
                   >
-                    Next
+                    {t("listings.pagination.next")}
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -612,17 +633,17 @@ function ListingsContent() {
             <Card className="text-center py-12 border-0">
               <CardContent>
                 <Heading level={3} className="text-xl font-semibold text-foreground mb-2">
-                  No units found
+                  {t("listings.empty.title")}
                 </Heading>
                 <Text className="text-muted-foreground mb-4">
-                  Try adjusting your search to find available units.
+                  {t("listings.empty.subtitle")}
                 </Text>
                 <Button
                   onClick={() => setSearchQuery('')}
                   className="transition-all duration-200 hover:scale-105"
                   style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
                 >
-                  Clear Search
+                  {t("listings.empty.clear")}
                 </Button>
               </CardContent>
             </Card>

@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export function Footer() {
+  const t = useTranslations("Tenant");
   return (
     <footer className="border-t border-slate-800 bg-slate-950 text-slate-200">
       {/* Main footer content */}
@@ -24,14 +26,14 @@ export function Footer() {
               </div>
             </div>
             <p className="max-w-xs text-sm text-slate-400">
-              The modern way to find, manage, and rent properties.
+              {t("footer.description")}
             </p>
           </div>
 
           {/* Product column */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-              Product
+              {t("footer.quickLinks")}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
@@ -39,7 +41,7 @@ export function Footer() {
                   href="#features"
                   className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
                 >
-                  <span>Features</span>
+                  <span>{t("nav.services")}</span>
                   <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
                 </Link>
               </li>
@@ -48,16 +50,7 @@ export function Footer() {
                   href="/home/listings"
                   className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
                 >
-                  <span>Listings</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>Security</span>
+                  <span>{t("nav.listings")}</span>
                   <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
                 </Link>
               </li>
@@ -67,7 +60,7 @@ export function Footer() {
           {/* Company column */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-              Company
+              {t("footer.support")}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
@@ -75,7 +68,7 @@ export function Footer() {
                   href="#"
                   className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
                 >
-                  <span>About</span>
+                  <span>{t("nav.about")}</span>
                   <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
                 </Link>
               </li>
@@ -84,16 +77,7 @@ export function Footer() {
                   href="#"
                   className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
                 >
-                  <span>Blog</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>Contact</span>
+                  <span>{t("nav.contact")}</span>
                   <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
                 </Link>
               </li>
@@ -103,7 +87,7 @@ export function Footer() {
           {/* Legal column */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-              Legal
+              {t("footer.legal")}
             </h3>
             <ul className="space-y-2 text-sm">
               <li>
@@ -112,24 +96,6 @@ export function Footer() {
                   className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
                 >
                   <span>Privacy</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>Terms</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>Cookie Policy</span>
                   <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
                 </Link>
               </li>
@@ -142,7 +108,7 @@ export function Footer() {
       <div className="border-t border-slate-800/80 bg-slate-950/95">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
           <p className="text-center sm:text-left">
-            © 2025 Building Management System. All rights reserved.
+            © 2025 Building Management System. {t("footer.rights")}
           </p>
 
           {/* Optional social icons */}

@@ -134,6 +134,28 @@ const styles = StyleSheet.create({
 
 interface InvoiceTemplateProps {
   invoice: Invoice;
+  labels?: {
+    title: string;
+    subtitle: string;
+    dateIssued: string;
+    dueDate: string;
+    billFrom: string;
+    billTo: string;
+    description: string;
+    quantity: string;
+    unitPrice: string;
+    total: string;
+    subtotal: string;
+    tax: string;
+    totalLabel: string;
+    footerLine1: string;
+    footerLine2: string;
+    status: {
+      Paid: string;
+      Pending: string;
+      Overdue: string;
+    };
+  };
 }
 
 const formatCurrency = (amount: number) => {
@@ -149,40 +171,69 @@ const getStatusStyle = (status: string) => {
   }
 };
 
-const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice }) => {
+const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice, labels }) => {
+  const baseStatus = {
+    Paid: "Paid",
+    Pending: "Pending",
+    Overdue: "Overdue",
+  };
+  const resolvedLabels = {
+    title: "INVOICE",
+    subtitle: "Building Management System",
+    dateIssued: "Date Issued:",
+    dueDate: "Due Date:",
+    billFrom: "Bill From:",
+    billTo: "Bill To:",
+    description: "Description",
+    quantity: "Quantity",
+    unitPrice: "Unit Price",
+    total: "Total",
+    subtotal: "Subtotal:",
+    tax: "Tax (15% VAT):",
+    totalLabel: "Total:",
+    footerLine1: "Thank you for your business. Please make checks payable to Building Management System.",
+    footerLine2: "For questions concerning this invoice, please contact billing@bms.et",
+    ...(labels ?? {}),
+    status: {
+      ...baseStatus,
+      ...(labels?.status ?? {}),
+    },
+  };
+
+  const statusLabel = resolvedLabels.status[invoice.status] || invoice.status;
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>INVOICE</Text>
-          <Text style={styles.subtitle}>Building Management System</Text>
+          <Text style={styles.title}>{resolvedLabels.title}</Text>
+          <Text style={styles.subtitle}>{resolvedLabels.subtitle}</Text>
           <Text style={styles.subtitle}>{invoice.invoiceNumber}</Text>
         </View>
 
         {/* Dates & Status */}
         <View style={styles.row}>
           <View style={styles.column}>
-            <Text style={styles.label}>Date Issued:</Text>
+            <Text style={styles.label}>{resolvedLabels.dateIssued}</Text>
             <Text style={styles.text}>{invoice.date}</Text>
-            <Text style={[styles.label, { marginTop: 10 }]}>Due Date:</Text>
+            <Text style={[styles.label, { marginTop: 10 }]}>{resolvedLabels.dueDate}</Text>
             <Text style={styles.text}>{invoice.dueDate}</Text>
           </View>
           <View style={[styles.column, { alignItems: 'flex-end' }]}>
-             <Text style={[styles.status, getStatusStyle(invoice.status)]}>{invoice.status}</Text>
+             <Text style={[styles.status, getStatusStyle(invoice.status)]}>{statusLabel}</Text>
           </View>
         </View>
 
         {/* Bill To / From */}
         <View style={styles.row}>
           <View style={styles.column}>
-            <Text style={styles.label}>Bill From:</Text>
+            <Text style={styles.label}>{resolvedLabels.billFrom}</Text>
             <Text style={[styles.text, { fontWeight: 'bold' }]}>{invoice.billFrom.name}</Text>
             <Text style={styles.text}>{invoice.billFrom.address}</Text>
             <Text style={styles.text}>{invoice.billFrom.email}</Text>
           </View>
           <View style={styles.column}>
-            <Text style={styles.label}>Bill To:</Text>
+            <Text style={styles.label}>{resolvedLabels.billTo}</Text>
             <Text style={[styles.text, { fontWeight: 'bold' }]}>{invoice.billTo.name}</Text>
             <Text style={styles.text}>{invoice.billTo.address}</Text>
             <Text style={styles.text}>{invoice.billTo.email}</Text>
@@ -192,10 +243,10 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice }) => {
         {/* Items Table */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={[styles.tableCell, styles.descriptionCell, { fontWeight: 'bold' }]}>Description</Text>
-            <Text style={[styles.tableCell, styles.numericCell, { fontWeight: 'bold' }]}>Quantity</Text>
-            <Text style={[styles.tableCell, styles.numericCell, { fontWeight: 'bold' }]}>Unit Price</Text>
-            <Text style={[styles.tableCell, styles.numericCell, { fontWeight: 'bold' }]}>Total</Text>
+            <Text style={[styles.tableCell, styles.descriptionCell, { fontWeight: 'bold' }]}>{resolvedLabels.description}</Text>
+            <Text style={[styles.tableCell, styles.numericCell, { fontWeight: 'bold' }]}>{resolvedLabels.quantity}</Text>
+            <Text style={[styles.tableCell, styles.numericCell, { fontWeight: 'bold' }]}>{resolvedLabels.unitPrice}</Text>
+            <Text style={[styles.tableCell, styles.numericCell, { fontWeight: 'bold' }]}>{resolvedLabels.total}</Text>
           </View>
           {invoice.items.map((item) => (
             <View key={item.id} style={styles.tableRow}>
@@ -210,23 +261,23 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ invoice }) => {
         {/* Totals */}
         <View style={styles.totals}>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal:</Text>
+            <Text style={styles.totalLabel}>{resolvedLabels.subtotal}</Text>
             <Text style={styles.totalValue}>{formatCurrency(invoice.subtotal)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tax (15% VAT):</Text>
+            <Text style={styles.totalLabel}>{resolvedLabels.tax}</Text>
             <Text style={styles.totalValue}>{formatCurrency(invoice.tax)}</Text>
           </View>
           <View style={[styles.totalRow, { borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 5 }]}>
-            <Text style={[styles.totalLabel, { color: '#000', fontWeight: 'bold' }]}>Total:</Text>
+            <Text style={[styles.totalLabel, { color: '#000', fontWeight: 'bold' }]}>{resolvedLabels.totalLabel}</Text>
             <Text style={[styles.totalValue, { fontSize: 14 }]}>{formatCurrency(invoice.total)}</Text>
           </View>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>Thank you for your business. Please make checks payable to Building Management System.</Text>
-          <Text>For questions concerning this invoice, please contact billing@bms.et</Text>
+          <Text>{resolvedLabels.footerLine1}</Text>
+          <Text>{resolvedLabels.footerLine2}</Text>
         </View>
       </Page>
     </Document>

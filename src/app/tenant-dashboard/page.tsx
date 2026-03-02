@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Heading, Text, MutedText } from "@/components/ui/typography"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
@@ -33,21 +34,23 @@ export default function TenantDashboard() {
 function DashboardContent() {
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations("Tenant")
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   
   // Determine active tab based on current pathname
   // IMPORTANT: Check more specific paths first to avoid partial matches
+  const normalizedPathname = pathname.replace(/^\/(en|am)(?=\/|$)/, "")
   let activeTab = "dashboard"
-  if (pathname === "/tenant-dashboard/leases" || pathname.startsWith("/tenant-dashboard/leases/")) {
+  if (normalizedPathname === "/tenant-dashboard/leases" || normalizedPathname.startsWith("/tenant-dashboard/leases/")) {
     activeTab = "leases"
-  } else if (pathname === "/tenant-dashboard/listings" || pathname.startsWith("/tenant-dashboard/listings/")) {
+  } else if (normalizedPathname === "/tenant-dashboard/listings" || normalizedPathname.startsWith("/tenant-dashboard/listings/")) {
     activeTab = "listings"
-  } else if (pathname === "/tenant-dashboard/documents" || pathname.startsWith("/tenant-dashboard/documents/")) {
+  } else if (normalizedPathname === "/tenant-dashboard/documents" || normalizedPathname.startsWith("/tenant-dashboard/documents/")) {
     activeTab = "documents"
-  } else if (pathname === "/tenant-dashboard/chat" || pathname.startsWith("/tenant-dashboard/chat/")) {
+  } else if (normalizedPathname === "/tenant-dashboard/chat" || normalizedPathname.startsWith("/tenant-dashboard/chat/")) {
     activeTab = "chat"
-  } else if (pathname === "/tenant-dashboard/settings" || pathname.startsWith("/tenant-dashboard/settings/")) {
+  } else if (normalizedPathname === "/tenant-dashboard/settings" || normalizedPathname.startsWith("/tenant-dashboard/settings/")) {
     activeTab = "settings"
   }
   const [messages, setMessages] = useState([
@@ -81,41 +84,41 @@ function DashboardContent() {
   const navItems = useMemo(() => [
     {
       icon: <LayoutDashboard className="w-5 h-5" />,
-      name: "Dashboard",
+      name: t("nav.dashboard"),
       path: "/tenant-dashboard",
       active: activeTab === "dashboard"
     },
     {
       icon: <Grid className="w-5 h-5" />,
-      name: "Listings",
+      name: t("nav.listings"),
       path: "/tenant-dashboard/listings",
       active: activeTab === "listings"
     },
     {
       icon: <FileText className="w-5 h-5" />,
-      name: "My Rents",
+      name: t("nav.myRents"),
       path: "/tenant-dashboard/leases",
       active: activeTab === "leases"
     },
     {
       icon: <FileText className="w-5 h-5" />,
-      name: "Documents",
+      name: t("nav.documents"),
       path: "/tenant-dashboard/documents",
       active: activeTab === "documents"
     },
     {
       icon: <MessageSquare className="w-5 h-5" />,
-      name: "Chat",
+      name: t("nav.chat"),
       path: "/tenant-dashboard/chat",
       active: activeTab === "chat"
     },
     {
       icon: <Settings className="w-5 h-5" />,
-      name: "Settings",
+      name: t("nav.settings"),
       path: "/tenant-dashboard/settings",
       active: activeTab === "settings"
     }
-  ], [activeTab])
+  ], [activeTab, t])
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
@@ -164,10 +167,23 @@ function DashboardContent() {
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title={activeTab === "dashboard" ? "Dashboard" : activeTab === "chat" ? "Chat with Landlord" : "Settings"}
-          subtitle={activeTab === "dashboard" ? "Welcome to your tenant dashboard" : activeTab === "chat" ? "Direct messaging with your property landlord" : "Manage your account settings"}
+          title={
+            activeTab === "dashboard"
+              ? t("dashboard.title")
+              : activeTab === "chat"
+                ? t("nav.chat")
+                : t("nav.settings")
+          }
+          subtitle={
+            activeTab === "dashboard"
+              ? t("dashboard.subtitle")
+              : activeTab === "chat"
+                ? t("chat.subtitle")
+                : t("settings.subtitle")
+          }
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          searchPlaceholder={t("header.searchPlaceholder")}
         />
 
         {/* Content Area */}
@@ -177,10 +193,10 @@ function DashboardContent() {
               {/* Chat Header */}
               <div className="bg-card border-b border-border px-8 py-4">
                 <Heading level={2} className="text-2xl font-bold text-foreground">
-                  Chat with Landlord
+                  {t("chat.title")}
                 </Heading>
                 <Text className="text-muted-foreground mt-1">
-                  Direct messaging with your property landlord
+                  {t("chat.subtitle")}
                 </Text>
               </div>
 
@@ -218,7 +234,7 @@ function DashboardContent() {
                 <div className="flex items-center space-x-3">
                   <input
                     type="text"
-                    placeholder="Type your message..."
+                    placeholder={t("chat.inputPlaceholder")}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
@@ -230,7 +246,7 @@ function DashboardContent() {
                     style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
                   >
                     <Send className="w-4 h-4" />
-                    Send
+                    {t("chat.send")}
                   </Button>
                 </div>
               </div>
@@ -240,10 +256,10 @@ function DashboardContent() {
           {activeTab === "dashboard" && (
             <div className="p-8">
               <Heading level={2} className="text-2xl font-bold text-foreground mb-6">
-                Welcome to Your Tenant Dashboard
+                {t("dashboard.welcome")}
               </Heading>
               <div className="bg-card rounded-lg border border-border p-6">
-                <h3 className="font-semibold mb-4">Notice Board</h3>
+                <h3 className="font-semibold mb-4">{t("dashboard.noticeBoard")}</h3>
                 <NoticeBoard />
               </div>
             </div>
@@ -252,42 +268,42 @@ function DashboardContent() {
           {activeTab === "settings" && (
             <div className="p-8">
               <Heading level={2} className="text-2xl font-bold text-foreground mb-6">
-                Settings
+                {t("settings.title")}
               </Heading>
               <div className="space-y-6">
                 {/* Profile Settings */}
                 <div className="bg-card rounded-lg border border-border p-6">
                   <Heading level={3} className="text-lg font-semibold text-foreground mb-4">
-                    Profile Information
+                    {t("settings.profile.title")}
                   </Heading>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        Full Name
+                        {t("settings.profile.fullName")}
                       </label>
                       <input
                         type="text"
-                        placeholder="Your full name"
+                        placeholder={t("settings.profile.fullNamePlaceholder")}
                         className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        Email Address
+                        {t("settings.profile.email")}
                       </label>
                       <input
                         type="email"
-                        placeholder="your@email.com"
+                        placeholder={t("settings.profile.emailPlaceholder")}
                         className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        Phone Number
+                        {t("settings.profile.phone")}
                       </label>
                       <input
                         type="tel"
-                        placeholder="+1 (555) 000-0000"
+                        placeholder={t("settings.profile.phonePlaceholder")}
                         className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
@@ -295,7 +311,7 @@ function DashboardContent() {
                       className="w-full h-10 font-semibold rounded-lg"
                       style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
                     >
-                      Save Changes
+                      {t("settings.profile.save")}
                     </Button>
                   </div>
                 </div>
@@ -303,36 +319,36 @@ function DashboardContent() {
                 {/* Password Settings */}
                 <div className="bg-card rounded-lg border border-border p-6">
                   <Heading level={3} className="text-lg font-semibold text-foreground mb-4">
-                    Change Password
+                    {t("settings.password.title")}
                   </Heading>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        Current Password
+                        {t("settings.password.current")}
                       </label>
                       <input
                         type="password"
-                        placeholder="Enter current password"
+                        placeholder={t("settings.password.currentPlaceholder")}
                         className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        New Password
+                        {t("settings.password.new")}
                       </label>
                       <input
                         type="password"
-                        placeholder="Enter new password"
+                        placeholder={t("settings.password.newPlaceholder")}
                         className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
-                        Confirm Password
+                        {t("settings.password.confirm")}
                       </label>
                       <input
                         type="password"
-                        placeholder="Confirm new password"
+                        placeholder={t("settings.password.confirmPlaceholder")}
                         className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
@@ -340,7 +356,7 @@ function DashboardContent() {
                       className="w-full h-10 font-semibold rounded-lg"
                       style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
                     >
-                      Update Password
+                      {t("settings.password.update")}
                     </Button>
                   </div>
                 </div>
@@ -348,27 +364,27 @@ function DashboardContent() {
                 {/* Notification Settings */}
                 <div className="bg-card rounded-lg border border-border p-6">
                   <Heading level={3} className="text-lg font-semibold text-foreground mb-4">
-                    Notification Preferences
+                    {t("settings.notifications.title")}
                   </Heading>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Text weight="medium" className="text-foreground">Email Notifications</Text>
-                        <MutedText className="text-sm">Receive updates via email</MutedText>
+                        <Text weight="medium" className="text-foreground">{t("settings.notifications.emailTitle")}</Text>
+                        <MutedText className="text-sm">{t("settings.notifications.emailDesc")}</MutedText>
                       </div>
                       <input type="checkbox" defaultChecked className="w-5 h-5" />
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <Text weight="medium" className="text-foreground">Chat Messages</Text>
-                        <MutedText className="text-sm">Get notified about new messages</MutedText>
+                        <Text weight="medium" className="text-foreground">{t("settings.notifications.chatTitle")}</Text>
+                        <MutedText className="text-sm">{t("settings.notifications.chatDesc")}</MutedText>
                       </div>
                       <input type="checkbox" defaultChecked className="w-5 h-5" />
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <Text weight="medium" className="text-foreground">Maintenance Alerts</Text>
-                        <MutedText className="text-sm">Receive maintenance updates</MutedText>
+                        <Text weight="medium" className="text-foreground">{t("settings.notifications.maintenanceTitle")}</Text>
+                        <MutedText className="text-sm">{t("settings.notifications.maintenanceDesc")}</MutedText>
                       </div>
                       <input type="checkbox" defaultChecked className="w-5 h-5" />
                     </div>

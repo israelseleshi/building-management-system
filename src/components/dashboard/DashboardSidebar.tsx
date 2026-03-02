@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
 import { getLandlordNavGroups, getTenantNavGroups, NavItem } from "@/constants/navItems"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 interface DashboardSidebarProps {
   navItems?: NavItem[]
@@ -29,11 +30,52 @@ export function DashboardSidebar({
   onNavigate,
 }: DashboardSidebarProps) {
   const pathname = usePathname()
-  const generatedGroups = pathname.startsWith("/tenant-dashboard")
+  const t = useTranslations("Tenant")
+  const normalizedPathname = pathname.replace(/^\/(en|am)(?=\/|$)/, "")
+  const isTenantDashboard = normalizedPathname.startsWith("/tenant-dashboard")
+
+  const generatedGroups = isTenantDashboard
     ? getTenantNavGroups(pathname)
     : getLandlordNavGroups(pathname)
+
+  const translatedGroups = isTenantDashboard
+    ? generatedGroups.map((group) => {
+        const titleKeyByTitle: Record<string, string> = {
+          Overview: "nav.overview",
+          Properties: "nav.properties",
+          Management: "nav.management",
+          Communication: "nav.communication",
+          Insights: "nav.insights",
+          Settings: "nav.settings",
+        }
+
+        const itemKeyByName: Record<string, string> = {
+          Dashboard: "nav.dashboard",
+          Listings: "nav.listings",
+          "My Rents": "nav.myRents",
+          Documents: "nav.documents",
+          Chat: "nav.chat",
+          Reports: "nav.reports",
+          Settings: "nav.settings",
+        }
+
+        const maybeTitleKey = titleKeyByTitle[group.title]
+
+        return {
+          ...group,
+          title: maybeTitleKey ? t(maybeTitleKey as any) : group.title,
+          items: group.items.map((item) => {
+            const maybeItemKey = itemKeyByName[item.name]
+            return {
+              ...item,
+              name: maybeItemKey ? t(maybeItemKey as any) : item.name,
+            }
+          }),
+        }
+      })
+    : generatedGroups
   // Always use generated list to guarantee completeness
-  const groups = generatedGroups
+  const groups = translatedGroups
   const router = useRouter()
   
   // Track open/closed state of each group
@@ -79,6 +121,7 @@ export function DashboardSidebar({
     if (onNavigate) {
       onNavigate(isSidebarCollapsed)
     }
+
     router.push(path)
   }
 
@@ -220,7 +263,7 @@ export function DashboardSidebar({
           className={`menu-item w-full transition-all duration-200 hover:bg-red-50 ${
             isSidebarCollapsed ? "justify-center px-2" : ""
           }`}
-          title={isSidebarCollapsed ? "Log Out" : ""}
+          title={isSidebarCollapsed ? t("nav.logout") : ""}
         >
           <span
             className={`${isSidebarCollapsed ? "mx-auto" : ""}`}
@@ -230,7 +273,7 @@ export function DashboardSidebar({
           </span>
           {!isSidebarCollapsed && (
             <span className="ml-3" style={{ color: "#DC2626" }}>
-              Log Out
+              {t("nav.logout")}
             </span>
           )}
         </button>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Heading, Text } from "@/components/ui/typography"
 import { Toaster } from "@/components/ui/toaster"
@@ -33,8 +34,6 @@ interface SettingsTab {
 
 interface NotificationSetting {
   id: string
-  label: string
-  description: string
   enabled: boolean
 }
 
@@ -48,6 +47,7 @@ export default function SettingsPage() {
 
 function SettingsContent() {
   const router = useRouter()
+  const t = useTranslations("Tenant")
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
@@ -78,7 +78,7 @@ function SettingsContent() {
         })
         const payload = await response.json().catch(() => ({}))
         if (!response.ok || payload?.success === false) {
-          throw new Error(payload?.error || payload?.message || "Failed to load profile")
+          throw new Error(payload?.error || payload?.message || t("settings.alerts.loadProfileFailed"))
         }
 
         const data = payload?.data?.user || {}
@@ -113,12 +113,35 @@ function SettingsContent() {
 
   // Notification state
   const [notifications, setNotifications] = useState<NotificationSetting[]>([
-    { id: "messages", label: "Landlord Messages", description: "Get notified when your landlord sends you messages", enabled: true },
-    { id: "maintenance", label: "Maintenance Updates", description: "Receive updates about maintenance requests", enabled: true },
-    { id: "payments", label: "Payment Reminders", description: "Get payment due date reminders", enabled: true },
-    { id: "announcements", label: "Property Announcements", description: "Receive important property announcements", enabled: true },
-    { id: "offers", label: "Special Offers", description: "Get notified about special offers and promotions", enabled: false },
+    { id: "messages", enabled: true },
+    { id: "maintenance", enabled: true },
+    { id: "payments", enabled: true },
+    { id: "announcements", enabled: true },
+    { id: "offers", enabled: false },
   ])
+
+  const notificationContent: Record<string, { label: string; description: string }> = {
+    messages: {
+      label: t("settings.notifications.items.messages.label"),
+      description: t("settings.notifications.items.messages.description"),
+    },
+    maintenance: {
+      label: t("settings.notifications.items.maintenance.label"),
+      description: t("settings.notifications.items.maintenance.description"),
+    },
+    payments: {
+      label: t("settings.notifications.items.payments.label"),
+      description: t("settings.notifications.items.payments.description"),
+    },
+    announcements: {
+      label: t("settings.notifications.items.announcements.label"),
+      description: t("settings.notifications.items.announcements.description"),
+    },
+    offers: {
+      label: t("settings.notifications.items.offers.label"),
+      description: t("settings.notifications.items.offers.description"),
+    },
+  }
 
   const navItems = [
     {
@@ -150,16 +173,16 @@ function SettingsContent() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Text className="text-muted-foreground text-sm">Loading settings...</Text>
+        <Text className="text-muted-foreground text-sm">{t("settings.loading")}</Text>
       </div>
     )
   }
 
   const settingsTabs: SettingsTab[] = [
-    { id: "profile", label: "Profile", icon: <User className="w-5 h-5" /> },
-    { id: "security", label: "Security", icon: <Lock className="w-5 h-5" /> },
-    { id: "notifications", label: "Notifications", icon: <Bell className="w-5 h-5" /> },
-    { id: "privacy", label: "Privacy", icon: <Shield className="w-5 h-5" /> },
+    { id: "profile", label: t("settings.tabs.profile"), icon: <User className="w-5 h-5" /> },
+    { id: "security", label: t("settings.tabs.security"), icon: <Lock className="w-5 h-5" /> },
+    { id: "notifications", label: t("settings.tabs.notifications"), icon: <Bell className="w-5 h-5" /> },
+    { id: "privacy", label: t("settings.tabs.privacy"), icon: <Shield className="w-5 h-5" /> },
   ]
 
   const handleLogout = () => {
@@ -221,19 +244,19 @@ function SettingsContent() {
 
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
-    } catch (err) {
-      console.error('Error saving profile:', err)
-      alert('Failed to save profile changes')
-    }
+      } catch (err) {
+        console.error('Error saving profile:', err)
+        alert(t("settings.alerts.saveProfileFailed"))
+      }
   }
 
   const handleChangePassword = async () => {
     if (password.new !== password.confirm) {
-      alert("Passwords do not match")
+      alert(t("settings.alerts.passwordMismatch"))
       return
     }
     if (!password.current || !password.new) {
-      alert("Please fill in all password fields")
+      alert(t("settings.alerts.passwordIncomplete"))
       return
     }
     const token = getAuthToken()
@@ -250,7 +273,7 @@ function SettingsContent() {
     })
     const payload = await response.json().catch(() => ({}))
     if (!response.ok || payload?.success === false) {
-      alert(payload?.error || payload?.message || "Failed to change password")
+      alert(payload?.error || payload?.message || t("settings.alerts.changePasswordFailed"))
       return
     }
     setSaveSuccess(true)
@@ -265,7 +288,7 @@ function SettingsContent() {
   const handleFieldSave = async (field: string, value: string) => {
     try {
       if (["email", "address", "bio"].includes(field)) {
-        alert("This field is not supported by the current API yet.")
+        alert(t("settings.alerts.fieldNotSupported"))
         return
       }
 
@@ -291,7 +314,7 @@ function SettingsContent() {
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.error || payload?.message || "Failed to save changes")
+        throw new Error(payload?.error || payload?.message || t("settings.alerts.saveChangesFailed"))
       }
 
       setProfile((prev) => ({ ...prev, [field]: value }))
@@ -300,11 +323,17 @@ function SettingsContent() {
       setTimeout(() => setSaveSuccess(false), 3000)
     } catch (err) {
       console.error('Error saving field:', err)
-      alert('Failed to save changes')
+      alert(t("settings.alerts.saveChangesFailed"))
     }
   }
 
-  const renderEditableField = (field: string, label: string, type: string = "text", rows?: number) => {
+  const renderEditableField = (
+    field: string,
+    label: string,
+    placeholder: string,
+    type: string = "text",
+    rows?: number
+  ) => {
     const value = profile[field as keyof typeof profile]
     const isEditing = editingField === field
 
@@ -334,7 +363,7 @@ function SettingsContent() {
               <button
                 onClick={() => handleFieldSave(field, value)}
                 className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
-                title="Save changes"
+                title={t("settings.profile.save")}
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -342,7 +371,7 @@ function SettingsContent() {
           ) : (
             <div className="w-full px-4 py-2 pr-10 border border-border rounded-lg bg-background text-foreground flex items-center justify-between">
               <span className={value ? "text-foreground" : "text-muted-foreground"}>
-                {value || `Enter ${label.toLowerCase()}`}
+                {value || placeholder}
               </span>
               <button onClick={() => handleFieldEdit(field)} className="p-1 hover:bg-muted rounded">
                 <Edit2 className="w-4 h-4 text-muted-foreground hover:text-foreground" />
@@ -366,10 +395,11 @@ function SettingsContent() {
 
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title="Settings"
-          subtitle="Manage your account and preferences"
+          title={t("settings.page.title")}
+          subtitle={t("settings.page.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          searchPlaceholder={t("header.searchPlaceholder")}
         />
 
         <main className="p-6">
@@ -406,7 +436,7 @@ function SettingsContent() {
             {saveSuccess && (
               <div className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg flex items-center gap-3">
                 <Check className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium text-green-800">Changes saved successfully!</span>
+                <span className="text-sm font-medium text-green-800">{t("settings.success")}</span>
               </div>
             )}
 
@@ -421,27 +451,55 @@ function SettingsContent() {
                 }}>
                 <div>
                   <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                    Profile Information
+                    {t("settings.profile.title")}
                   </Heading>
-                  <Text className="text-sm text-muted-foreground">Update your personal information</Text>
+                  <Text className="text-sm text-muted-foreground">{t("settings.profile.subtitle")}</Text>
                 </div>
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {renderEditableField("firstName", "First Name")}
-                    {renderEditableField("lastName", "Last Name")}
+                    {renderEditableField(
+                      "firstName",
+                      t("settings.profile.firstName.label"),
+                      t("settings.profile.firstName.placeholder")
+                    )}
+                    {renderEditableField(
+                      "lastName",
+                      t("settings.profile.lastName.label"),
+                      t("settings.profile.lastName.placeholder")
+                    )}
                   </div>
 
-                  {renderEditableField("email", "Email Address", "email")}
-                  {renderEditableField("phone", "Phone Number", "tel")}
-                  {renderEditableField("address", "Address")}
-                  {renderEditableField("bio", "Bio", "text", 4)}
+                  {renderEditableField(
+                    "email",
+                    t("settings.profile.email.label"),
+                    t("settings.profile.email.placeholder"),
+                    "email"
+                  )}
+                  {renderEditableField(
+                    "phone",
+                    t("settings.profile.phone.label"),
+                    t("settings.profile.phone.placeholder"),
+                    "tel"
+                  )}
+                  {renderEditableField(
+                    "address",
+                    t("settings.profile.address.label"),
+                    t("settings.profile.address.placeholder")
+                  )}
+                  {renderEditableField(
+                    "bio",
+                    t("settings.profile.bio.label"),
+                    t("settings.profile.bio.placeholder"),
+                    "text",
+                    4
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-border">
                   <Button onClick={handleSaveProfile} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
                     <Save className="w-4 h-4 mr-2" />
-                    Save Changes
+                    {t("settings.profile.save")}
                   </Button>
                 </div>
               </div>
@@ -459,14 +517,16 @@ function SettingsContent() {
                 }}>
                   <div>
                     <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                      Change Password
+                      {t("settings.security.title")}
                     </Heading>
-                    <Text className="text-sm text-muted-foreground">Update your password to keep your account secure</Text>
+                    <Text className="text-sm text-muted-foreground">{t("settings.security.subtitle")}</Text>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Current Password</label>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        {t("settings.security.currentPassword")}
+                      </label>
                       <div className="relative">
                         <input
                           type={showPassword ? "text" : "password"}
@@ -484,7 +544,9 @@ function SettingsContent() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">New Password</label>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        {t("settings.security.newPassword")}
+                      </label>
                       <div className="relative">
                         <input
                           type={showNewPassword ? "text" : "password"}
@@ -502,7 +564,9 @@ function SettingsContent() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Confirm New Password</label>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        {t("settings.security.confirmPassword")}
+                      </label>
                       <input
                         type="password"
                         value={password.confirm}
@@ -515,7 +579,7 @@ function SettingsContent() {
                   <div className="flex gap-3 pt-4 border-t border-border">
                     <Button onClick={handleChangePassword} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
                       <Save className="w-4 h-4 mr-2" />
-                      Update Password
+                      {t("settings.security.update")}
                     </Button>
                   </div>
                 </div>
@@ -533,13 +597,15 @@ function SettingsContent() {
                 }}>
                 <div>
                   <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                    Notification Preferences
+                    {t("settings.notifications.title")}
                   </Heading>
-                  <Text className="text-sm text-muted-foreground">Choose which notifications you want to receive</Text>
+                  <Text className="text-sm text-muted-foreground">{t("settings.notifications.subtitle")}</Text>
                 </div>
 
                 <div className="space-y-4">
-                  {notifications.map((notif) => (
+                  {notifications.map((notif) => {
+                    const content = notificationContent[notif.id] || { label: notif.id, description: "" }
+                    return (
                     <div key={notif.id} className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-background/50 transition-colors"
                       style={{
                         background: "rgba(125, 139, 111, 0.1)",
@@ -547,8 +613,8 @@ function SettingsContent() {
                         border: "1px solid rgba(125, 139, 111, 0.2)"
                       }}>
                       <div className="flex-1">
-                        <h3 className="text-sm font-bold text-foreground">{notif.label}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{notif.description}</p>
+                        <h3 className="text-sm font-bold text-foreground">{content.label}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{content.description}</p>
                       </div>
                       <button
                         onClick={() => handleNotificationToggle(notif.id)}
@@ -563,13 +629,14 @@ function SettingsContent() {
                         />
                       </button>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-border">
                   <Button onClick={handleSaveProfile} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
                     <Save className="w-4 h-4 mr-2" />
-                    Save Preferences
+                    {t("settings.notifications.save")}
                   </Button>
                 </div>
               </div>
@@ -586,17 +653,17 @@ function SettingsContent() {
                 }}>
                 <div>
                   <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                    Privacy & Security
+                    {t("settings.privacy.title")}
                   </Heading>
-                  <Text className="text-sm text-muted-foreground">Control your privacy settings and data sharing preferences</Text>
+                  <Text className="text-sm text-muted-foreground">{t("settings.privacy.subtitle")}</Text>
                 </div>
 
                 <div className="space-y-4">
                   {[
-                    { label: "Profile Visibility", description: "Allow landlords to see your profile", enabled: true },
-                    { label: "Show Contact Information", description: "Let landlords see your contact details", enabled: true },
-                    { label: "Allow Search Indexing", description: "Allow search engines to index your profile", enabled: false },
-                    { label: "Data Collection", description: "Allow us to collect usage data for improvements", enabled: true },
+                    { label: t("settings.privacy.items.profileVisibility.label"), description: t("settings.privacy.items.profileVisibility.description"), enabled: true },
+                    { label: t("settings.privacy.items.contactInfo.label"), description: t("settings.privacy.items.contactInfo.description"), enabled: true },
+                    { label: t("settings.privacy.items.searchIndexing.label"), description: t("settings.privacy.items.searchIndexing.description"), enabled: false },
+                    { label: t("settings.privacy.items.dataCollection.label"), description: t("settings.privacy.items.dataCollection.description"), enabled: true },
                   ].map((setting, idx) => (
                     <div key={idx} className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-background/50 transition-colors">
                       <div className="flex-1">

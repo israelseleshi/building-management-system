@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Text, Heading } from "@/components/ui/typography"
@@ -40,6 +41,9 @@ interface Lease {
 
 function TenantLeasesContent() {
   const router = useRouter()
+  const t = useTranslations("Tenant")
+  const locale = useLocale()
+  const dateLocale = locale === "am" ? "am-ET" : "en-US"
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [leases, setLeases] = useState<Lease[]>([])
   const [loading, setLoading] = useState(true)
@@ -135,19 +139,19 @@ function TenantLeasesContent() {
 
   const stats = [
     {
-      title: "Active Leases",
+      title: t("leases.stats.active"),
       value: leases.filter(l => l.status === "active").length,
       icon: <CheckCircle className="w-8 h-8" />,
       color: "text-emerald-600",
     },
     {
-      title: "Pending",
+      title: t("leases.stats.pending"),
       value: leases.filter(l => l.status === "pending").length,
       icon: <Clock className="w-8 h-8" />,
       color: "text-yellow-600",
     },
     {
-      title: "Monthly Rent",
+      title: t("leases.stats.monthlyRent"),
       value: `ETB ${(leases.filter(l => l.status === "active").reduce((sum, l) => sum + l.rent_amount, 0) / 1000).toFixed(1)}K`,
       icon: <DollarSign className="w-8 h-8" />,
       color: "text-purple-600",
@@ -175,6 +179,10 @@ function TenantLeasesContent() {
     router.push("/")
   }
 
+  const getStatusLabel = (status: Lease["status"]) => {
+    return t(`leases.status.${status}`)
+  }
+
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
@@ -199,8 +207,8 @@ function TenantLeasesContent() {
 
       <div className="flex-1 flex flex-col">
         <DashboardHeader
-          title="My Rents"
-          subtitle="View and manage your rental agreements"
+          title={t("leases.header.title")}
+          subtitle={t("leases.header.subtitle")}
         />
 
         <ScrollArea className="flex-1">
@@ -209,7 +217,7 @@ function TenantLeasesContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               {stats.map((stat, index) => (
                 <div
-                  key={index}
+                  key={`lease-stat-${index}`}
                   className="rounded-2xl p-5 md:p-6 border-0 group hover:shadow-lg transition-all duration-300"
                   style={{
                     backgroundColor: "var(--card)",
@@ -236,10 +244,10 @@ function TenantLeasesContent() {
             {/* Header */}
             <div className="mb-6">
               <Heading level={2} className="mb-1">
-                Your Rents
+                {t("leases.section.title")}
               </Heading>
               <Text className="text-muted-foreground">
-                View and manage your rental agreements
+                {t("leases.section.subtitle")}
               </Text>
             </div>
 
@@ -249,21 +257,22 @@ function TenantLeasesContent() {
                 <div className="col-span-full text-center py-12">
                   <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                   <Heading level={3} className="mb-2">
-                    No leases yet
+                    {t("leases.empty.title")}
                   </Heading>
                   <Text className="text-muted-foreground">
-                    You don't have any active leases. Browse listings to find a property.
+                    {t("leases.empty.subtitle")}
                   </Text>
                 </div>
               ) : (
-                leases.map((lease) => {
+                leases.map((lease, index) => {
+                  const leaseKey = lease.id || `lease-${index}`
                   const daysRemaining = Math.ceil(
                     (new Date(lease.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
                   )
 
                   return (
                     <div
-                      key={lease.id}
+                      key={leaseKey}
                       className="rounded-2xl p-6 border-0 group hover:shadow-lg transition-all duration-300 flex flex-col"
                       style={{
                         backgroundColor: "var(--card)",
@@ -277,15 +286,17 @@ function TenantLeasesContent() {
                             <Home className="w-5 h-5" />
                           </div>
                           <div className="flex-1">
-                            <Text className="font-semibold line-clamp-1">{`Unit ${lease.unit_id}`}</Text>
+                            <Text className="font-semibold line-clamp-1">
+                              {t("leases.unitLabel", { id: lease.unit_id })}
+                            </Text>
                             <Text className="text-xs text-muted-foreground line-clamp-1">
-                              {`Lease ID: ${lease.id}`}
+                              {t("leases.leaseIdLabel", { id: lease.id })}
                             </Text>
                           </div>
                         </div>
                         <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-semibold ${getStatusColor(lease.status)}`}>
                           {getStatusIcon(lease.status)}
-                          <span className="capitalize">{lease.status}</span>
+                          <span className="capitalize">{getStatusLabel(lease.status)}</span>
                         </div>
                       </div>
 
@@ -294,24 +305,30 @@ function TenantLeasesContent() {
 
                       {/* Rent Info */}
                       <div className="mb-4">
-                        <Text className="text-xs font-semibold text-muted-foreground uppercase mb-2">Monthly Rent</Text>
-                        <Text className="text-2xl font-bold text-emerald-600">ETB {lease.rent_amount.toLocaleString()}</Text>
+                        <Text className="text-xs font-semibold text-muted-foreground uppercase mb-2">
+                          {t("leases.monthlyRent")}
+                        </Text>
+                        <Text className="text-2xl font-bold text-emerald-600">ETB {(lease.rent_amount ?? 0).toLocaleString()}</Text>
                       </div>
 
                       {/* Dates */}
                       <div className="grid grid-cols-2 gap-3 mb-4">
                         <div>
-                          <Text className="text-xs font-semibold text-muted-foreground uppercase mb-1">Start Date</Text>
+                          <Text className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                            {t("leases.startDate")}
+                          </Text>
                           <div className="flex items-center gap-2">
                             <Calendar className="w-3 h-3 text-muted-foreground" />
-                            <Text className="text-sm">{new Date(lease.start_date).toLocaleDateString()}</Text>
+                            <Text className="text-sm">{new Date(lease.start_date).toLocaleDateString(dateLocale)}</Text>
                           </div>
                         </div>
                         <div>
-                          <Text className="text-xs font-semibold text-muted-foreground uppercase mb-1">End Date</Text>
+                          <Text className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                            {t("leases.endDate")}
+                          </Text>
                           <div className="flex items-center gap-2">
                             <Calendar className="w-3 h-3 text-muted-foreground" />
-                            <Text className="text-sm">{new Date(lease.end_date).toLocaleDateString()}</Text>
+                            <Text className="text-sm">{new Date(lease.end_date).toLocaleDateString(dateLocale)}</Text>
                           </div>
                         </div>
                       </div>
@@ -319,9 +336,13 @@ function TenantLeasesContent() {
                       {/* Days Remaining */}
                       {lease.status === "active" && (
                         <div className="mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200">
-                          <Text className="text-xs font-semibold text-blue-900 mb-1">Days Remaining</Text>
+                          <Text className="text-xs font-semibold text-blue-900 mb-1">
+                            {t("leases.daysRemaining")}
+                          </Text>
                           <Text className="text-lg font-bold text-blue-600">
-                            {daysRemaining > 0 ? `${daysRemaining} days` : "Expired"}
+                            {daysRemaining > 0
+                              ? t("leases.daysCount", { count: daysRemaining })
+                              : t("leases.expired")}
                           </Text>
                         </div>
                       )}
@@ -335,7 +356,7 @@ function TenantLeasesContent() {
                         className="w-full bg-[#7D8B6F] hover:bg-[#6a7a5f] text-white rounded-lg mt-auto"
                       >
                         <Eye className="w-4 h-4 mr-2" />
-                        View Details
+                        {t("leases.viewDetails")}
                       </Button>
                     </div>
                   )
@@ -351,24 +372,28 @@ function TenantLeasesContent() {
         <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
           <DialogContent className="max-w-2xl" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
             <DialogHeader>
-              <DialogTitle className="text-2xl">Lease Details</DialogTitle>
+              <DialogTitle className="text-2xl">{t("leases.dialog.title")}</DialogTitle>
               <DialogDescription>
-                Complete information about your lease agreement
+                {t("leases.dialog.subtitle")}
               </DialogDescription>
             </DialogHeader>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
                       {/* Property Info */}
                       <div className="space-y-2">
-                        <Text className="text-xs font-semibold text-muted-foreground uppercase">Property</Text>
+                        <Text className="text-xs font-semibold text-muted-foreground uppercase">
+                          {t("leases.dialog.property")}
+                        </Text>
                         <div className="flex items-start gap-3">
                           <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white flex-shrink-0">
                             <Home className="w-6 h-6" />
                           </div>
                           <div>
-                            <Text className="font-semibold">{`Unit ${selectedLease.unit_id}`}</Text>
+                            <Text className="font-semibold">
+                              {t("leases.unitLabel", { id: selectedLease.unit_id })}
+                            </Text>
                             <Text className="text-sm text-muted-foreground">
-                              {`Lease ID: ${selectedLease.id}`}
+                              {t("leases.leaseIdLabel", { id: selectedLease.id })}
                             </Text>
                           </div>
                         </div>
@@ -376,65 +401,82 @@ function TenantLeasesContent() {
 
                       {/* Monthly Rent */}
                       <div className="space-y-2">
-                        <Text className="text-xs font-semibold text-muted-foreground uppercase">Monthly Rent</Text>
+                        <Text className="text-xs font-semibold text-muted-foreground uppercase">
+                          {t("leases.monthlyRent")}
+                        </Text>
                         <Text className="text-2xl font-bold text-emerald-600">
-                          ETB {selectedLease.rent_amount.toLocaleString()}
+                          ETB {(selectedLease.rent_amount ?? 0).toLocaleString()}
                         </Text>
                       </div>
 
               {/* Status */}
               <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Status</Text>
+                <Text className="text-xs font-semibold text-muted-foreground uppercase">
+                  {t("leases.statusLabel")}
+                </Text>
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${getStatusColor(selectedLease.status)}`}>
                   {getStatusIcon(selectedLease.status)}
-                  <Text className="text-sm font-semibold capitalize">{selectedLease.status}</Text>
+                  <Text className="text-sm font-semibold capitalize">{getStatusLabel(selectedLease.status)}</Text>
                 </div>
               </div>
 
               {/* Start Date */}
               <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Start Date</Text>
+                <Text className="text-xs font-semibold text-muted-foreground uppercase">
+                  {t("leases.startDate")}
+                </Text>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <Text className="font-medium">{new Date(selectedLease.start_date).toLocaleDateString()}</Text>
+                  <Text className="font-medium">{new Date(selectedLease.start_date).toLocaleDateString(dateLocale)}</Text>
                 </div>
               </div>
 
               {/* End Date */}
               <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">End Date</Text>
+                <Text className="text-xs font-semibold text-muted-foreground uppercase">
+                  {t("leases.endDate")}
+                </Text>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <Text className="font-medium">{new Date(selectedLease.end_date).toLocaleDateString()}</Text>
+                  <Text className="font-medium">{new Date(selectedLease.end_date).toLocaleDateString(dateLocale)}</Text>
                 </div>
               </div>
 
               {/* Duration */}
               <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Duration</Text>
+                <Text className="text-xs font-semibold text-muted-foreground uppercase">
+                  {t("leases.duration")}
+                </Text>
                 <Text className="font-medium">
-                  {Math.ceil((new Date(selectedLease.end_date).getTime() - new Date(selectedLease.start_date).getTime()) / (1000 * 60 * 60 * 24))} days
+                  {t("leases.daysCount", {
+                    count: Math.ceil((new Date(selectedLease.end_date).getTime() - new Date(selectedLease.start_date).getTime()) / (1000 * 60 * 60 * 24))
+                  })}
                 </Text>
               </div>
 
               {/* Total Value */}
               <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Total Value</Text>
+                <Text className="text-xs font-semibold text-muted-foreground uppercase">
+                  {t("leases.totalValue")}
+                </Text>
                 <Text className="text-xl font-bold text-purple-600">
-                  ETB {(selectedLease.rent_amount * Math.ceil((new Date(selectedLease.end_date).getTime() - new Date(selectedLease.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))).toLocaleString()}
+                  ETB {((selectedLease.rent_amount ?? 0) * Math.ceil((new Date(selectedLease.end_date).getTime() - new Date(selectedLease.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))).toLocaleString()}
                 </Text>
               </div>
 
               {/* Created Date */}
               <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Created</Text>
-                <Text className="font-medium">{new Date(selectedLease.created_at).toLocaleDateString()}</Text>
+                <Text className="text-xs font-semibold text-muted-foreground uppercase">
+                  {t("leases.created")}
+                </Text>
+                <Text className="font-medium">{new Date(selectedLease.created_at).toLocaleDateString(dateLocale)}</Text>
               </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-4">
               <Text className="text-sm text-blue-900">
-                <span className="font-semibold">Note:</span> Please contact your landlord if you have any questions about this lease agreement.
+                <span className="font-semibold">{t("leases.noteTitle")}</span>{" "}
+                {t("leases.noteBody")}
               </Text>
             </div>
 
@@ -444,13 +486,13 @@ function TenantLeasesContent() {
                 onClick={() => setViewModalOpen(false)}
                 className="flex-1 rounded-lg"
               >
-                Close
+                {t("leases.close")}
               </Button>
               <Button
                 className="flex-1 bg-[#7D8B6F] hover:bg-[#6a7a5f] text-white rounded-lg"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download PDF
+                {t("leases.downloadPdf")}
               </Button>
             </div>
           </DialogContent>

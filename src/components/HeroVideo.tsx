@@ -44,8 +44,8 @@ export function HeroVideo({
   useEffect(() => {
     if (!isClient) return;
 
-    // Avoid loading the iframe on small screens: rely on poster only
-    if (typeof window !== "undefined" && window.innerWidth <= 800) {
+    // For mobile devices, we use the poster image for better performance and data saving
+    if (typeof window !== "undefined" && window.innerWidth <= 640) {
       return;
     }
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Text, Heading } from "@/components/ui/typography"
 import { Download, Trash2, Clock, CheckCircle, AlertCircle, FileText } from "lucide-react"
@@ -42,6 +43,8 @@ export function DocumentList({
   onDownload,
   userRole = "tenant",
 }: DocumentListProps) {
+  const t = useTranslations("Tenant")
+  const locale = useLocale()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -71,6 +74,10 @@ export function DocumentList({
       default:
         return <FileText className="w-4 h-4" />
     }
+  }
+
+  const getStatusLabel = (status: string) => {
+    return t(`documents.status.${status}` as any)
   }
 
   const handleDelete = async () => {
@@ -110,7 +117,7 @@ export function DocumentList({
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString(locale === "am" ? "am-ET" : "en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -136,12 +143,12 @@ export function DocumentList({
       <div className="text-center py-12">
         <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
         <Heading level={3} className="mb-2">
-          No documents yet
+          {t("documents.list.emptyTitle")}
         </Heading>
         <Text className="text-muted-foreground">
           {userRole === "tenant"
-            ? "Upload your documents to get started"
-            : "No documents to review at this time"}
+            ? t("documents.list.emptyTenant")
+            : t("documents.list.emptyLandlord")}
         </Text>
       </div>
     )
@@ -172,7 +179,7 @@ export function DocumentList({
               <div className="flex items-center gap-2 mb-3">
                 <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-xs font-semibold ${getStatusColor(document.status)}`}>
                   {getStatusIcon(document.status)}
-                  <span className="capitalize">{document.status}</span>
+                  <span className="capitalize">{getStatusLabel(document.status)}</span>
                 </div>
                 <Text className="text-xs text-muted-foreground">
                   {formatDate(document.created_at)}
@@ -182,7 +189,7 @@ export function DocumentList({
               {/* Rejection Reason */}
               {document.status === "rejected" && document.rejection_reason && (
                 <div className="p-3 rounded-lg bg-red-50 border border-red-200 mb-3">
-                  <Text className="text-xs font-semibold text-red-900 mb-1">Rejection Reason:</Text>
+                  <Text className="text-xs font-semibold text-red-900 mb-1">{t("documents.list.rejectionReason")}</Text>
                   <Text className="text-sm text-red-800">{document.rejection_reason}</Text>
                 </div>
               )}
@@ -227,9 +234,9 @@ export function DocumentList({
         <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
           <DialogContent style={{ backgroundColor: "var(--card)" }}>
             <DialogHeader>
-              <DialogTitle>Delete Document</DialogTitle>
+              <DialogTitle>{t("documents.list.deleteTitle")}</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete "{selectedDocument.file_name}"? This action cannot be undone.
+                {t("documents.list.deleteDescription", { name: selectedDocument.file_name })}
               </DialogDescription>
             </DialogHeader>
 
@@ -240,7 +247,7 @@ export function DocumentList({
                 disabled={deleting}
                 className="rounded-lg"
               >
-                Cancel
+                {t("documents.actions.cancel")}
               </Button>
               <Button
                 onClick={handleDelete}
@@ -250,10 +257,10 @@ export function DocumentList({
                 {deleting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Deleting...
+                    {t("documents.actions.deleting")}
                   </>
                 ) : (
-                  "Delete"
+                  t("documents.actions.delete")
                 )}
               </Button>
             </DialogFooter>

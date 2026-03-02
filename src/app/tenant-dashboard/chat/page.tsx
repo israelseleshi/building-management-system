@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -67,6 +68,8 @@ type MessageItem = {
 
 function ChatContent() {
   const router = useRouter()
+  const t = useTranslations("Tenant")
+  const locale = useLocale()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [chatSearch, setChatSearch] = useState("")
@@ -116,15 +119,18 @@ function ChatContent() {
     const uniqueBuildings = [...new Set(contacts.map(c => c.building_id))]
       .map(id => {
         const contact = contacts.find(c => c.building_id === id)
-        return { value: String(id), label: contact?.building_name || `Building ${id}` }
+        return {
+          value: String(id),
+          label: contact?.building_name || t("chatPage.filters.buildingLabel", { id })
+        }
       })
-    setBuildings([{ value: "all", label: "All Buildings" }, ...uniqueBuildings])
+    setBuildings([{ value: "all", label: t("chatPage.filters.allBuildings") }, ...uniqueBuildings])
 
     const uniqueFloors = [...new Set(contacts.map(c => c.floor).filter(f => f !== null && f !== undefined))]
       .sort((a, b) => (a || 0) - (b || 0))
-      .map(floor => ({ value: String(floor), label: `Floor ${floor}` }))
-    setFloors([{ value: "all", label: "All Floors" }, ...uniqueFloors])
-  }, [contacts])
+      .map(floor => ({ value: String(floor), label: t("chatPage.filters.floorLabel", { floor }) }))
+    setFloors([{ value: "all", label: t("chatPage.filters.allFloors") }, ...uniqueFloors])
+  }, [contacts, locale, t])
 
   // Filtered contacts based on building/floor/search
   const filteredContacts = (contacts || []).filter(contact => {
@@ -348,10 +354,11 @@ function ChatContent() {
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col">
         <DashboardHeader
-          title="Chat"
-          subtitle="Direct messaging"
+          title={t("chatPage.header.title")}
+          subtitle={t("chatPage.header.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          searchPlaceholder={t("header.searchPlaceholder")}
         />
 
         {/* Chat Container with padding gap */}
@@ -365,7 +372,7 @@ function ChatContent() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search contacts..."
+                  placeholder={t("chatPage.searchPlaceholder")}
                   value={chatSearch}
                   onChange={(e) => setChatSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -377,7 +384,7 @@ function ChatContent() {
                 options={buildings}
                 value={selectedBuilding}
                 onValueChange={setSelectedBuilding}
-                placeholder="All Buildings"
+                placeholder={t("chatPage.filters.allBuildings")}
                 className="w-full"
               />
 
@@ -386,7 +393,7 @@ function ChatContent() {
                 options={floors}
                 value={selectedFloor}
                 onValueChange={setSelectedFloor}
-                placeholder="All Floors"
+                placeholder={t("chatPage.filters.allFloors")}
                 className="w-full"
               />
             </div>
@@ -395,7 +402,7 @@ function ChatContent() {
             <div className="flex-1 overflow-y-auto">
               {filteredContacts.length === 0 ? (
                 <div className="p-4 text-center text-muted-foreground">
-                  No contacts found
+                  {t("chatPage.noContacts")}
                 </div>
               ) : (
                 filteredContacts.map((contact, idx) => (
@@ -419,7 +426,8 @@ function ChatContent() {
                           <span className="text-xs text-muted-foreground capitalize">{contact.role}</span>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
-                          {contact.building_name} {contact.floor !== null && `• Floor ${contact.floor}`}
+                          {contact.building_name}{" "}
+                          {contact.floor !== null && `• ${t("chatPage.filters.floorLabel", { floor: contact.floor })}`}
                         </p>
                       </div>
                     </div>
@@ -439,10 +447,13 @@ function ChatContent() {
                   <AvatarFallback>{currentPerson?.full_name?.[0]}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <h2 className="font-semibold text-foreground">{currentPerson?.full_name || "Select a contact"}</h2>
+                  <h2 className="font-semibold text-foreground">
+                    {currentPerson?.full_name || t("chatPage.selectContact")}
+                  </h2>
                   {currentPerson && (
                     <p className="text-xs text-muted-foreground">
-                      {currentPerson.building_name} {currentPerson.floor !== null && `• Floor ${currentPerson.floor}`}
+                      {currentPerson.building_name}{" "}
+                      {currentPerson.floor !== null && `• ${t("chatPage.filters.floorLabel", { floor: currentPerson.floor })}`}
                     </p>
                   )}
                 </div>
@@ -464,7 +475,7 @@ function ChatContent() {
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
               {!activeConversationId ? (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
-                  Select a contact to start messaging
+                  {t("chatPage.selectToStart")}
                 </div>
               ) : (
                 messages.map((msg) => (
@@ -507,7 +518,11 @@ function ChatContent() {
                 </Button>
                 <input
                   type="text"
-                  placeholder={activeConversationId ? "Enter message..." : "Select a contact first"}
+                  placeholder={
+                    activeConversationId
+                      ? t("chatPage.inputPlaceholder")
+                      : t("chatPage.selectContactFirst")
+                  }
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}

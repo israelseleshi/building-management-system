@@ -154,11 +154,18 @@ const tenantGroups: NavGroupBase[] = [
 /*                             HELPER FUNCTIONS                               */
 /* -------------------------------------------------------------------------- */
 
+const stripLocalePrefix = (pathname: string) =>
+  pathname.replace(/^\/(en|am)(?=\/|$)/, "")
+
 const isActive = (pathname: string, itemPath: string) => {
+  const normalizedPathname = stripLocalePrefix(pathname)
   if (itemPath === "/dashboard" || itemPath === "/tenant-dashboard") {
-    return pathname === itemPath
+    return normalizedPathname === itemPath
   }
-  return pathname === itemPath || pathname.startsWith(itemPath + "/")
+  return (
+    normalizedPathname === itemPath ||
+    normalizedPathname.startsWith(itemPath + "/")
+  )
 }
 
 export const getLandlordNavGroups = (pathname: string): NavGroup[] =>

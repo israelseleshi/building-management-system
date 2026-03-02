@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Heading, Text, Large, MutedText } from "@/components/ui/typography"
 import { Breadcrumb } from "@/components/ui/breadcrumb"
+import { useTranslations } from "next-intl"
 import {
   MapPin,
   Users,
@@ -53,12 +54,14 @@ export function ListingDetailView({
   isSaved,
   onToggleSave
 }: ListingDetailViewProps) {
+  const t = useTranslations("Tenant")
+  const parkingSuffix = unit.parking === 1 ? "" : "s"
   return (
     <div className="space-y-6">
       {/* Breadcrumb Navigation */}
       <Breadcrumb
         items={[
-          { label: "Listings", onClick: onBack },
+          { label: t("listingDetail.breadcrumb"), onClick: onBack },
           { label: unit.title, active: true }
         ]}
       />
@@ -70,7 +73,7 @@ export function ListingDetailView({
         className="gap-2 border-border hover:bg-background transition-all duration-200"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Listings
+        {t("listingDetail.backToListings")}
       </Button>
 
       {/* Main Content - Image Left, Info Right */}
@@ -83,7 +86,7 @@ export function ListingDetailView({
                 <div className="absolute top-4 left-4 z-10">
                   <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 gap-1 animate-pulse">
                     <Sparkles className="w-3 h-3" />
-                    Featured
+                    {t("listingDetail.featured")}
                   </Badge>
                 </div>
               )}
@@ -121,9 +124,9 @@ export function ListingDetailView({
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary" className={`text-sm ${unit.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                   {unit.status === 'Active' ? (
-                    <><CheckCircle className="w-3 h-3 mr-1" /> Available</>
+                    <><CheckCircle className="w-3 h-3 mr-1" /> {t("listingDetail.available")}</>
                   ) : (
-                    'Unavailable'
+                    t("listingDetail.unavailable")
                   )}
                 </Badge>
                 <Badge variant="outline" className="text-sm capitalize">
@@ -137,7 +140,7 @@ export function ListingDetailView({
             <Card className="border-0 p-6" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
               <div className="flex items-baseline justify-between">
                 <div>
-                  <MutedText className="text-sm mb-2">Monthly Rent</MutedText>
+                  <MutedText className="text-sm mb-2">{t("listingDetail.monthlyRent")}</MutedText>
                   <div className="flex items-baseline">
                     <Large className="text-4xl font-bold text-primary">{unit.price.toLocaleString()}</Large>
                     <Text size="sm" className="text-muted-foreground ml-2">
@@ -149,7 +152,9 @@ export function ListingDetailView({
                   <div className="flex items-center gap-1 mb-2">
                     <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
                     <span className="font-semibold text-foreground">{unit.rating}</span>
-                    <span className="text-sm text-muted-foreground">({unit.reviews} reviews)</span>
+                    <span className="text-sm text-muted-foreground">
+                      ({unit.reviews} {t("listingDetail.reviews")})
+                    </span>
                   </div>
                 </div>
               </div>
@@ -163,11 +168,11 @@ export function ListingDetailView({
                     <Users className="w-6 h-6 text-primary" />
                   </div>
                 </div>
-                <MutedText className="text-xs mb-1">Capacity</MutedText>
+                <MutedText className="text-xs mb-1">{t("listingDetail.capacity")}</MutedText>
                 <Heading level={3} className="text-2xl font-bold text-foreground">
                   {unit.capacity}
                 </Heading>
-                <Text size="sm" className="text-muted-foreground mt-1">People</Text>
+                <Text size="sm" className="text-muted-foreground mt-1">{t("listingDetail.people")}</Text>
               </Card>
 
               <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
@@ -176,11 +181,11 @@ export function ListingDetailView({
                     <Car className="w-6 h-6 text-primary" />
                   </div>
                 </div>
-                <MutedText className="text-xs mb-1">Parking</MutedText>
+                <MutedText className="text-xs mb-1">{t("listingDetail.parking")}</MutedText>
                 <Heading level={3} className="text-2xl font-bold text-foreground">
                   {unit.parking}
                 </Heading>
-                <Text size="sm" className="text-muted-foreground mt-1">Spaces</Text>
+                <Text size="sm" className="text-muted-foreground mt-1">{t("listingDetail.spaces")}</Text>
               </Card>
 
               <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
@@ -189,11 +194,11 @@ export function ListingDetailView({
                     <Square className="w-6 h-6 text-primary" />
                   </div>
                 </div>
-                <MutedText className="text-xs mb-1">Area</MutedText>
+                <MutedText className="text-xs mb-1">{t("listingDetail.area")}</MutedText>
                 <Heading level={3} className="text-2xl font-bold text-foreground">
                   {unit.area}
                 </Heading>
-                <Text size="sm" className="text-muted-foreground mt-1">m²</Text>
+                <Text size="sm" className="text-muted-foreground mt-1">{t("listingDetail.areaUnit")}</Text>
               </Card>
 
               <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
@@ -202,7 +207,7 @@ export function ListingDetailView({
                     <Home className="w-6 h-6 text-primary" />
                   </div>
                 </div>
-                <MutedText className="text-xs mb-1">Type</MutedText>
+                <MutedText className="text-xs mb-1">{t("listingDetail.type")}</MutedText>
                 <Heading level={3} className="text-lg font-bold text-foreground capitalize">
                   {unit.type}
                 </Heading>
@@ -215,7 +220,7 @@ export function ListingDetailView({
       {/* About Section - Bento Grid */}
       <div className="space-y-4">
         <Heading level={2} className="text-2xl font-bold text-foreground">
-          About This Unit
+          {t("listingDetail.aboutTitle")}
         </Heading>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card 
@@ -223,13 +228,17 @@ export function ListingDetailView({
             style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}
           >
             <Text className="text-muted-foreground mb-4 leading-relaxed">
-              This is a premium {unit.type.toLowerCase()} unit located in {unit.location}. 
-              Perfect for {unit.capacity} people with {unit.parking} parking space{unit.parking !== 1 ? 's' : ''} 
-              and {unit.area} square meters of space.
+              {t("listingDetail.aboutLine1", {
+                type: unit.type.toLowerCase(),
+                location: unit.location,
+                capacity: unit.capacity,
+                parking: unit.parking,
+                parkingSuffix,
+                area: unit.area
+              })}
             </Text>
             <Text className="text-muted-foreground leading-relaxed">
-              The unit features modern amenities, excellent natural lighting, and is well-maintained. 
-              Highly rated by previous tenants with an average rating of {unit.rating} stars.
+              {t("listingDetail.aboutLine2", { rating: unit.rating })}
             </Text>
           </Card>
         </div>
@@ -238,7 +247,7 @@ export function ListingDetailView({
       {/* Contact Section - Bento Grid */}
       <div className="space-y-4">
         <Heading level={2} className="text-2xl font-bold text-foreground">
-          Contact Landlord
+          {t("listingDetail.contactTitle")}
         </Heading>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card 
@@ -248,7 +257,7 @@ export function ListingDetailView({
             <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#7D8B6F20' }}>
               <Phone className="w-7 h-7 text-primary" />
             </div>
-            <MutedText className="text-sm mb-2">Phone</MutedText>
+            <MutedText className="text-sm mb-2">{t("listingDetail.phone")}</MutedText>
             <Text className="font-semibold text-foreground">+251 911 234 567</Text>
           </Card>
           <Card 
@@ -258,7 +267,7 @@ export function ListingDetailView({
             <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#7D8B6F20' }}>
               <Mail className="w-7 h-7 text-primary" />
             </div>
-            <MutedText className="text-sm mb-2">Email</MutedText>
+            <MutedText className="text-sm mb-2">{t("listingDetail.email")}</MutedText>
             <Text className="font-semibold text-foreground">landlord@example.com</Text>
           </Card>
         </div>
@@ -271,14 +280,14 @@ export function ListingDetailView({
           onClick={onBack}
           className="flex-1"
         >
-          Back to Listings
+          {t("listingDetail.backToListings")}
         </Button>
         <Button
           className="flex-1 gap-2"
           style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
         >
           <Mail className="w-4 h-4" />
-          Contact Landlord
+          {t("listingDetail.contactButton")}
         </Button>
       </div>
     </div>

@@ -58,7 +58,7 @@ export function TopBannerSlider() {
   return (
     <section
       aria-label="Featured promotions"
-      className="w-full border-b border-slate-800 bg-slate-950 text-white"
+      className="w-full border-b border-slate-800 bg-slate-950 text-white overflow-hidden"
     >
       <Swiper
         modules={[Autoplay, Pagination]}
@@ -66,11 +66,11 @@ export function TopBannerSlider() {
         loop
         slidesPerView={1}
         pagination={{ clickable: true }}
-        className="w-full h-28 sm:h-32 md:h-40 lg:h-48"
+        className="w-full h-32 sm:h-36 md:h-44 lg:h-52"
       >
         {slides.map((slide) => (
           <SwiperSlide key={slide.id}>
-            <div className="relative h-full w-full">
+            <div className="relative h-full w-full flex items-center">
               {/* Background image with cover fit */}
               <div className="absolute inset-0">
                 <Image
@@ -79,43 +79,45 @@ export function TopBannerSlider() {
                   fill
                   priority={slide.id === 1}
                   loading={slide.id === 1 ? "eager" : "lazy"}
-                  className="object-cover"
+                  className="object-cover opacity-60 sm:opacity-100"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent sm:from-black/80 sm:via-black/50 sm:to-black/30" />
               </div>
 
               {/* Overlay content */}
-              <div className="relative z-10 flex h-full w-full items-center justify-center px-4 sm:px-6 lg:px-10">
+              <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10">
                 <motion.div
-                  className="max-w-5xl w-full flex flex-col items-center justify-center text-center sm:items-start sm:text-left"
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.6 }}
-                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="max-w-5xl w-full flex flex-col items-start text-left"
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
                 >
                   {slide.eyebrow && (
-                    <span className="mb-2 inline-flex items-center rounded-full bg-black/40 px-3 py-1 text-xs font-medium uppercase tracking-wide text-emerald-300">
+                    <span className="mb-1.5 inline-flex items-center rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-emerald-400 border border-emerald-500/30">
                       {slide.eyebrow}
                     </span>
                   )}
-                  <h2 className="text-base sm:text-lg md:text-2xl font-semibold text-white drop-shadow-md">
+                  <h2 className="text-sm sm:text-lg md:text-2xl font-bold text-white leading-tight max-w-[85%] sm:max-w-none">
                     {slide.title}
                   </h2>
                   {slide.subtitle && (
-                    <p className="mt-1 text-xs sm:text-sm md:text-base text-slate-200/90 max-w-2xl">
+                    <p className="mt-1 hidden xs:block text-[10px] sm:text-sm md:text-base text-slate-300 max-w-lg line-clamp-1 sm:line-clamp-none">
                       {slide.subtitle}
                     </p>
                   )}
 
                   {slide.cta && slide.href && (
-                    <motion.a
-                      href={slide.href}
-                      className="mt-3 inline-flex items-center rounded-full bg-emerald-500 px-4 py-1.5 text-xs sm:text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/40 transition-transform hover:scale-[1.03] hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {slide.cta}
-                    </motion.a>
+                    <div className="mt-2 sm:mt-3">
+                      <motion.a
+                        href={slide.href}
+                        className="inline-flex items-center rounded-full bg-emerald-600 px-3 py-1 sm:px-5 sm:py-2 text-[10px] sm:text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition-all hover:bg-emerald-500 hover:shadow-emerald-500/40"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {slide.cta}
+                      </motion.a>
+                    </div>
                   )}
                 </motion.div>
               </div>

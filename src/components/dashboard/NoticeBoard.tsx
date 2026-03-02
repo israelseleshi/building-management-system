@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState, useTransition } from "react"
 import { getGlobalNotices, deleteGlobalNotice, updateGlobalNotice } from "@/lib/actions/notices"
+import { useTranslations } from "next-intl"
 import NoticeCard from "./NoticeCard"
 import { Text } from "@/components/ui/typography"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 
 export default function NoticeBoard({ editable = false }: { editable?: boolean }) {
+  const t = useTranslations("Tenant")
   const [notices, setNotices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,19 +47,19 @@ export default function NoticeBoard({ editable = false }: { editable?: boolean }
   }, [])
 
   if (loading) {
-    return <Text>Loading notices...</Text>
+    return <Text>{t("dashboard.loadingNotices")}</Text>
   }
   if (error) {
     return (
       <div className="flex flex-col items-center gap-2 text-red-600">
         <AlertCircle className="w-5 h-5" />
-        <Text size="sm">Failed to load notices</Text>
-        <Button variant="outline" size="sm" onClick={() => location.reload()}>Retry</Button>
+        <Text size="sm">{t("dashboard.failedNotices")}</Text>
+        <Button variant="outline" size="sm" onClick={() => location.reload()}>{t("dashboard.retry")}</Button>
       </div>
     )
   }
   if (notices.length === 0) {
-    return <Text>No notices at the moment.</Text>
+    return <Text>{t("dashboard.noNotices")}</Text>
   }
 
   async function handleDelete(id: string) {

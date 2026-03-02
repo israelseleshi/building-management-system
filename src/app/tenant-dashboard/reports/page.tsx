@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
@@ -21,7 +22,8 @@ import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
 
 interface TenantIncident {
   id: string
-  category: string
+  categoryKey: string
+  categoryCustom?: string
   severity: "low" | "medium" | "high"
   message: string
   createdAt: string
@@ -30,6 +32,7 @@ interface TenantIncident {
 
 function TenantReportsContent() {
   const router = useRouter()
+  const t = useTranslations("Tenant")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -40,6 +43,17 @@ function TenantReportsContent() {
   const [categoryOther, setCategoryOther] = useState<string>("")
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("medium")
   const [message, setMessage] = useState("")
+
+  const getCategoryLabel = (key: string, custom?: string) => {
+    if (key === "other") {
+      return custom?.trim() || t("reports.categories.other")
+    }
+    return t(`reports.categories.${key}` as any)
+  }
+
+  const getSeverityLabel = (level: "low" | "medium" | "high") => {
+    return t(`reports.severity.${level}` as any)
+  }
 
   const handleLogout = async () => {
     try {
@@ -77,24 +91,16 @@ function TenantReportsContent() {
     setSubmitting(true)
     try {
       const now = new Date()
-      const effectiveCategory = category === "other" && categoryOther.trim() ? categoryOther.trim() :
-        category === "noise"
-          ? "Noise Complaint"
-          : category === "parking"
-          ? "Parking"
-          : category === "security"
-          ? "Security"
-          : category === "cleanliness"
-          ? "Cleanliness"
-          : "Other"
+      const categoryCustom = category === "other" ? categoryOther.trim() : ""
 
       const newIncident: TenantIncident = {
         id: `local-${now.getTime()}`,
-        category: effectiveCategory,
+        categoryKey: category,
+        categoryCustom: categoryCustom || undefined,
         severity,
         message: message.trim(),
         createdAt: now.toISOString(),
-        propertyTitle: propertyTitle || "My Unit",
+        propertyTitle: propertyTitle || t("reports.defaultPropertyTitle"),
       }
 
       // For this phase we only keep this locally as mock data.
@@ -131,10 +137,11 @@ function TenantReportsContent() {
 
       <div className="flex-1 flex flex-col">
         <DashboardHeader
-          title="Report an Issue"
-          subtitle="Send detailed reports to your building owner (mock flow for now)"
+          title={t("reports.header.title")}
+          subtitle={t("reports.header.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          searchPlaceholder={t("header.searchPlaceholder")}
         />
 
         <ScrollArea className="flex-1">
@@ -144,65 +151,64 @@ function TenantReportsContent() {
               style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}
             >
               <Heading level={3} className="text-lg font-bold">
-                New Incident Report
+                {t("reports.form.title")}
               </Heading>
               <Text className="text-sm text-muted-foreground">
-                Describe any issue related to noise, security, cleanliness, or other building rules. In the next
-                phase this will be sent to your landlord and shown in their Reports dashboard.
+                {t("reports.form.subtitle")}
               </Text>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="space-y-2">
-                  <Text className="text-xs font-medium text-muted-foreground">Property / Unit</Text>
+                  <Text className="text-xs font-medium text-muted-foreground">{t("reports.form.propertyLabel")}</Text>
                   <Input
-                    placeholder="e.g. CMC Apartments 302"
+                    placeholder={t("reports.form.propertyPlaceholder")}
                     value={propertyTitle}
                     onChange={(e) => setPropertyTitle(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Text className="text-xs font-medium text-muted-foreground">Category</Text>
+                  <Text className="text-xs font-medium text-muted-foreground">{t("reports.form.categoryLabel")}</Text>
                   <Select value={category} onValueChange={(v) => setCategory(v)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder={t("reports.form.categoryPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-card border border-border shadow-md">
-                      <SelectItem value="noise">Noise Complaint</SelectItem>
-                      <SelectItem value="parking">Parking</SelectItem>
-                      <SelectItem value="security">Security</SelectItem>
-                      <SelectItem value="cleanliness">Cleanliness</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="noise">{t("reports.categories.noise")}</SelectItem>
+                      <SelectItem value="parking">{t("reports.categories.parking")}</SelectItem>
+                      <SelectItem value="security">{t("reports.categories.security")}</SelectItem>
+                      <SelectItem value="cleanliness">{t("reports.categories.cleanliness")}</SelectItem>
+                      <SelectItem value="other">{t("reports.categories.other")}</SelectItem>
                     </SelectContent>
                   </Select>
                   {category === "other" && (
                     <Input
                       className="mt-2"
-                      placeholder="Describe category (e.g. Pets, Smell, Other)"
+                      placeholder={t("reports.form.categoryOtherPlaceholder")}
                       value={categoryOther}
                       onChange={(e) => setCategoryOther(e.target.value)}
                     />
                   )}
                 </div>
                 <div className="space-y-2 relative z-40">
-                  <Text className="text-xs font-medium text-muted-foreground">Severity</Text>
+                  <Text className="text-xs font-medium text-muted-foreground">{t("reports.form.severityLabel")}</Text>
                   <Select value={severity} onValueChange={(v) => setSeverity(v as any)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select severity" />
+                      <SelectValue placeholder={t("reports.form.severityPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent className="z-50 bg-card border border-border shadow-md">
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="low">{t("reports.severity.low")}</SelectItem>
+                      <SelectItem value="medium">{t("reports.severity.medium")}</SelectItem>
+                      <SelectItem value="high">{t("reports.severity.high")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2 mt-4">
-                <Text className="text-xs font-medium text-muted-foreground">Detailed message</Text>
+                <Text className="text-xs font-medium text-muted-foreground">{t("reports.form.messageLabel")}</Text>
                 <Textarea
                   rows={5}
-                  placeholder="Describe the issue in detail so your landlord can understand what happened..."
+                  placeholder={t("reports.form.messagePlaceholder")}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                 />
@@ -215,7 +221,7 @@ function TenantReportsContent() {
                   disabled={submitting || !message.trim()}
                   onClick={handleSubmit}
                 >
-                  Submit Report (mock)
+                  {t("reports.form.submit")}
                 </Button>
               </div>
             </div>
@@ -227,10 +233,10 @@ function TenantReportsContent() {
               <div className="px-6 py-4 border-b border-border flex items-center justify-between">
                 <div>
                   <Heading level={3} className="text-lg font-bold">
-                    Your submitted reports (mock)
+                    {t("reports.list.title")}
                   </Heading>
                   <Text className="text-sm text-muted-foreground">
-                    These are stored only on this page for now. Later they will be visible to your landlord.
+                    {t("reports.list.subtitle")}
                   </Text>
                 </div>
               </div>
@@ -238,7 +244,7 @@ function TenantReportsContent() {
               {incidents.length === 0 ? (
                 <div className="p-8 text-center">
                   <Text className="text-muted-foreground text-sm">
-                    You have not submitted any reports yet. Use the form above to send your first incident report.
+                    {t("reports.list.empty")}
                   </Text>
                 </div>
               ) : (
@@ -248,10 +254,10 @@ function TenantReportsContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <Text className="text-xs text-muted-foreground mb-1">
-                            {inc.propertyTitle} • {inc.category}
+                            {inc.propertyTitle} • {getCategoryLabel(inc.categoryKey, inc.categoryCustom)}
                           </Text>
                           <Heading level={4} className="text-sm font-semibold">
-                            {inc.severity.charAt(0).toUpperCase() + inc.severity.slice(1)} severity • {" "}
+                            {t("reports.severityLine", { severity: getSeverityLabel(inc.severity) })} •{" "}
                             {new Date(inc.createdAt).toLocaleDateString()}
                           </Heading>
                         </div>

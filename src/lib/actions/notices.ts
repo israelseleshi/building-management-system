@@ -12,14 +12,23 @@ export interface NoticePayload {
 
 export async function getGlobalNotices() {
   try {
+    if (!API_BASE_URL) {
+      return []
+    }
+    const cookieStore = await cookies()
+    const token = cookieStore.get("authToken")?.value
     const response = await fetch(`${API_BASE_URL}/maintenance`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       cache: "no-store"
     })
 
+    if (response.status === 401 || response.status === 404) {
+      return []
+    }
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }

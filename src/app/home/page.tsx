@@ -11,6 +11,7 @@ import { leftAds, rightAds } from "@/data/verticalAds"
 import { HeroVideo } from "@/components/HeroVideo"
 import { FeatureCard } from "@/components/FeatureCard"
 import { Footer } from "@/components/Footer"
+import { useTranslations } from "next-intl"
 import { 
   Building, 
   Search, 
@@ -24,6 +25,7 @@ import {
 
 export default function LandingPage() {
   const router = useRouter()
+  const t = useTranslations("Tenant")
   const [searchQuery, setSearchQuery] = useState("")
 
   const handleGetStarted = () => {
@@ -63,29 +65,28 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <div className="inline-flex items-center px-3 sm:px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6 sm:mb-8">
               <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-              <span className="text-white font-medium text-xs sm:text-sm">🏠 Trusted by 10,000+ tenants & landlords</span>
+              <span className="text-white font-medium text-xs sm:text-sm">{t("home.hero.trusted")}</span>
               <div className="w-2 h-2 bg-amber-400 rounded-full ml-2 animate-pulse"></div>
             </div>
             
-            <Heading level={1} className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-4 sm:mb-6">
-              Find Your Perfect
-              <span className="block text-green-300">Rental Property</span>
+            <Heading level={1} className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-white mb-4 sm:mb-6 px-4">
+              {t("home.hero.title")}
+              <span className="block text-green-300">{t("home.hero.titleAccent")}</span>
             </Heading>
             
-            <Text size="lg" className="text-white/90 max-w-3xl mx-auto mb-8 sm:mb-12 leading-relaxed text-sm sm:text-base">
-              Discover your dream home with our <span className="font-semibold text-green-300">intelligent platform</span>. 
-              Connect with verified landlords, take immersive virtual tours, and sign leases digitally — 
-              all in one <span className="font-semibold text-amber-300">beautiful experience</span>.
+            <Text size="lg" className="text-white/90 max-w-3xl mx-auto mb-8 sm:mb-12 leading-relaxed text-sm sm:text-base px-6">
+              {t("home.hero.subtitle1")} <span className="font-semibold text-green-300">{t("home.hero.subtitle2")}</span>. 
+              {t("home.hero.subtitle3")} <span className="font-semibold text-amber-300">{t("home.hero.subtitle4")}</span>.
             </Text>
             
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center mb-8 sm:mb-16">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center mb-8 sm:mb-16 px-8">
               <Button 
                 onClick={handleBrowseListings} 
                 className="group relative overflow-hidden bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-xl hover:shadow-green-200 transition-all px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-medium w-full sm:w-auto"
               >
                 <span className="relative z-10 flex items-center justify-center">
                   <Search className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
-                  Browse Properties
+                  {t("home.hero.browseButton")}
                   <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-500 opacity-0 group-hover:opacity-20 transition-opacity"></div>
@@ -97,7 +98,7 @@ export default function LandingPage() {
               >
                 <span className="flex items-center justify-center">
                   <Building className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
-                  List Your Property
+                  {t("home.hero.listButton")}
                 </span>
               </Button>
             </div>
@@ -112,7 +113,7 @@ export default function LandingPage() {
                       <Search className="w-4 sm:w-5 h-4 sm:h-5 text-white/60 mr-2 sm:mr-3 flex-shrink-0" />
                       <input
                         type="text"
-                        placeholder="Search by location..."
+                        placeholder={t("home.hero.searchPlaceholder")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-transparent border-0 focus:outline-none text-white placeholder-white/60 text-sm sm:text-base"
@@ -123,7 +124,7 @@ export default function LandingPage() {
                       className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-medium shadow-lg hover:shadow-green-200 transition-all text-sm sm:text-base w-full sm:w-auto"
                     >
                       <span className="flex items-center justify-center">
-                        Search
+                        {t("home.hero.searchPlaceholder").split("...")[0]}
                         <ArrowRight className="w-3 sm:w-4 h-3 sm:h-4 ml-2" />
                       </span>
                     </Button>
@@ -139,53 +140,53 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-8 sm:mb-10 lg:mb-12">
               <Heading level={2} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 sm:mb-6">
-                Everything You Need for
-                <span className="block" style={{ color: '#7D8B6F' }}>Property Management</span>
+                {t("home.features.title")}
+                <span className="block" style={{ color: '#7D8B6F' }}>{t("home.features.titleAccent")}</span>
               </Heading>
               <Text size="lg" className="text-muted-foreground max-w-3xl mx-auto text-sm sm:text-base">
-                From advanced search to digital contracts, we've got all the tools you need to succeed
+                {t("home.features.subtitle")}
               </Text>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)_220px] gap-6 lg:gap-8 items-start">
-              {/* Left Vertical Ads - desktop only, start at cards */}
+              {/* Left Vertical Ads - Hidden on mobile, shown on desktop only */}
               <div className="hidden lg:block">
                 <VerticalAdSlider ads={leftAds} position="left" />
               </div>
 
               {/* Main feature cards */}
-              <div>
+              <div className="px-4 sm:px-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                   {[
                     {
                       icon: <Search className="w-6 sm:w-8 h-6 sm:h-8" />, 
-                      title: "Advanced Search",
-                      desc: "Find your perfect property with powerful filters and smart recommendations",
+                      title: t("home.features.advancedSearch.title"),
+                      desc: t("home.features.advancedSearch.desc"),
                     },
                     {
                       icon: <MessageSquare className="w-6 sm:w-8 h-6 sm:h-8" />, 
-                      title: "In-App Messaging",
-                      desc: "Communicate directly with landlords and tenants through our secure messaging system",
+                      title: t("home.features.messaging.title"),
+                      desc: t("home.features.messaging.desc"),
                     },
                     {
                       icon: <CreditCard className="w-6 sm:w-8 h-6 sm:h-8" />, 
-                      title: "Online Payments",
-                      desc: "Secure online rent payments and automated payout processing for landlords",
+                      title: t("home.features.payments.title"),
+                      desc: t("home.features.payments.desc"),
                     },
                     {
                       icon: <Shield className="w-6 sm:w-8 h-6 sm:h-8" />, 
-                      title: "Verified Listings",
-                      desc: "All properties are verified by our team to ensure authenticity and quality",
+                      title: t("home.features.verified.title"),
+                      desc: t("home.features.verified.desc"),
                     },
                     {
                       icon: <Calendar className="w-6 sm:w-8 h-6 sm:h-8" />, 
-                      title: "Virtual Tours",
-                      desc: "Take virtual tours of properties from the comfort of your home",
+                      title: t("home.features.virtualTours.title"),
+                      desc: t("home.features.virtualTours.desc"),
                     },
                     {
                       icon: <Lock className="w-6 sm:w-8 h-6 sm:h-8" />, 
-                      title: "E-Signature",
-                      desc: "Sign leases digitally and securely with compliant e-signatures",
+                      title: t("home.features.eSignature.title"),
+                      desc: t("home.features.eSignature.desc"),
                     },
                   ].map((feature, index) => (
                     <FeatureCard
