@@ -148,12 +148,38 @@ function ListingsContent() {
             const resolvedSqft = unit.size_sqm ?? unit.sqft ?? null
             const resolvedRent = unit.rent_amount ?? unit.base_rent ?? 0
 
+            // Try to find the tenant name from the lease associated with the unit
+            // The backend returns units with their active leases and tenant profiles
+            let tenantName = "N/A"
+            if (unit.leases && unit.leases.length > 0) {
+              const activeLease = unit.leases.find((l: any) => l.is_active || l.status === "active") || unit.leases[0]
+              if (activeLease && activeLease.tenant) {
+                // Fetch directly from the user profile linked to the lease
+                tenantName = activeLease.tenant.full_name || 
+                             `${activeLease.tenant.first_name || ""} ${activeLease.tenant.last_name || ""}`.trim() ||
+                             activeLease.tenant.email || 
+                             "Unnamed Tenant"
+              }
+            } else if (unit.tenant_profile) {
+              // Fallback if tenant_profile is directly on the unit object
+              tenantName = unit.tenant_profile.full_name || 
+                           `${unit.tenant_profile.first_name || ""} ${unit.tenant_profile.last_name || ""}`.trim() ||
+                           unit.tenant_profile.email ||
+                           "Unnamed Tenant"
+            } else if (unit.tenant) {
+              // Fallback if tenant is directly on the unit object
+              tenantName = unit.tenant.full_name || 
+                           `${unit.tenant.first_name || ""} ${unit.tenant.last_name || ""}`.trim() ||
+                           unit.tenant.email ||
+                           "Unnamed Tenant"
+            }
+
             rows.push({
               id: resolvedUnitId || `${buildingId}-${unit.unit_number}`,
               buildingId: buildingId,
               unitId: resolvedUnitId,
               unitNumber: unit.unit_number?.toString() || "Unit",
-              tenantName: unit.tenant_name || (unit.leases?.[0]?.tenant?.full_name) || null,
+              tenantName: tenantName === "N/A" ? null : tenantName,
               floorNumber: resolvedFloor != null ? Number(resolvedFloor) : null,
               bedrooms: unit.bedrooms ?? null,
               bathrooms: unit.bathrooms ?? null,
