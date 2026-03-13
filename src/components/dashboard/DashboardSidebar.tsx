@@ -132,7 +132,7 @@ export function DashboardSidebar({
 
   return (
     <aside
-      className={`bg-background min-h-screen transition-all duration-300 ease-in-out ${
+      className={`bg-background transition-all duration-300 ease-in-out sticky top-0 h-screen overflow-hidden ${
         isSidebarCollapsed ? "w-20" : "w-[320px]"
       }`}
       style={{
@@ -154,7 +154,7 @@ export function DashboardSidebar({
         </Button>
       </div>
 
-      <nav className={`flex-1 px-4 py-8 ${isSidebarCollapsed ? "px-2" : ""}`}>
+      <nav className={`flex-1 px-4 py-8 overflow-y-auto ${isSidebarCollapsed ? "px-2" : ""}`}>
         {groups.map((group, groupIndex) => {
           const isSingleItem = group.items.length === 1
           const singleItem = isSingleItem ? group.items[0] : null
