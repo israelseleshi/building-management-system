@@ -139,7 +139,11 @@ export function DashboardSidebar({
         boxShadow: "0 0 12px rgba(0, 0, 0, 0.05)",
       }}
     >
-      <div className="p-6 flex items-center justify-center">
+      <div
+        className={`px-6 py-4 flex items-center border-b border-border/60 ${
+          isSidebarCollapsed ? "justify-center" : "justify-start"
+        }`}
+      >
         <Button
           variant="ghost"
           size="icon"

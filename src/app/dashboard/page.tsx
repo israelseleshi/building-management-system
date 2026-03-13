@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { RevenueChart } from "@/components/dashboard/RevenueChart"
-import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
+import { API_BASE_URL, getAuthToken, apiGet } from "@/lib/apiClient"
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -63,10 +63,15 @@ function DashboardContent() {
   const [metrics, setMetrics] = useState([
     { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
     { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
-    { title: "Active Listings", value: "0", change: "+0 this month", trend: "up", color: "success" },
-    { title: "Revenue", value: "$0", change: "+0% from last month", trend: "up", color: "success" }
+    { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
+    { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
   ])
   const [loading, setLoading] = useState(true)
+  const [buildingInfo, setBuildingInfo] = useState<{ name: string; address: string } | null>(null)
+  const [userName, setUserName] = useState<string>("Owner")
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+  const [buildingLogo, setBuildingLogo] = useState<string | null>(null)
+  const [buildingId, setBuildingId] = useState<string | null>(null)
 
   // Fetch dashboard metrics from API
   useEffect(() => {
@@ -74,31 +79,126 @@ function DashboardContent() {
       try {
         setLoading(true)
         const token = getAuthToken()
-        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
-          method: "GET",
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        })
+        if (!token) {
+          setMetrics([
+            { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
+            { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
+            { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
+            { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
+          ])
+          return
+        }
+
+        const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs = 15000) => {
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), timeoutMs)
+          try {
+            return await fetch(url, { ...init, signal: controller.signal })
+          } finally {
+            clearTimeout(timeout)
+          }
+        }
+        
+        // Try to get user profile for the name
+        try {
+          const profilePayload = await apiGet<any>("/user/me")
+          if (profilePayload.success) {
+            const user = profilePayload.data.user
+            setUserName(user.first_name || user.full_name?.split(" ")[0] || "Owner")
+          }
+        } catch (e) {
+          console.error("Failed to fetch profile from /user/me, trying /profiles/me", e)
+          try {
+            const profilePayload = await apiGet<any>("/profiles/me")
+            if (profilePayload.success) {
+              const user = profilePayload.data.profile || profilePayload.data
+              setUserName(user.first_name || user.full_name?.split(" ")[0] || "Owner")
+            }
+          } catch (e2) {
+            console.error("Failed to fetch profile from /profiles/me", e2)
+          }
+        }
+
+        const buildingsRes = await fetchWithTimeout(
+          `${API_BASE_URL}/buildings`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+          15000
+        )
         const buildingsPayload = await buildingsRes.json().catch(() => ({}))
         if (!buildingsRes.ok || buildingsPayload?.success === false) {
           throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
         }
 
         const buildings = buildingsPayload?.data?.buildings || []
-        const units: any[] = []
-
-        for (const building of buildings) {
-          const unitsRes = await fetch(`${API_BASE_URL}/buildings/${building.id}/units`, {
-            method: "GET",
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        const buildingIds: string[] = buildings
+          .map((b: any) => (b?.building_id ?? b?.id)?.toString())
+          .filter((id: any) => typeof id === "string" && id.length > 0)
+        
+        if (buildings.length > 0) {
+          const primaryBuildingId = (buildings[0]?.building_id ?? buildings[0]?.id)?.toString?.() || null
+          setBuildingId(primaryBuildingId)
+          setBuildingInfo({
+            name: buildings[0].name || "My Building",
+            address: buildings[0].address || "Addis Ababa, Ethiopia"
           })
-          const unitsPayload = await unitsRes.json().catch(() => ({}))
-          if (unitsRes.ok && unitsPayload?.success !== false) {
-            units.push(...(unitsPayload?.data?.units || []))
+          // Set initial logo if exists in building data
+          if (buildings[0].logo_url) {
+            setBuildingLogo(buildings[0].logo_url)
           }
         }
 
-        const activeListings = units.length
-        const totalRevenue = units.reduce((sum: number, unit: any) => sum + (unit.rent_amount || 0), 0)
+        if (buildingIds.length === 0) {
+          setMetrics([
+            { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
+            { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
+            { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
+            { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
+          ])
+          return
+        }
+
+        const unitResults = await Promise.allSettled(
+          buildingIds.map(async (buildingId) => {
+            const unitsRes = await fetchWithTimeout(
+              `${API_BASE_URL}/buildings/${buildingId}/units`,
+              {
+                method: "GET",
+                headers: { Authorization: `Bearer ${token}` },
+              },
+              15000
+            )
+            const unitsPayload = await unitsRes.json().catch(() => ({}))
+            if (!unitsRes.ok || unitsPayload?.success === false) return []
+            return (unitsPayload?.data?.units || []).map((unit: any) => ({ unit, buildingId }))
+          })
+        )
+
+        const units: {
+          status: "vacant" | "occupied" | "maintenance"
+          rentAmount: number
+          tenantName: string | null
+        }[] = []
+
+        for (const result of unitResults) {
+          if (result.status !== "fulfilled") continue
+          for (const item of result.value) {
+            const rawStatus = item.unit.status || "vacant"
+            const normalizedStatus: "vacant" | "occupied" | "maintenance" =
+              rawStatus === "occupied" || rawStatus === "maintenance" ? rawStatus : "vacant"
+            const resolvedRent = item.unit.rent_amount ?? item.unit.base_rent ?? 0
+            units.push({
+              status: normalizedStatus,
+              rentAmount: Number(resolvedRent || 0),
+              tenantName: item.unit.tenant_name || (item.unit.leases?.[0]?.tenant?.full_name) || null,
+            })
+          }
+        }
+
+        const totalUnits = units.length
+        const totalRevenue = units.reduce((sum: number, unit: any) => sum + (unit.rentAmount || 0), 0)
         const occupiedUnits = units.filter((u: any) => u.status === "occupied").length
         const vacantUnits = units.filter((u: any) => u.status === "vacant").length
 
@@ -118,16 +218,16 @@ function DashboardContent() {
             color: "error"
           },
           {
-            title: "Active Listings",
-            value: activeListings.toString(),
+            title: "Active Units",
+            value: totalUnits.toString(),
             change: "+4 this month",
             trend: "up",
             color: "success"
           },
           {
-            title: "Revenue",
-            value: `ETB ${(totalRevenue / 1000).toFixed(1)}K`,
-            change: "+15.3% from last month",
+            title: "Revenue Generated",
+            value: `ETB ${totalRevenue.toLocaleString()}`,
+            change: "+15.3%",
             trend: "up",
             color: "success"
           }
@@ -141,6 +241,15 @@ function DashboardContent() {
 
     fetchMetrics()
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (!buildingId) return
+    const cachedLogo = localStorage.getItem(`bms.buildingLogo.${buildingId}`)
+    if (cachedLogo) {
+      setBuildingLogo(cachedLogo)
+    }
+  }, [buildingId])
 
   const navItems = useMemo(() => [
     {
@@ -234,6 +343,44 @@ function DashboardContent() {
     }
   }
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !buildingId) return
+
+    // Basic client-side validation of uploaded logo
+    const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+
+    if (!allowedMimeTypes.includes(file.type)) {
+      console.error("Invalid logo file type:", file.type)
+      return
+    }
+
+    if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
+      console.error("Logo file is too large:", file.size)
+      return
+    }
+
+    setIsUploadingLogo(true)
+    try {
+      const reader = new FileReader()
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(String(reader.result || ""))
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(file)
+      })
+
+      if (dataUrl) {
+        setBuildingLogo(dataUrl)
+        localStorage.setItem(`bms.buildingLogo.${buildingId}`, dataUrl)
+      }
+    } catch (err) {
+      console.error('Error uploading logo:', err)
+    } finally {
+      setIsUploadingLogo(false)
+    }
+  }
+
   // Show loading state
   if (loading) {
     return (
@@ -278,10 +425,15 @@ function DashboardContent() {
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title="Dashboard"
-          subtitle="Welcome back to your landlord dashboard"
+          title={`Welcome back, ${userName}`}
+          subtitle={buildingInfo ? `Managing ${buildingInfo.name}` : "Welcome back to your landlord dashboard"}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          buildingName={buildingInfo?.name}
+          buildingAddress={buildingInfo?.address}
+          buildingLogo={buildingLogo}
+          onLogoUpload={handleLogoUpload}
+          isUploadingLogo={isUploadingLogo}
         />
 
         {/* Dashboard Content */}
@@ -293,28 +445,46 @@ function DashboardContent() {
                 {metrics.map((metric, index) => (
                   <div 
                     key={index} 
-                    className="rounded-2xl p-5 md:p-6 border-0"
+                    className="rounded-2xl p-5 md:p-6 border-0 transition-transform hover:scale-[1.01]"
                     style={{ 
                       backgroundColor: 'var(--card)', 
                       boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
                     }}
                   >
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <Text size="xl" className="text-muted-foreground font-bold">
-                          {metric.title}
-                        </Text>
-                        <Large className="mt-3 text-4xl font-bold" style={{ color: 'var(--foreground)' }}>
-                          {metric.value}
-                        </Large>
-                      </div>
-                      <Badge 
-                        variant={metric.color === 'success' ? 'default' : 'destructive'}
-                        className="bg-green-100 text-green-800 border-green-200 text-xl px-4 py-2 font-semibold"
-                      >
-                        {metric.change}
-                      </Badge>
-                    </div>
+                    {(() => {
+                      const isRevenue = metric.title === "Revenue Generated"
+                      const revenueValue = isRevenue ? metric.value.replace(/^ETB\s*/i, "") : metric.value
+                      return (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Text size="xl" className="text-[#5A5A5A] font-semibold">
+                              {metric.title}
+                            </Text>
+                            {isRevenue ? (
+                              <div className="mt-3">
+                                <div className="flex items-end gap-2">
+                                  <span className="text-xs font-semibold text-muted-foreground">ETB</span>
+                                  <Large className="text-4xl font-bold" style={{ color: "var(--foreground)" }}>
+                                    {revenueValue}
+                                  </Large>
+                                </div>
+                                <MutedText className="text-xs mt-1">from last month</MutedText>
+                              </div>
+                            ) : (
+                              <Large className="mt-3 text-4xl font-bold" style={{ color: "var(--foreground)" }}>
+                                {metric.value}
+                              </Large>
+                            )}
+                          </div>
+                          <Badge
+                            variant={metric.color === "success" ? "default" : "destructive"}
+                            className={`${metric.color === "success" ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"} text-xl px-4 py-2 font-semibold`}
+                          >
+                            {metric.change}
+                          </Badge>
+                        </div>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>
