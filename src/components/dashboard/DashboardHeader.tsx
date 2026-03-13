@@ -1,9 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heading, MutedText } from "@/components/ui/typography"
-import { Search, Globe, MapPin, Building2, ImagePlus, Upload, Pencil } from "lucide-react"
+import { Search, Globe, MapPin, ImagePlus, Upload, Pencil } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useLocale } from "next-intl"
 import { NotificationsDropdown } from "./NotificationsDropdown"
@@ -155,13 +154,6 @@ export function DashboardHeader({
           )}
 
           <NotificationsDropdown />
-
-          <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="/avatars/landlord.png" alt="Landlord" />
-              <AvatarFallback>LL</AvatarFallback>
-            </Avatar>
-          </Button>
         </div>
       </div>
     </header>

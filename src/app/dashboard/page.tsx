@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { RevenueChart } from "@/components/dashboard/RevenueChart"
-import { API_BASE_URL, getAuthToken, apiGet, apiPost } from "@/lib/apiClient"
+import { API_BASE_URL, getAuthToken, apiGet } from "@/lib/apiClient"
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -19,8 +19,7 @@ import {
   Settings,
   Building2,
   Users,
-  FileText,
-  MapPin
+  FileText
 } from "lucide-react"
 
 export default function LandlordDashboard() {
@@ -64,8 +63,8 @@ function DashboardContent() {
   const [metrics, setMetrics] = useState([
     { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
     { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
-    { title: "Active Listings", value: "0", change: "+0 this month", trend: "up", color: "success" },
-    { title: "Revenue", value: "$0", change: "+0% from last month", trend: "up", color: "success" }
+    { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
+    { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
   ])
   const [loading, setLoading] = useState(true)
   const [buildingInfo, setBuildingInfo] = useState<{ name: string; address: string } | null>(null)
@@ -85,7 +84,7 @@ function DashboardContent() {
             { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
             { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
             { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
-            { title: "Revenue Generated", value: "ETB 0", change: "+0% from last month", trend: "up", color: "success" }
+            { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
           ])
           return
         }
@@ -156,7 +155,7 @@ function DashboardContent() {
             { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
             { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
             { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
-            { title: "Revenue Generated", value: "ETB 0", change: "+0% from last month", trend: "up", color: "success" }
+            { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
           ])
           return
         }
@@ -228,7 +227,7 @@ function DashboardContent() {
           {
             title: "Revenue Generated",
             value: `ETB ${totalRevenue.toLocaleString()}`,
-            change: "+15.3% from last month",
+            change: "+15.3%",
             trend: "up",
             color: "success"
           }
@@ -438,22 +437,40 @@ function DashboardContent() {
                       boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
                     }}
                   >
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <Text size="xl" className="text-muted-foreground font-bold">
-                          {metric.title}
-                        </Text>
-                        <Large className="mt-3 text-4xl font-bold" style={{ color: 'var(--foreground)' }}>
-                          {metric.value}
-                        </Large>
-                      </div>
-                      <Badge 
-                        variant={metric.color === 'success' ? 'default' : 'destructive'}
-                        className={`${metric.color === 'success' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'} text-xl px-4 py-2 font-semibold`}
-                      >
-                        {metric.change}
-                      </Badge>
-                    </div>
+                    {(() => {
+                      const isRevenue = metric.title === "Revenue Generated"
+                      const revenueValue = isRevenue ? metric.value.replace(/^ETB\s*/i, "") : metric.value
+                      return (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Text size="xl" className="text-[#5A5A5A] font-semibold">
+                              {metric.title}
+                            </Text>
+                            {isRevenue ? (
+                              <div className="mt-3">
+                                <div className="flex items-end gap-2">
+                                  <span className="text-xs font-semibold text-muted-foreground">ETB</span>
+                                  <Large className="text-4xl font-bold" style={{ color: "var(--foreground)" }}>
+                                    {revenueValue}
+                                  </Large>
+                                </div>
+                                <MutedText className="text-xs mt-1">from last month</MutedText>
+                              </div>
+                            ) : (
+                              <Large className="mt-3 text-4xl font-bold" style={{ color: "var(--foreground)" }}>
+                                {metric.value}
+                              </Large>
+                            )}
+                          </div>
+                          <Badge
+                            variant={metric.color === "success" ? "default" : "destructive"}
+                            className={`${metric.color === "success" ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"} text-xl px-4 py-2 font-semibold`}
+                          >
+                            {metric.change}
+                          </Badge>
+                        </div>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>

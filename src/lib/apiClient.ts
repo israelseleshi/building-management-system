@@ -2,7 +2,7 @@ const rawBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 
 export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "")
 
-export const getAuthHeaders = () => {
+export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
@@ -27,6 +27,13 @@ export const getAuthToken = () => {
   return localStorage.getItem("authToken") || readCookie("authToken")
 }
 
+const normalizeHeaders = (headers?: HeadersInit) => {
+  if (!headers) return {}
+  if (headers instanceof Headers) return Object.fromEntries(headers.entries())
+  if (Array.isArray(headers)) return Object.fromEntries(headers)
+  return headers
+}
+
 export async function apiPost<T>(
   path: string,
   body: unknown,
@@ -37,7 +44,7 @@ export async function apiPost<T>(
     headers: {
       "Content-Type": "application/json",
       ...getAuthHeaders(),
-      ...(init?.headers ?? {}),
+      ...normalizeHeaders(init?.headers),
     },
     body: JSON.stringify(body),
     ...init,
@@ -67,7 +74,7 @@ export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
     method: "GET",
     headers: {
       ...getAuthHeaders(),
-      ...(init?.headers ?? {}),
+      ...normalizeHeaders(init?.headers),
     },
     ...init,
   })
@@ -101,7 +108,7 @@ export async function apiPut<T>(
     headers: {
       "Content-Type": "application/json",
       ...getAuthHeaders(),
-      ...(init?.headers ?? {}),
+      ...normalizeHeaders(init?.headers),
     },
     body: JSON.stringify(body),
     ...init,
