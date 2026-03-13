@@ -99,18 +99,20 @@ function DashboardContent() {
 
         const activeListings = units.length
         const totalRevenue = units.reduce((sum: number, unit: any) => sum + (unit.rent_amount || 0), 0)
+        const occupiedUnits = units.filter((u: any) => u.status === "occupied").length
+        const vacantUnits = units.filter((u: any) => u.status === "vacant").length
 
         setMetrics([
           {
             title: "Tenants",
-            value: activeListings.toString(),
+            value: occupiedUnits.toString(),
             change: "+11.01%",
             trend: "up",
             color: "success"
           },
           {
             title: "Vacant Units",
-            value: Math.max(0, Math.floor(activeListings * 0.25)).toString(),
+            value: vacantUnits.toString(),
             change: "-9.05%",
             trend: "down",
             color: "error"
@@ -124,7 +126,7 @@ function DashboardContent() {
           },
           {
             title: "Revenue",
-            value: `$${(totalRevenue / 1000).toFixed(1)}K`,
+            value: `ETB ${(totalRevenue / 1000).toFixed(1)}K`,
             change: "+15.3% from last month",
             trend: "up",
             color: "success"

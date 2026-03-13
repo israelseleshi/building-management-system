@@ -37,6 +37,7 @@ interface UnitListing {
   buildingId: string
   unitId: string
   unitNumber: string
+  tenantName: string | null
   floorNumber: number | null
   bedrooms: number | null
   bathrooms: number | null
@@ -152,6 +153,7 @@ function ListingsContent() {
               buildingId: buildingId,
               unitId: resolvedUnitId,
               unitNumber: unit.unit_number?.toString() || "Unit",
+              tenantName: unit.tenant_name || (unit.leases?.[0]?.tenant?.full_name) || null,
               floorNumber: resolvedFloor != null ? Number(resolvedFloor) : null,
               bedrooms: unit.bedrooms ?? null,
               bathrooms: unit.bathrooms ?? null,
@@ -161,6 +163,9 @@ function ListingsContent() {
             })
           }
         }
+
+        // Sort by rent amount descending
+        rows.sort((a, b) => b.rentAmount - a.rentAmount)
 
         setUnits(rows)
       } catch (err) {
@@ -219,19 +224,14 @@ function ListingsContent() {
       cell: ({ row }) => <div className="font-medium text-foreground">{row.original.unitNumber}</div>,
     },
     {
+      accessorKey: "tenantName",
+      header: "Tenant Name",
+      cell: ({ row }) => <div className="text-muted-foreground">{row.original.tenantName || "N/A"}</div>,
+    },
+    {
       accessorKey: "floorNumber",
       header: "Floor",
       cell: ({ row }) => <div>{row.original.floorNumber ?? "-"}</div>,
-    },
-    {
-      accessorKey: "bedrooms",
-      header: "Bedrooms",
-      cell: ({ row }) => <div>{row.original.bedrooms ?? "-"}</div>,
-    },
-    {
-      accessorKey: "bathrooms",
-      header: "Bathrooms",
-      cell: ({ row }) => <div>{row.original.bathrooms ?? "-"}</div>,
     },
     {
       accessorKey: "sizeSqm",
@@ -514,29 +514,28 @@ function ListingsContent() {
       </div>
 
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
-        <DialogContent className="sm:max-w-2xl border-0 p-6">
+        <DialogContent className="sm:max-w-2xl border-0 p-6 bg-white shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Unit Details</DialogTitle>
-            <DialogDescription>Only the required unit fields are displayed.</DialogDescription>
+            <DialogTitle className="text-gray-900 text-xl font-semibold">Unit Details</DialogTitle>
+            <DialogDescription className="text-gray-600">Only the required unit fields are displayed.</DialogDescription>
           </DialogHeader>
           {selectedUnit && (
             <div className="grid grid-cols-2 gap-4">
               <div><p className="text-xs text-muted-foreground">Unit Number</p><p className="font-semibold">{selectedUnit.unitNumber}</p></div>
               <div><p className="text-xs text-muted-foreground">Floor Number</p><p className="font-semibold">{selectedUnit.floorNumber ?? "-"}</p></div>
-              <div><p className="text-xs text-muted-foreground">Bedrooms</p><p className="font-semibold">{selectedUnit.bedrooms ?? "-"}</p></div>
-              <div><p className="text-xs text-muted-foreground">Bathrooms</p><p className="font-semibold">{selectedUnit.bathrooms ?? "-"}</p></div>
               <div><p className="text-xs text-muted-foreground">Size (sqm)</p><p className="font-semibold">{selectedUnit.sizeSqm ?? "-"}</p></div>
               <div><p className="text-xs text-muted-foreground">Rent Amount</p><p className="font-semibold">ETB {selectedUnit.rentAmount.toLocaleString()}</p></div>
               <div className="col-span-2"><p className="text-xs text-muted-foreground">Status</p><div className="mt-1">{statusBadge(selectedUnit.status)}</div></div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setViewModalOpen(false)}>Close</Button>
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => setViewModalOpen(false)} className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400">Close</Button>
             <Button
               onClick={() => {
                 setViewModalOpen(false)
                 setEditModalOpen(true)
               }}
+              className="font-medium"
               style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
             >
               Edit Unit
@@ -546,10 +545,10 @@ function ListingsContent() {
       </Dialog>
 
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="sm:max-w-2xl border-0 p-6">
+        <DialogContent className="sm:max-w-2xl border-0 p-6 bg-white shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Unit</DialogTitle>
-            <DialogDescription>Update only the API fields for units.</DialogDescription>
+            <DialogTitle className="text-gray-900 text-xl font-semibold">Edit Unit</DialogTitle>
+            <DialogDescription className="text-gray-600">Update only the API fields for units.</DialogDescription>
           </DialogHeader>
           {selectedUnit && (
             <div className="grid grid-cols-2 gap-4">
@@ -568,24 +567,6 @@ function ListingsContent() {
                   type="number"
                   value={editFormData.floorNumber ?? selectedUnit.floorNumber ?? ""}
                   onChange={(e) => setEditFormData((prev) => ({ ...prev, floorNumber: e.target.value === "" ? null : parseInt(e.target.value, 10) }))}
-                  className="w-full px-4 py-3 border border-border rounded-lg bg-background"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-foreground block mb-2">Bedrooms</label>
-                <input
-                  type="number"
-                  value={editFormData.bedrooms ?? selectedUnit.bedrooms ?? ""}
-                  onChange={(e) => setEditFormData((prev) => ({ ...prev, bedrooms: e.target.value === "" ? null : parseInt(e.target.value, 10) }))}
-                  className="w-full px-4 py-3 border border-border rounded-lg bg-background"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-foreground block mb-2">Bathrooms</label>
-                <input
-                  type="number"
-                  value={editFormData.bathrooms ?? selectedUnit.bathrooms ?? ""}
-                  onChange={(e) => setEditFormData((prev) => ({ ...prev, bathrooms: e.target.value === "" ? null : parseInt(e.target.value, 10) }))}
                   className="w-full px-4 py-3 border border-border rounded-lg bg-background"
                 />
               </div>
@@ -624,9 +605,9 @@ function ListingsContent() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditModalOpen(false); setEditFormData({}) }} disabled={isSaving}>Cancel</Button>
-            <Button onClick={handleSaveEdit} disabled={isSaving} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => { setEditModalOpen(false); setEditFormData({}) }} disabled={isSaving} className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400">Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={isSaving} className="font-medium" style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>

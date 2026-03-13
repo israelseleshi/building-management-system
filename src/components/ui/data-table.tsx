@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -41,6 +41,37 @@ export function DataTable<TData, TValue>({
       },
     },
   })
+
+  const currentPage = table.getState().pagination.pageIndex + 1
+  const pageCount = table.getPageCount()
+
+  const getPageNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+
+    if (pageCount <= maxVisiblePages) {
+      for (let i = 1; i <= pageCount; i++) pages.push(i)
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i)
+        pages.push("ellipsis")
+        pages.push(pageCount)
+      } else if (currentPage >= pageCount - 2) {
+        pages.push(1)
+        pages.push("ellipsis")
+        for (let i = pageCount - 3; i <= pageCount; i++) pages.push(i)
+      } else {
+        pages.push(1)
+        pages.push("ellipsis")
+        pages.push(currentPage - 1)
+        pages.push(currentPage)
+        pages.push(currentPage + 1)
+        pages.push("ellipsis")
+        pages.push(pageCount)
+      }
+    }
+    return pages
+  }
 
   return (
     <div className="space-y-4">
@@ -105,14 +136,19 @@ export function DataTable<TData, TValue>({
       {/* Pagination */}
       <div className="flex items-center justify-between px-2">
         <div className="text-sm text-muted-foreground">
-          Page{" "}
+          Showing{" "}
           <span className="font-medium text-foreground">
-            {table.getState().pagination.pageIndex + 1}
+            {table.getState().pagination.pageIndex * pageSize + 1}
+          </span>{" "}
+          to{" "}
+          <span className="font-medium text-foreground">
+            {Math.min((table.getState().pagination.pageIndex + 1) * pageSize, data.length)}
           </span>{" "}
           of{" "}
           <span className="font-medium text-foreground">
-            {table.getPageCount()}
-          </span>
+            {data.length}
+          </span>{" "}
+          results
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -122,9 +158,31 @@ export function DataTable<TData, TValue>({
             disabled={!table.getCanPreviousPage()}
             className="h-9 px-3"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 mr-1" />
             Previous
           </Button>
+          
+          <div className="flex items-center gap-1">
+            {getPageNumbers().map((page, index) => (
+              page === "ellipsis" ? (
+                <div key={`ellipsis-${index}`} className="flex h-9 w-9 items-center justify-center">
+                  <MoreHorizontal className="h-4 w-4" />
+                </div>
+              ) : (
+                <Button
+                  key={`page-${page}`}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => table.setPageIndex((page as number) - 1)}
+                  className="h-9 w-9 p-0"
+                  style={currentPage === page ? { backgroundColor: "#7D8B6F", color: "#FFFFFF" } : {}}
+                >
+                  {page}
+                </Button>
+              )
+            ))}
+          </div>
+
           <Button
             variant="outline"
             size="sm"
@@ -133,7 +191,7 @@ export function DataTable<TData, TValue>({
             className="h-9 px-3"
           >
             Next
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       </div>
