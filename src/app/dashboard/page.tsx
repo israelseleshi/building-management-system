@@ -347,6 +347,20 @@ function DashboardContent() {
     const file = e.target.files?.[0]
     if (!file || !buildingId) return
 
+    // Basic client-side validation of uploaded logo
+    const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+
+    if (!allowedMimeTypes.includes(file.type)) {
+      console.error("Invalid logo file type:", file.type)
+      return
+    }
+
+    if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
+      console.error("Logo file is too large:", file.size)
+      return
+    }
+
     setIsUploadingLogo(true)
     try {
       const reader = new FileReader()
