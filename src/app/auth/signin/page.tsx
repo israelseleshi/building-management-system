@@ -15,7 +15,7 @@ export default function SignInPage() {
       <div className="relative hidden lg:block">
         <img
           className="absolute inset-0 h-full w-full object-cover"
-          src="/ethiopian-building.jpg"
+          src="/building-image_1.jpg"
           alt="Ethiopian building - Addis Ababa architecture"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40"></div>

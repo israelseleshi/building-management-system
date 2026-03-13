@@ -231,17 +231,15 @@ export function DashboardSidebar({
                   <CollapsibleTrigger className="flex items-center justify-center w-full p-2 rounded-md hover:bg-muted transition-colors">
                     <span className="text-foreground">{group.icon}</span>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="absolute left-full ml-2 top-0 bg-card border rounded-md shadow-lg p-2 min-w-[200px] z-50">
-                    <div className="text-sm font-semibold text-muted-foreground mb-2 px-2">
-                      {group.title}
-                    </div>
+                  <CollapsibleContent className="w-full mt-1 space-y-1 px-2">
                     {group.items.map((item, itemIndex) => (
                       <button
                         key={itemIndex}
                         onClick={() => handleNavigation(item.path)}
-                        className={`menu-item w-full text-left px-2 py-1.5 rounded transition-all duration-200 ${
+                        className={`menu-item w-full flex justify-center p-2 rounded transition-all duration-200 ${
                           item.active ? "bg-green-100 text-green-700 border border-green-200" : "menu-item-inactive"
                         }`}
+                        title={item.name}
                         >
                         <span
                           className={
@@ -250,7 +248,6 @@ export function DashboardSidebar({
                         >
                           {item.icon}
                         </span>
-                        <span className="ml-2 whitespace-nowrap">{item.name}</span>
                       </button>
                     ))}
                   </CollapsibleContent>
