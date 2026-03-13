@@ -2,6 +2,11 @@ const rawBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ""
 
 export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "")
 
+export const getAuthHeaders = () => {
+  const token = getAuthToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 export type ApiError = {
   error?: string
   message?: string
@@ -31,43 +36,59 @@ export async function apiPost<T>(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
       ...(init?.headers ?? {}),
     },
     body: JSON.stringify(body),
     ...init,
   })
 
-  const data = (await response.json().catch(() => ({}))) as T
+  const text = await response.text()
+  let data: any
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch (e) {
+    console.error(`Failed to parse JSON from ${path}:`, text)
+    throw new Error(`Invalid JSON response from ${path}`)
+  }
 
   if (!response.ok) {
-    throw Object.assign(new Error("API request failed"), {
+    throw Object.assign(new Error(data?.message || data?.error || "API request failed"), {
       status: response.status,
       data,
     })
   }
 
-  return data
+  return data as T
 }
 
 export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "GET",
     headers: {
+      ...getAuthHeaders(),
       ...(init?.headers ?? {}),
     },
     ...init,
   })
 
-  const data = (await response.json().catch(() => ({}))) as T
+  const text = await response.text()
+  let data: any
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch (e) {
+    console.error(`Failed to parse JSON from ${path}:`, text)
+    throw new Error(`Invalid JSON response from ${path}`)
+  }
 
   if (!response.ok) {
-    throw Object.assign(new Error("API request failed"), {
+    throw Object.assign(new Error(data?.message || data?.error || "API request failed"), {
       status: response.status,
       data,
     })
   }
 
-  return data
+  return data as T
 }
 
 export async function apiPut<T>(
@@ -79,20 +100,28 @@ export async function apiPut<T>(
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
       ...(init?.headers ?? {}),
     },
     body: JSON.stringify(body),
     ...init,
   })
 
-  const data = (await response.json().catch(() => ({}))) as T
+  const text = await response.text()
+  let data: any
+  try {
+    data = text ? JSON.parse(text) : {}
+  } catch (e) {
+    console.error(`Failed to parse JSON from ${path}:`, text)
+    throw new Error(`Invalid JSON response from ${path}`)
+  }
 
   if (!response.ok) {
-    throw Object.assign(new Error("API request failed"), {
+    throw Object.assign(new Error(data?.message || data?.error || "API request failed"), {
       status: response.status,
       data,
     })
   }
 
-  return data
+  return data as T
 }
