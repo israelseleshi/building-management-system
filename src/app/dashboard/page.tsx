@@ -393,7 +393,7 @@ function DashboardContent() {
           onNavigate={handleSidebarNavigation}
         />
 
-        <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden">
+        <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden min-h-0">
           <DashboardHeader
             title="Dashboard"
             subtitle="Loading your dashboard..."
@@ -401,7 +401,7 @@ function DashboardContent() {
             onSearchChange={setSearchQuery}
           />
 
-          <main className="p-6 flex items-center justify-center min-h-96 flex-1 overflow-y-auto">
+          <main className="p-6 flex items-center justify-center min-h-96 flex-1 overflow-y-auto min-h-0">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
               <Text className="text-muted-foreground">Loading dashboard metrics...</Text>
@@ -423,7 +423,7 @@ function DashboardContent() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden">
+      <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden min-h-0">
         <DashboardHeader
           title={`Welcome back, ${userName}`}
           subtitle={buildingInfo ? `Managing ${buildingInfo.name}` : "Welcome back to your landlord dashboard"}
@@ -437,7 +437,7 @@ function DashboardContent() {
         />
 
         {/* Dashboard Content */}
-        <main className="p-6 flex-1 overflow-y-auto">
+        <main className="p-6 flex-1 overflow-y-auto min-h-0">
           <div className="grid grid-cols-12 gap-4 md:gap-6">
             <div className="col-span-12 space-y-6 xl:col-span-12">
               {/* Metrics Grid */}

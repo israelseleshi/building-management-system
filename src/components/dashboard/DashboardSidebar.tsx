@@ -132,7 +132,7 @@ export function DashboardSidebar({
 
   return (
     <aside
-      className={`bg-background transition-all duration-300 ease-in-out sticky top-0 h-screen overflow-hidden ${
+      className={`bg-background transition-all duration-300 ease-in-out sticky top-0 h-screen overflow-hidden flex flex-col ${
         isSidebarCollapsed ? "w-20" : "w-[320px]"
       }`}
       style={{
@@ -154,44 +154,59 @@ export function DashboardSidebar({
         </Button>
       </div>
 
-      <nav className={`flex-1 px-4 py-8 overflow-y-auto ${isSidebarCollapsed ? "px-2" : ""}`}>
-        {groups.map((group, groupIndex) => {
-          const isSingleItem = group.items.length === 1
-          const singleItem = isSingleItem ? group.items[0] : null
-
-          if (isSingleItem && singleItem) {
-            return (
+      <nav className={`flex-1 min-h-0 px-4 py-8 overflow-y-auto ${isSidebarCollapsed ? "px-2" : ""}`}>
+        {isSidebarCollapsed ? (
+          <div className="flex flex-col items-center gap-2">
+            {groups.flatMap((group) => group.items).map((item, index) => (
               <button
-                key={groupIndex}
-                onClick={() => handleNavigation(singleItem.path)}
-                className={`flex items-center w-full px-3 py-3 text-sm font-semibold rounded-md transition-all ${
-                  singleItem.active
+                key={`${item.path}-${index}`}
+                onClick={() => handleNavigation(item.path)}
+                title={item.name}
+                className={`flex items-center justify-center w-full p-2 rounded-md transition-all ${
+                  item.active
                     ? "bg-green-100 text-green-700 border border-green-200"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                } ${
-                  isSidebarCollapsed ? "justify-center" : "justify-start"
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <span className={singleItem.active ? "text-green-700" : "text-foreground"}>
-                    {group.icon}
-                  </span>
-                  {!isSidebarCollapsed && (
-                    <span className="whitespace-nowrap">{group.title}</span>
-                  )}
-                </div>
+                <span className={item.active ? "text-green-700" : "text-foreground"}>
+                  {item.icon}
+                </span>
               </button>
-            )
-          }
+            ))}
+          </div>
+        ) : (
+          groups.map((group, groupIndex) => {
+            const isSingleItem = group.items.length === 1
+            const singleItem = isSingleItem ? group.items[0] : null
 
-          return (
-            <Collapsible
-              key={groupIndex}
-              open={getOpenState(groupIndex)}
-              onOpenChange={() => toggleGroup(groupIndex)}
-              className="mb-4"
-            >
-              {!isSidebarCollapsed ? (
+            if (isSingleItem && singleItem) {
+              return (
+                <button
+                  key={groupIndex}
+                  onClick={() => handleNavigation(singleItem.path)}
+                  className={`flex items-center w-full px-3 py-3 text-sm font-semibold rounded-md transition-all ${
+                    singleItem.active
+                      ? "bg-green-100 text-green-700 border border-green-200"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={singleItem.active ? "text-green-700" : "text-foreground"}>
+                      {group.icon}
+                    </span>
+                    <span className="whitespace-nowrap">{group.title}</span>
+                  </div>
+                </button>
+              )
+            }
+
+            return (
+              <Collapsible
+                key={groupIndex}
+                open={getOpenState(groupIndex)}
+                onOpenChange={() => toggleGroup(groupIndex)}
+                className="mb-4"
+              >
                 <>
                   <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors">
                     <div className="flex items-center gap-3">
@@ -212,12 +227,8 @@ export function DashboardSidebar({
                         className={`menu-item w-full transition-all duration-200 ${
                           item.active ? "bg-green-100 text-green-700 border border-green-200" : "menu-item-inactive"
                         }`}
-                        >
-                        <span
-                          className={
-                            item.active ? "text-green-700" : "menu-item-icon-inactive"
-                          }
-                        >
+                      >
+                        <span className={item.active ? "text-green-700" : "menu-item-icon-inactive"}>
                           {item.icon}
                         </span>
                         <span className="ml-3 whitespace-nowrap">{item.name}</span>
@@ -225,37 +236,10 @@ export function DashboardSidebar({
                     ))}
                   </CollapsibleContent>
                 </>
-              ) : (
-                // Collapsed view - show group icon that expands on hover
-                <div className="flex flex-col items-center gap-1">
-                  <CollapsibleTrigger className="flex items-center justify-center w-full p-2 rounded-md hover:bg-muted transition-colors">
-                    <span className="text-foreground">{group.icon}</span>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="w-full mt-1 space-y-1 px-2">
-                    {group.items.map((item, itemIndex) => (
-                      <button
-                        key={itemIndex}
-                        onClick={() => handleNavigation(item.path)}
-                        className={`menu-item w-full flex justify-center p-2 rounded transition-all duration-200 ${
-                          item.active ? "bg-green-100 text-green-700 border border-green-200" : "menu-item-inactive"
-                        }`}
-                        title={item.name}
-                        >
-                        <span
-                          className={
-                            item.active ? "text-green-700" : "menu-item-icon-inactive"
-                          }
-                        >
-                          {item.icon}
-                        </span>
-                      </button>
-                    ))}
-                  </CollapsibleContent>
-                </div>
-              )}
-            </Collapsible>
-          )
-        })}
+              </Collapsible>
+            )
+          })
+        )}
       </nav>
 
       <div className={`px-4 pb-6 mt-auto ${isSidebarCollapsed ? "px-2" : ""}`}>

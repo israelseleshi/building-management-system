@@ -90,6 +90,9 @@ function ListingsContent() {
           const timeout = setTimeout(() => controller.abort(), timeoutMs)
           try {
             return await fetch(url, { ...init, signal: controller.signal })
+          } catch (err: any) {
+            if (err?.name === "AbortError") return null
+            throw err
           } finally {
             clearTimeout(timeout)
           }
@@ -103,6 +106,7 @@ function ListingsContent() {
           },
           15000
         )
+        if (!buildingsRes) return
         const buildingsPayload = await buildingsRes.json().catch(() => ({}))
         if (!buildingsRes.ok || buildingsPayload?.success === false) {
           throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
@@ -128,6 +132,7 @@ function ListingsContent() {
               },
               15000
             )
+            if (!unitsRes) return []
             const unitsPayload = await unitsRes.json().catch(() => ({}))
             if (!unitsRes.ok || unitsPayload?.success === false) return []
             return (unitsPayload?.data?.units || []).map((unit: any) => ({ unit, buildingId }))
