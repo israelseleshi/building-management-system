@@ -9,6 +9,7 @@ import { LogOut, ChevronDown, Settings, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
 import { getLandlordNavGroups, getTenantNavGroups, NavItem } from "@/constants/navItems"
+import * as React from "react"
 import { useState } from "react"
 import { useTranslations } from "next-intl"
 
@@ -255,7 +256,9 @@ export function DashboardSidebar({
                         }`}
                       >
                         <span className={`shrink-0 ${item.active ? "text-[#1C8B4C]" : "text-muted-foreground"}`}>
-                          {item.icon}
+                          {React.cloneElement(item.icon as React.ReactElement, {
+                            className: "h-3.5 w-3.5",
+                          })}
                         </span>
                         <span className="ml-2.5 truncate whitespace-nowrap">{item.name}</span>
                         {item.active && !isTenantDashboard && (

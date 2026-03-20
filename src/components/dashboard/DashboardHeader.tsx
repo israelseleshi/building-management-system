@@ -15,6 +15,7 @@ interface DashboardHeaderProps {
   searchPlaceholder?: string
   buildingName?: string
   buildingAddress?: string
+  buildingMotto?: string
   buildingLogo?: string | null
   appBrandName?: string
   onToggleSidebar?: () => void
@@ -28,6 +29,7 @@ export function DashboardHeader({
   searchPlaceholder = "Search...",
   buildingName,
   buildingAddress,
+  buildingMotto,
   buildingLogo,
   appBrandName: _appBrandName = "BMS",
   onToggleSidebar,
@@ -95,7 +97,7 @@ export function DashboardHeader({
                 <div className="mt-0.5 flex items-center gap-1.5 text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="truncate text-[0.67rem] font-medium uppercase tracking-[0.2em]">
-                    {buildingAddress}
+                    {buildingMotto || buildingAddress}
                   </span>
                 </div>
               </div>

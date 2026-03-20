@@ -643,7 +643,7 @@ function AttendanceContent() {
                     </FilterField>
                     <FilterField label="Business Name">
                       <Select value={filters.shopId} onValueChange={(value) => setFilters((current) => ({ ...current, shopId: value }))}>
-                        <SelectTrigger className="bg-white text-foreground border-border">
+                        <SelectTrigger className="bg-white text-foreground border-border transition-all duration-200 hover:bg-muted/30 hover:border-muted-foreground/30">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-border shadow-md z-[100]">
@@ -658,7 +658,7 @@ function AttendanceContent() {
                     </FilterField>
                     <FilterField label="Unit">
                       <Select value={filters.unit} onValueChange={(value) => setFilters((current) => ({ ...current, unit: value }))}>
-                        <SelectTrigger className="bg-white text-foreground border-border">
+                        <SelectTrigger className="bg-white text-foreground border-border transition-all duration-200 hover:bg-muted/30 hover:border-muted-foreground/30">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-border shadow-md z-[100]">
@@ -673,7 +673,7 @@ function AttendanceContent() {
                     </FilterField>
                     <FilterField label="Location">
                       <Select value={filters.location} onValueChange={(value) => setFilters((current) => ({ ...current, location: value }))}>
-                        <SelectTrigger className="bg-white text-foreground border-border">
+                        <SelectTrigger className="bg-white text-foreground border-border transition-all duration-200 hover:bg-muted/30 hover:border-muted-foreground/30">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-border shadow-md z-[100]">
@@ -688,7 +688,7 @@ function AttendanceContent() {
                     </FilterField>
                     <FilterField label="Status">
                       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}>
-                        <SelectTrigger className="bg-white text-foreground border-border">
+                        <SelectTrigger className="bg-white text-foreground border-border transition-all duration-200 hover:bg-muted/30 hover:border-muted-foreground/30">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-border shadow-md z-[100]">
@@ -973,10 +973,10 @@ function AttendanceContent() {
                       <Button
                         className="gap-2"
                         style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
-                        onClick={simulateLog}
+                        onClick={() => void simulateLog()}
                         disabled={!simulationShopId}
                       >
-                        <Fingerprint className="h-4 w-4" />
+                        <Clock3 className="h-4 w-4" />
                         Test Device Log
                       </Button>
                     </div>
@@ -1012,10 +1012,10 @@ function AttendanceContent() {
                         placeholder="fp-1001"
                       />
                     </FilterField>
-                    <FilterField label="Test Business">
+                    <FilterField label="Unit">
                       <Select value={simulationShopId} onValueChange={setSimulationShopId}>
                         <SelectTrigger className="bg-card text-foreground">
-                          <SelectValue placeholder="Select unit/business" />
+                          <SelectValue placeholder="Select unit" />
                         </SelectTrigger>
                         <SelectContent className="bg-card">
                           {activeShops.map((shop, index) => (
@@ -1328,42 +1328,6 @@ function AttendanceContent() {
                             }
                           />
                         </FilterField>
-                        <div className="space-y-3 rounded-2xl border border-border/50 bg-background/50 p-4">
-                          <ToggleRow
-                            label="Late penalty"
-                            checked={Boolean(config.penaltyRules.latePenaltyEnabled)}
-                            onChange={(checked) =>
-                              setConfig((current) =>
-                                current
-                                  ? {
-                                      ...current,
-                                      penaltyRules: {
-                                        ...current.penaltyRules,
-                                        latePenaltyEnabled: checked,
-                                      },
-                                    }
-                                  : current
-                              )
-                            }
-                          />
-                          <ToggleRow
-                            label="Closed penalty"
-                            checked={Boolean(config.penaltyRules.closedPenaltyEnabled)}
-                            onChange={(checked) =>
-                              setConfig((current) =>
-                                current
-                                  ? {
-                                      ...current,
-                                      penaltyRules: {
-                                        ...current.penaltyRules,
-                                        closedPenaltyEnabled: checked,
-                                      },
-                                    }
-                                  : current
-                              )
-                            }
-                          />
-                        </div>
                         <div className="md:col-span-2">
                           <Button
                             className="w-full md:w-auto"
@@ -1639,28 +1603,5 @@ function SortableHead({
         {active ? direction === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" /> : null}
       </button>
     </TableHead>
-  )
-}
-
-function ToggleRow({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-}) {
-  return (
-    <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => onChange(!checked)}>
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      <span className={`relative h-5 w-10 rounded-full ${checked ? "bg-primary" : "bg-muted"}`}>
-        <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0.5"
-          }`}
-        />
-      </span>
-    </button>
   )
 }

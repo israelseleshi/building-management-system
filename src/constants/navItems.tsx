@@ -16,6 +16,11 @@ import {
   BarChart3,
   Building,
   Clock3,
+  Bell,
+  Receipt,
+  PieChart,
+  Calendar,
+  ShieldCheck,
 } from "lucide-react"
 
 export interface NavItemBase {
@@ -27,7 +32,6 @@ export interface NavItemBase {
 export interface NavItem extends NavItemBase {
   active: boolean
 }
-
 
 export interface NavGroupBase {
   title: string
@@ -49,7 +53,7 @@ const landlordGroups: NavGroupBase[] = [
     title: "Overview",
     icon: <LayoutDashboard className="w-5 h-5" />,
     items: [
-      { icon: <LayoutDashboard className="w-5 h-5" />, name: "Dashboard", path: "/dashboard" },
+      { icon: <PieChart className="w-5 h-5" />, name: "Dashboard", path: "/dashboard" },
     ],
     defaultOpen: true,
   },
@@ -64,11 +68,11 @@ const landlordGroups: NavGroupBase[] = [
   },
   {
     title: "Management",
-    icon: <Users className="w-5 h-5" />,
+    icon: <Grid className="w-5 h-5" />,
     items: [
       { icon: <Users className="w-5 h-5" />, name: "Employees", path: "/dashboard/employees" },
       { icon: <Clock3 className="w-5 h-5" />, name: "Attendance", path: "/dashboard/attendance" },
-      { icon: <FileText className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
+      { icon: <Calendar className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
       { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/dashboard/documents" },
     ],
   },
@@ -77,7 +81,7 @@ const landlordGroups: NavGroupBase[] = [
     icon: <MessageSquare className="w-5 h-5" />,
     items: [
       { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/dashboard/chat" },
-      { icon: <MessageSquare className="w-5 h-5" />, name: "Manage Notices", path: "/dashboard/notices" },
+      { icon: <Bell className="w-5 h-5" />, name: "NOTICE", path: "/dashboard/notices" },
     ],
   },
   {
@@ -85,14 +89,14 @@ const landlordGroups: NavGroupBase[] = [
     icon: <DollarSign className="w-5 h-5" />,
     items: [
       { icon: <CreditCard className="w-5 h-5" />, name: "Payouts", path: "/dashboard/payouts" },
-      { icon: <FileText className="w-5 h-5" />, name: "Invoices", path: "/dashboard/invoices" },
+      { icon: <Receipt className="w-5 h-5" />, name: "Invoices", path: "/dashboard/invoices" },
     ],
   },
   {
     title: "Insights",
     icon: <BarChart3 className="w-5 h-5" />,
     items: [
-      { icon: <Users className="w-5 h-5" />, name: "Reports", path: "/dashboard/reports" },
+      { icon: <ShieldCheck className="w-5 h-5" />, name: "Reports", path: "/dashboard/reports" },
       { icon: <TrendingUp className="w-5 h-5" />, name: "Analytics", path: "/dashboard/analytics" },
     ],
   },
@@ -110,7 +114,7 @@ const tenantGroups: NavGroupBase[] = [
     title: "Overview",
     icon: <LayoutDashboard className="w-5 h-5" />,
     items: [
-      { icon: <LayoutDashboard className="w-5 h-5" />, name: "Dashboard", path: "/tenant-dashboard" },
+      { icon: <PieChart className="w-5 h-5" />, name: "Dashboard", path: "/tenant-dashboard" },
     ],
     defaultOpen: true,
   },
@@ -123,9 +127,9 @@ const tenantGroups: NavGroupBase[] = [
   },
   {
     title: "Management",
-    icon: <Users className="w-5 h-5" />,
+    icon: <Grid className="w-5 h-5" />,
     items: [
-      { icon: <FileText className="w-5 h-5" />, name: "My Rents", path: "/tenant-dashboard/leases" },
+      { icon: <Calendar className="w-5 h-5" />, name: "My Rents", path: "/tenant-dashboard/leases" },
       { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/tenant-dashboard/documents" },
     ],
   },
@@ -140,7 +144,7 @@ const tenantGroups: NavGroupBase[] = [
     title: "Insights",
     icon: <BarChart3 className="w-5 h-5" />,
     items: [
-      { icon: <FileText className="w-5 h-5" />, name: "Reports", path: "/tenant-dashboard/reports" },
+      { icon: <ShieldCheck className="w-5 h-5" />, name: "Reports", path: "/tenant-dashboard/reports" },
     ],
   },
   {

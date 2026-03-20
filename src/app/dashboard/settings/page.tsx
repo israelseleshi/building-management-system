@@ -76,6 +76,7 @@ function SettingsContent() {
   const [buildingId, setBuildingId] = useState<string | null>(null)
   const [buildingName, setBuildingName] = useState("My Building")
   const [buildingAddress, setBuildingAddress] = useState("Addis Ababa, Ethiopia")
+  const [buildingMotto, setBuildingMotto] = useState("")
   const [buildingLogo, setBuildingLogo] = useState<string | null>(null)
   const [isUploadingBranding, setIsUploadingBranding] = useState(false)
 
@@ -135,6 +136,7 @@ function SettingsContent() {
             setBuildingId(resolvedBuildingId)
             setBuildingName(building?.name || "My Building")
             setBuildingAddress(building?.address || "Addis Ababa, Ethiopia")
+            setBuildingMotto(building?.motto || building?.tagline || "")
             setBuildingLogo(building?.logo_url || null)
           }
         }
@@ -151,8 +153,12 @@ function SettingsContent() {
   useEffect(() => {
     if (typeof window === "undefined" || !buildingId) return
     const cachedLogo = localStorage.getItem(`bms.buildingLogo.${buildingId}`)
+    const cachedMotto = localStorage.getItem(`bms.buildingMotto.${buildingId}`)
     if (cachedLogo) {
       setBuildingLogo(cachedLogo)
+    }
+    if (cachedMotto) {
+      setBuildingMotto(cachedMotto)
     }
   }, [buildingId])
 
@@ -412,6 +418,16 @@ function SettingsContent() {
     localStorage.removeItem(`bms.buildingLogo.${buildingId}`)
   }
 
+  const handleSaveBuildingMotto = () => {
+    const trimmedMotto = buildingMotto.trim()
+    if (buildingId) {
+      localStorage.setItem(`bms.buildingMotto.${buildingId}`, trimmedMotto)
+    }
+    localStorage.setItem("bms.buildingMotto.current", trimmedMotto)
+    setSaveSuccess(true)
+    setTimeout(() => setSaveSuccess(false), 3000)
+  }
+
   const handleFieldSave = async (field: string, value: string) => {
     try {
       if (field === "bio" || field === "email") {
@@ -623,7 +639,7 @@ function SettingsContent() {
                           Building Logo or Photo
                         </Heading>
                         <Text className="mb-1 text-sm text-foreground">{buildingName}</Text>
-                        <Text className="text-sm text-muted-foreground">{buildingAddress}</Text>
+                        <Text className="text-sm text-muted-foreground">{buildingMotto || buildingAddress}</Text>
                         <Text className="mt-2 text-xs text-muted-foreground">
                           Upload any building logo, facade photo, or identity image. This will appear in your overview header circle.
                         </Text>
@@ -658,6 +674,26 @@ function SettingsContent() {
                 </div>
 
                 <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-foreground">Building Motto</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={buildingMotto}
+                        onChange={(e) => setBuildingMotto(e.target.value)}
+                        placeholder="Enter your building motto"
+                        className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                      <Button type="button" onClick={handleSaveBuildingMotto} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Motto
+                      </Button>
+                    </div>
+                    <Text className="mt-2 text-xs text-muted-foreground">
+                      This text replaces the location line in your overview dashboard header.
+                    </Text>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {renderEditableField("firstName", "First Name")}
                     {renderEditableField("lastName", "Last Name")}
