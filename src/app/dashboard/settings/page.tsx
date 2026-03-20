@@ -27,6 +27,9 @@ import {
   Check,
   Edit2,
   Users,
+  Upload,
+  ImagePlus,
+  Trash2,
 } from "lucide-react"
 
 interface SettingsTab {
@@ -70,6 +73,11 @@ function SettingsContent() {
     bio: "",
   })
   const [loading, setLoading] = useState(true)
+  const [buildingId, setBuildingId] = useState<string | null>(null)
+  const [buildingName, setBuildingName] = useState("My Building")
+  const [buildingAddress, setBuildingAddress] = useState("Addis Ababa, Ethiopia")
+  const [buildingLogo, setBuildingLogo] = useState<string | null>(null)
+  const [isUploadingBranding, setIsUploadingBranding] = useState(false)
 
   // Fetch profile from database
   useEffect(() => {
@@ -113,6 +121,23 @@ function SettingsContent() {
           company: owner.company_name || "",
           bio: "",
         })
+
+        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const buildingsPayload = await buildingsRes.json().catch(() => ({}))
+        if (buildingsRes.ok && buildingsPayload?.success !== false) {
+          const buildings = buildingsPayload?.data?.buildings || []
+          if (buildings.length > 0) {
+            const building = buildings[0]
+            const resolvedBuildingId = (building?.building_id ?? building?.id)?.toString?.() || null
+            setBuildingId(resolvedBuildingId)
+            setBuildingName(building?.name || "My Building")
+            setBuildingAddress(building?.address || "Addis Ababa, Ethiopia")
+            setBuildingLogo(building?.logo_url || null)
+          }
+        }
       } catch (err) {
         console.error('Error fetching profile:', err)
       } finally {
@@ -122,6 +147,14 @@ function SettingsContent() {
 
     fetchProfile()
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !buildingId) return
+    const cachedLogo = localStorage.getItem(`bms.buildingLogo.${buildingId}`)
+    if (cachedLogo) {
+      setBuildingLogo(cachedLogo)
+    }
+  }, [buildingId])
 
   // Password state
   const [password, setPassword] = useState({
@@ -337,6 +370,48 @@ function SettingsContent() {
     setEditingField(field)
   }
 
+  const handleBuildingLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !buildingId) return
+
+    const maxFileSizeBytes = 2 * 1024 * 1024
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file")
+      return
+    }
+    if (file.size > maxFileSizeBytes) {
+      alert("Image must be smaller than 2MB")
+      return
+    }
+
+    setIsUploadingBranding(true)
+    try {
+      const reader = new FileReader()
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(String(reader.result || ""))
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(file)
+      })
+
+      if (dataUrl) {
+        setBuildingLogo(dataUrl)
+        localStorage.setItem(`bms.buildingLogo.${buildingId}`, dataUrl)
+      }
+    } catch (err) {
+      console.error("Error uploading building logo:", err)
+      alert("Failed to upload image")
+    } finally {
+      setIsUploadingBranding(false)
+      e.target.value = ""
+    }
+  }
+
+  const handleRemoveBuildingLogo = () => {
+    if (!buildingId) return
+    setBuildingLogo(null)
+    localStorage.removeItem(`bms.buildingLogo.${buildingId}`)
+  }
+
   const handleFieldSave = async (field: string, value: string) => {
     try {
       if (field === "bio" || field === "email") {
@@ -468,6 +543,7 @@ function SettingsContent() {
           subtitle="Manage your account and preferences"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         <main className="p-6">
@@ -522,6 +598,63 @@ function SettingsContent() {
                     Profile Information
                   </Heading>
                   <Text className="text-sm text-muted-foreground">Update your personal and professional information</Text>
+                </div>
+
+                <div className="rounded-2xl border border-border/70 bg-background/50 p-5">
+                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-border/70 bg-card">
+                        {buildingLogo ? (
+                          <img src={buildingLogo} alt="Building identity" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                            <ImagePlus className="h-6 w-6" />
+                            <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em]">No Image</span>
+                          </div>
+                        )}
+                        {isUploadingBranding && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-background/70">
+                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <Heading level={4} className="text-lg font-semibold text-foreground">
+                          Building Logo or Photo
+                        </Heading>
+                        <Text className="mb-1 text-sm text-foreground">{buildingName}</Text>
+                        <Text className="text-sm text-muted-foreground">{buildingAddress}</Text>
+                        <Text className="mt-2 text-xs text-muted-foreground">
+                          Upload any building logo, facade photo, or identity image. This will appear in your overview header circle.
+                        </Text>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted">
+                        <Upload className="h-4 w-4" />
+                        <span>{buildingLogo ? "Change Image" : "Upload Image"}</span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleBuildingLogoUpload}
+                          disabled={isUploadingBranding}
+                        />
+                      </label>
+                      {buildingLogo && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={handleRemoveBuildingLogo}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-4">

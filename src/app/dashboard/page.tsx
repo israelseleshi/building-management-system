@@ -69,7 +69,6 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true)
   const [buildingInfo, setBuildingInfo] = useState<{ name: string; address: string } | null>(null)
   const [userName, setUserName] = useState<string>("Owner")
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
   const [buildingLogo, setBuildingLogo] = useState<string | null>(null)
   const [buildingId, setBuildingId] = useState<string | null>(null)
 
@@ -343,44 +342,6 @@ function DashboardContent() {
     }
   }
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !buildingId) return
-
-    // Basic client-side validation of uploaded logo
-    const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
-    const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-
-    if (!allowedMimeTypes.includes(file.type)) {
-      console.error("Invalid logo file type:", file.type)
-      return
-    }
-
-    if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
-      console.error("Logo file is too large:", file.size)
-      return
-    }
-
-    setIsUploadingLogo(true)
-    try {
-      const reader = new FileReader()
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(String(reader.result || ""))
-        reader.onerror = () => reject(reader.error)
-        reader.readAsDataURL(file)
-      })
-
-      if (dataUrl) {
-        setBuildingLogo(dataUrl)
-        localStorage.setItem(`bms.buildingLogo.${buildingId}`, dataUrl)
-      }
-    } catch (err) {
-      console.error('Error uploading logo:', err)
-    } finally {
-      setIsUploadingLogo(false)
-    }
-  }
-
   // Show loading state
   if (loading) {
     return (
@@ -388,9 +349,9 @@ function DashboardContent() {
         <DashboardSidebar
           navItems={navItems}
           isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
           onLogout={handleLogout}
           onNavigate={handleSidebarNavigation}
+          appBrandName="BMS"
         />
 
         <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden min-h-0">
@@ -399,6 +360,7 @@ function DashboardContent() {
             subtitle="Loading your dashboard..."
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            onToggleSidebar={toggleSidebar}
           />
 
           <main className="p-6 flex items-center justify-center min-h-96 flex-1 overflow-y-auto min-h-0">
@@ -417,9 +379,9 @@ function DashboardContent() {
       <DashboardSidebar
         navItems={navItems}
         isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
         onNavigate={handleSidebarNavigation}
+        appBrandName="BMS"
       />
 
       {/* Main Content */}
@@ -432,8 +394,8 @@ function DashboardContent() {
           buildingName={buildingInfo?.name}
           buildingAddress={buildingInfo?.address}
           buildingLogo={buildingLogo}
-          onLogoUpload={handleLogoUpload}
-          isUploadingLogo={isUploadingLogo}
+          appBrandName="BMS"
+          onToggleSidebar={toggleSidebar}
         />
 
         {/* Dashboard Content */}

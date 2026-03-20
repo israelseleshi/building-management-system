@@ -217,6 +217,7 @@ function TenantDocumentsContent() {
           <DashboardHeader
             title={t("documents.loading.title")}
             subtitle={t("documents.loading.subtitle")}
+            onToggleSidebar={toggleSidebar}
           />
 
           <main className="p-6 flex items-center justify-center min-h-96">
@@ -244,6 +245,7 @@ function TenantDocumentsContent() {
         <DashboardHeader
           title={t("documents.header.title")}
           subtitle={t("documents.header.subtitle")}
+          onToggleSidebar={toggleSidebar}
           searchPlaceholder={t("header.searchPlaceholder")}
         />
 

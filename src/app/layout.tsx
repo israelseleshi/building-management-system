@@ -1,10 +1,8 @@
 // src/app/layout.tsx
 import "./globals.css";
-import { Public_Sans } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { cookies } from "next/headers";
 
-const publicSans = Public_Sans({ subsets: ["latin"], variable: "--font-public-sans" });
 const SUPPORTED_LOCALES = ["en", "am"] as const;
 
 export default async function RootLayout({
@@ -22,7 +20,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={publicSans.className} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <NextIntlClientProvider messages={messages} locale={locale}>
           {children}
         </NextIntlClientProvider>

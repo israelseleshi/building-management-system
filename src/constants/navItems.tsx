@@ -15,6 +15,7 @@ import {
   DollarSign,
   BarChart3,
   Building,
+  Clock3,
 } from "lucide-react"
 
 export interface NavItemBase {
@@ -66,6 +67,7 @@ const landlordGroups: NavGroupBase[] = [
     icon: <Users className="w-5 h-5" />,
     items: [
       { icon: <Users className="w-5 h-5" />, name: "Employees", path: "/dashboard/employees" },
+      { icon: <Clock3 className="w-5 h-5" />, name: "Attendance", path: "/dashboard/attendance" },
       { icon: <FileText className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
       { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/dashboard/documents" },
     ],

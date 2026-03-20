@@ -1,8 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Heading, MutedText } from "@/components/ui/typography"
-import { Search, Globe, MapPin, ImagePlus, Upload, Pencil } from "lucide-react"
+import { Heading } from "@/components/ui/typography"
+import { Search, Globe, MapPin, AlignLeft } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useLocale } from "next-intl"
 import { NotificationsDropdown } from "./NotificationsDropdown"
@@ -16,21 +16,21 @@ interface DashboardHeaderProps {
   buildingName?: string
   buildingAddress?: string
   buildingLogo?: string | null
-  onLogoUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void
-  isUploadingLogo?: boolean
+  appBrandName?: string
+  onToggleSidebar?: () => void
 }
 
 export function DashboardHeader({
   title,
-  subtitle,
+  subtitle: _subtitle,
   searchQuery = "",
   onSearchChange,
   searchPlaceholder = "Search...",
   buildingName,
   buildingAddress,
   buildingLogo,
-  onLogoUpload,
-  isUploadingLogo = false,
+  appBrandName: _appBrandName = "BMS",
+  onToggleSidebar,
 }: DashboardHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -38,6 +38,7 @@ export function DashboardHeader({
   const currentLocale = useLocale()
   const normalizedPathname = pathname.replace(/^\/(en|am)(?=\/|$)/, "")
   const isTenantDashboard = normalizedPathname.startsWith("/tenant-dashboard")
+  const isOverviewStyleHeader = Boolean(buildingName)
 
   const handleToggleLocale = () => {
     const nextLocale = currentLocale === "en" ? "am" : "en"
@@ -51,83 +52,64 @@ export function DashboardHeader({
   }
 
   return (
-    <header className="bg-card border-b border-border shadow-sm px-8 py-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          {buildingName ? (
-            <div className="flex items-center gap-4">
-              <div className="relative group">
-                <div
-                  className={[
-                    "w-14 h-14 rounded-xl flex items-center justify-center shadow-inner overflow-hidden transition-all",
-                    buildingLogo
-                      ? "border border-primary/20 bg-primary/10"
-                      : "border-2 border-dashed border-primary/40 bg-primary/5",
-                  ].join(" ")}
-                >
-                  {buildingLogo ? (
-                    <img src={buildingLogo} alt="Building Logo" className="w-full h-full object-contain p-1" />
-                  ) : (
-                    <div className="flex flex-col items-center gap-1 text-primary/70">
-                      <ImagePlus className="w-5 h-5" />
-                      <span className="text-[9px] font-semibold tracking-wide">Add Logo</span>
-                    </div>
-                  )}
-                </div>
-                {onLogoUpload && (
-                  <>
-                    <label className="absolute inset-0 cursor-pointer">
-                      <span className="sr-only">Upload Building Logo</span>
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={onLogoUpload}
-                        disabled={isUploadingLogo}
-                      />
-                    </label>
+    <header className="border-b border-border bg-card shadow-sm">
+      <div
+        className={[
+          "flex items-center justify-between border-border bg-card",
+          isOverviewStyleHeader ? "min-h-[60px] gap-5 px-6 py-2.5" : "min-h-[46px] gap-3 px-4 py-1.5",
+        ].join(" ")}
+      >
+        <div className={`flex min-w-0 items-center ${isOverviewStyleHeader ? "gap-3" : "gap-3"}`}>
+          {onToggleSidebar && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleSidebar}
+              className={`shrink-0 rounded-md border border-transparent text-foreground hover:bg-muted ${
+                isOverviewStyleHeader ? "h-8 w-8" : "h-6.5 w-6.5"
+              }`}
+              aria-label="Toggle dashboard navigation"
+            >
+              <AlignLeft
+                className={isOverviewStyleHeader ? "h-[1.1rem] w-[1.1rem]" : "h-[0.95rem] w-[0.95rem]"}
+                strokeWidth={1.85}
+              />
+            </Button>
+          )}
 
-                    <div className="pointer-events-none absolute inset-0 rounded-xl bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      {buildingLogo ? (
-                        <Pencil className="w-5 h-5 text-white" />
-                      ) : (
-                        <Upload className="w-5 h-5 text-white" />
-                      )}
-                    </div>
-
-                    <div className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                      {buildingLogo ? "Change Logo" : "Upload Building Logo"}
-                    </div>
-
-                    {isUploadingLogo && (
-                      <div className="absolute inset-0 rounded-xl bg-background/70 flex items-center justify-center">
-                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    )}
-                  </>
+          {isOverviewStyleHeader ? (
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/80 bg-muted/40">
+                {buildingLogo ? (
+                  <img src={buildingLogo} alt="Building Logo" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-foreground">
+                    {buildingName?.split(" ").slice(0, 2).map((part) => part[0]).join("") || "BLD"}
+                  </span>
                 )}
               </div>
-              <div>
-                <Heading level={2} className="text-foreground flex items-center gap-2 tracking-tight">
+              <div className="min-w-0">
+                <Heading level={2} className="truncate text-[1.8rem] leading-none text-foreground tracking-tight">
                   {buildingName}
                 </Heading>
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <MapPin className="w-3.5 h-3.5 text-primary/60" />
-                  <span className="text-xs font-medium uppercase tracking-wider">{buildingAddress}</span>
+                <div className="mt-0.5 flex items-center gap-1.5 text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="truncate text-[0.67rem] font-medium uppercase tracking-[0.2em]">
+                    {buildingAddress}
+                  </span>
                 </div>
               </div>
             </div>
           ) : (
-            <div>
-              <Heading level={2} className="text-foreground">
+            <div className="min-w-0">
+              <div className="text-[0.76rem] font-semibold uppercase tracking-[0.035em] text-foreground">
                 {title}
-              </Heading>
-              <MutedText className="text-sm">{subtitle}</MutedText>
+              </div>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
@@ -135,7 +117,7 @@ export function DashboardHeader({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              className="pl-10 pr-4 py-2 w-64 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder-black"
+              className="h-10 w-64 rounded-lg border border-border bg-background py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder-black"
             />
           </div>
 

@@ -552,6 +552,7 @@ function EmployeesContent() {
             subtitle="Loading employee data..."
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            onToggleSidebar={toggleSidebar}
           />
 
           <main className="p-6 flex items-center justify-center min-h-96">
@@ -581,6 +582,7 @@ function EmployeesContent() {
           subtitle="Manage building staff and track attendance"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         <main className="p-6">
@@ -661,14 +663,16 @@ function EmployeesContent() {
                   <select
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
-                    className="px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                    className="px-3 py-2 border border-border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer appearance-none pr-8 relative z-20"
+                    style={{ backgroundColor: 'white' }}
                   >
                     {departments.map((dept) => (
-                      <option key={dept} value={dept}>
+                      <option key={dept} value={dept} className="bg-white">
                         {dept === "all" ? "All Departments" : dept}
                       </option>
                     ))}
                   </select>
+
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -676,14 +680,16 @@ function EmployeesContent() {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                    className="px-3 py-2 border border-border rounded-lg bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer appearance-none pr-8 relative z-20"
+                    style={{ backgroundColor: 'white' }}
                   >
                     {statuses.map((status) => (
-                      <option key={status} value={status}>
+                      <option key={status} value={status} className="bg-white">
                         {status === "all" ? "All Status" : status}
                       </option>
                     ))}
                   </select>
+
                 </div>
               </div>
 

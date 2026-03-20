@@ -358,6 +358,7 @@ function ChatContent() {
           subtitle={t("chatPage.header.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
           searchPlaceholder={t("header.searchPlaceholder")}
         />
 

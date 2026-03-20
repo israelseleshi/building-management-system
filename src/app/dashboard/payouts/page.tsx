@@ -356,6 +356,7 @@ function PayoutsContent() {
           subtitle="Manage your payment requests and track payout status"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         <main className="flex-1 overflow-auto p-6">
