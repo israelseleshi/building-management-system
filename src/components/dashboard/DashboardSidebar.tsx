@@ -127,9 +127,16 @@ export function DashboardSidebar({
     router.push(path)
   }
 
+  const isApplicationsPage = normalizedPathname.startsWith("/dashboard/applications")
+  
+  const sidebarBg = isApplicationsPage ? "bg-[#0A2A43]" : "bg-background"
+  const sidebarHoverBg = isApplicationsPage ? "hover:bg-[#113B5E]" : "hover:bg-[#7D8B6F]"
+  const sidebarHoverText = "hover:text-white"
+  const sidebarBorderColor = isApplicationsPage ? "border-white/10" : "border-border/60"
+
   return (
     <aside
-      className={`border-r border-border/60 bg-background transition-all duration-300 ease-in-out sticky top-0 h-screen overflow-hidden flex flex-col ${
+      className={`border-r ${sidebarBorderColor} ${sidebarBg} transition-all duration-300 ease-in-out sticky top-0 h-screen overflow-visible flex flex-col select-none ${
         isSidebarCollapsed ? "w-[78px]" : "w-[210px]"
       }`}
       style={{
@@ -137,25 +144,40 @@ export function DashboardSidebar({
       }}
     >
       <div
-        className={`px-5 py-4 flex items-center gap-3 border-b border-border/60 ${
-          isSidebarCollapsed ? "justify-center px-3" : "justify-start"
+        className={`px-5 py-4 flex items-center gap-3 border-b ${sidebarBorderColor} ${
+          isSidebarCollapsed ? "justify-center px-2" : "justify-start"
         }`}
       >
-        {!isSidebarCollapsed && (
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-card">
-              <Building2 className="h-5 w-5 text-foreground" />
-            </div>
-            <div className="min-w-0">
-              <div className="brand-logo truncate text-[1.95rem] leading-none text-foreground">{appBrandName}</div>
-            </div>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${sidebarBorderColor} ${isApplicationsPage ? "bg-white/10" : "bg-card"}`}>
+            <Building2 className={`h-5 w-5 ${isApplicationsPage ? "text-white" : "text-foreground"}`} />
           </div>
-        )}
+          {!isSidebarCollapsed && (
+            <div className="min-w-0">
+              <div className={`brand-logo truncate text-[1.95rem] leading-none ${isApplicationsPage ? "text-white" : "text-foreground"}`}>{appBrandName}</div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <nav className={`flex-1 min-h-0 overflow-y-auto py-4 ${isSidebarCollapsed ? "px-1.5" : "px-2"}`}>
+      <nav className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 custom-scrollbar ${isSidebarCollapsed ? "" : ""}`}>
+        <style jsx>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: ${isApplicationsPage ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)"};
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: ${isApplicationsPage ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.1)"};
+          }
+        `}</style>
         {isSidebarCollapsed ? (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 px-1.5">
             {groups.map((group, index) => {
               const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
               if (isSettingsGroup) return null
@@ -171,17 +193,22 @@ export function DashboardSidebar({
                   key={`${group.title}-${index}`}
                   onClick={() => handleNavigation(targetPath)}
                   title={group.title}
-                  className={`relative flex h-10 w-full items-center justify-center rounded-lg transition-all ${
+                  className={`relative flex h-10 w-full items-center justify-center rounded-lg transition-all duration-200 group ${
                     isGroupActive
-                      ? "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? isApplicationsPage 
+                        ? "bg-[#113B5E] text-white shadow-sm"
+                        : "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C]"
+                      : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`
                   }`}
                 >
-                  <span className={isGroupActive ? "text-[#1C8B4C]" : "text-foreground"}>{group.icon}</span>
+                  <span className={`transition-colors ${isGroupActive ? (isApplicationsPage ? "text-white" : "text-[#1C8B4C]") : `${isApplicationsPage ? "text-white" : "text-foreground"} group-hover:text-white`}`}>{group.icon}</span>
                   {isGroupActive && !isTenantDashboard && (
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute right-0 top-1/2 h-0 w-0 -translate-y-1/2 border-y-[9px] border-y-transparent border-r-[10px] border-r-[var(--background)]"
+                      className="pointer-events-none absolute left-full top-1/2 h-0 w-0 -translate-y-1/2 border-y-[6px] border-y-transparent border-r-[6px] border-r-[#E9EDF3]"
+                      style={{ 
+                        borderRightColor: isApplicationsPage ? "#E9EDF3" : "#E9EDF3"
+                      }}
                     />
                   )}
                 </button>
@@ -189,95 +216,107 @@ export function DashboardSidebar({
             })}
           </div>
         ) : (
-          groups.map((group, groupIndex) => {
-            const isSingleItem = group.items.length === 1
-            const singleItem = isSingleItem ? group.items[0] : null
-            const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
+          <div className="flex flex-col gap-1">
+            {groups.map((group, groupIndex) => {
+              const isSingleItem = group.items.length === 1
+              const singleItem = isSingleItem ? group.items[0] : null
+              const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
 
-            if (isSettingsGroup) {
-              return null
-            }
+              if (isSettingsGroup) {
+                return null
+              }
 
-            if (isSingleItem && singleItem) {
-              return (
-                <button
-                  key={groupIndex}
-                  onClick={() => handleNavigation(singleItem.path)}
-                  className={`relative mb-1 flex items-center w-full rounded-lg px-3 py-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.045em] transition-all ${
-                    singleItem.active
-                      ? "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C]"
-                      : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <span className={`shrink-0 ${singleItem.active ? "text-[#1C8B4C]" : "text-foreground"}`}>
-                      {group.icon}
-                    </span>
-                    <span className="truncate whitespace-nowrap">{group.title}</span>
-                  </div>
-                  {singleItem.active && !isTenantDashboard && (
-                    <span
-                      aria-hidden="true"
-                      className="pointer-events-none absolute right-0 top-1/2 h-0 w-0 -translate-y-1/2 border-y-[9px] border-y-transparent border-r-[10px] border-r-[var(--background)]"
-                    />
-                  )}
-                </button>
-              )
-            }
-
-            return (
-              <Collapsible
-                key={groupIndex}
-                open={openGroups[groupIndex] ?? false}
-                onOpenChange={() => toggleGroup(groupIndex)}
-                className="mb-1"
-              >
-                <>
-                  <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.045em] text-foreground hover:bg-muted transition-colors">
+              if (isSingleItem && singleItem) {
+                return (
+                  <button
+                    key={groupIndex}
+                    onClick={() => handleNavigation(singleItem.path)}
+                    className={`relative flex items-center w-full px-3 py-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.045em] transition-all duration-200 group ${
+                      singleItem.active
+                        ? isApplicationsPage
+                          ? "bg-[#113B5E] text-white shadow-sm rounded-none"
+                          : "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C] rounded-lg mx-2 w-[calc(100%-16px)]"
+                        : `rounded-lg mx-2 w-[calc(100%-16px)] ${isApplicationsPage ? "text-white" : "text-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`
+                    }`}
+                  >
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="shrink-0 text-foreground">{group.icon}</span>
-                      <span className="truncate">{group.title}</span>
+                      <span className={`shrink-0 transition-colors ${singleItem.active ? (isApplicationsPage ? "text-white" : "text-[#1C8B4C]") : `${isApplicationsPage ? "text-white" : "text-foreground"} group-hover:text-white`}`}>
+                        {group.icon}
+                      </span>
+                      <span className={`truncate whitespace-nowrap transition-colors ${sidebarHoverText}`}>{group.title}</span>
                     </div>
-                    <ChevronDown
-                      className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-                        openGroups[groupIndex] ? "rotate-180" : ""
-                      }`}
-                    />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-1 space-y-1 pl-8">
-                    {group.items.map((item, itemIndex) => (
-                      <button
-                        key={itemIndex}
-                        onClick={() => handleNavigation(item.path)}
-                        className={`relative flex w-full items-center rounded-lg px-3 py-2.5 text-[0.76rem] font-medium uppercase tracking-[0.04em] transition-all duration-200 ${
-                          item.active
-                            ? "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C]"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    {singleItem.active && !isTenantDashboard && (
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -right-[1px] top-1/2 h-0 w-0 -translate-y-1/2 border-y-[8px] border-y-transparent border-r-[8px] border-r-[#E9EDF3]"
+                        style={{ 
+                          borderRightColor: isApplicationsPage ? "#E9EDF3" : "#E9EDF3"
+                        }}
+                      />
+                    )}
+                  </button>
+                )
+              }
+
+              return (
+                <Collapsible
+                  key={groupIndex}
+                  open={openGroups[groupIndex] ?? false}
+                  onOpenChange={() => toggleGroup(groupIndex)}
+                  className="w-full"
+                >
+                  <>
+                    <CollapsibleTrigger className={`flex w-full items-center justify-between px-3 py-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.045em] transition-all duration-200 group mx-2 rounded-lg w-[calc(100%-16px)] ${isApplicationsPage ? "text-white" : "text-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`}>
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className={`shrink-0 ${isApplicationsPage ? "text-white" : "text-foreground"} transition-colors group-hover:text-white`}>{group.icon}</span>
+                        <span className={`truncate transition-colors group-hover:text-white`}>{group.title}</span>
+                      </div>
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 group-hover:text-white ${
+                          openGroups[groupIndex] ? "rotate-180" : ""
                         }`}
-                      >
-                        <span className={`shrink-0 ${item.active ? "text-[#1C8B4C]" : "text-muted-foreground"}`}>
-                          {React.cloneElement(item.icon as React.ReactElement, {
-                            className: "h-3.5 w-3.5",
-                          })}
-                        </span>
-                        <span className="ml-2.5 truncate whitespace-nowrap">{item.name}</span>
-                        {item.active && !isTenantDashboard && (
-                          <span
-                            aria-hidden="true"
-                            className="pointer-events-none absolute right-0 top-1/2 h-0 w-0 -translate-y-1/2 border-y-[9px] border-y-transparent border-r-[10px] border-r-[var(--background)]"
-                          />
-                        )}
-                      </button>
-                    ))}
-                  </CollapsibleContent>
-                </>
-              </Collapsible>
-            )
-          })
+                      />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-1 space-y-1 pl-8">
+                      {group.items.map((item, itemIndex) => (
+                        <button
+                          key={itemIndex}
+                          onClick={() => handleNavigation(item.path)}
+                          className={`relative flex w-full items-center px-3 py-2.5 text-[0.76rem] font-medium uppercase tracking-[0.04em] transition-all duration-200 group ${
+                            item.active
+                              ? isApplicationsPage
+                                ? "bg-[#113B5E] text-white shadow-sm rounded-none -ml-8 w-[calc(100%+32px)] pl-11"
+                                : "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C] rounded-lg -ml-2 w-[calc(100%-12px)]"
+                              : `rounded-lg -ml-2 w-[calc(100%-12px)] ${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`
+                          }`}
+                        >
+                          <span className={`shrink-0 transition-colors ${item.active ? (isApplicationsPage ? "text-white" : "text-[#1C8B4C]") : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} group-hover:text-white`}`}>
+                            {React.cloneElement(item.icon as React.ReactElement, {
+                              className: "h-3.5 w-3.5",
+                            })}
+                          </span>
+                          <span className={`ml-2.5 truncate whitespace-nowrap transition-colors group-hover:text-white`}>{item.name}</span>
+                          {item.active && !isTenantDashboard && (
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute -right-[1px] top-1/2 h-0 w-0 -translate-y-1/2 border-y-[8px] border-y-transparent border-r-[8px] border-r-[#E9EDF3]"
+                              style={{ 
+                                borderRightColor: isApplicationsPage ? "#E9EDF3" : "#E9EDF3"
+                              }}
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </CollapsibleContent>
+                  </>
+                </Collapsible>
+              )
+            })}
+          </div>
         )}
       </nav>
 
-      <div className={`mt-auto border-t border-border/60 px-3 py-3 ${isSidebarCollapsed ? "px-2" : ""}`}>
+      <div className={`mt-auto border-t ${sidebarBorderColor} px-3 py-3 ${isSidebarCollapsed ? "px-2" : ""}`}>
         {isTenantDashboard ? (
           <button
             onClick={handleLogoutClick}
@@ -299,7 +338,7 @@ export function DashboardSidebar({
           <div className={`flex items-center gap-2 ${isSidebarCollapsed ? "flex-col" : "flex-row justify-between"}`}>
             <button
               onClick={() => handleNavigation("/dashboard/settings")}
-              className={`flex h-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground ${
+              className={`flex h-11 items-center justify-center rounded-lg ${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} transition-colors ${isApplicationsPage ? "hover:bg-white/10 hover:text-white" : "hover:bg-muted hover:text-foreground"} ${
                 isSidebarCollapsed ? "w-full" : "flex-1"
               }`}
               title="Settings"
@@ -308,7 +347,7 @@ export function DashboardSidebar({
             </button>
             <button
               onClick={handleLogoutClick}
-              className={`flex h-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-red-500 ${
+              className={`flex h-11 items-center justify-center rounded-lg ${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} transition-colors ${isApplicationsPage ? "hover:bg-white/10" : "hover:bg-muted"} hover:text-red-500 ${
                 isSidebarCollapsed ? "w-full" : "flex-1"
               }`}
               title="Log Out"

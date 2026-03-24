@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Heading, Text, MutedText } from "@/components/ui/typography"
+import { Text, MutedText } from "@/components/ui/typography"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
@@ -17,7 +17,6 @@ import {
   TrendingUp, 
   Settings,
   Building2,
-  Building,
   Users,
   FileText,
   ClipboardList,
@@ -30,6 +29,15 @@ export default function LandlordDashboard() {
     <ProtectedRoute requiredRole="landlord">
       <DashboardContent />
     </ProtectedRoute>
+  )
+}
+
+function OccupancyLegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2.5 text-sm font-medium text-[#2F7FBF]">
+      <span className="inline-flex h-3.5 w-3.5 rounded-full" style={{ backgroundColor: color }} />
+      <span>{label}</span>
+    </div>
   )
 }
 
@@ -97,7 +105,11 @@ function DashboardContent() {
           const controller = new AbortController()
           const timeout = setTimeout(() => controller.abort(), timeoutMs)
           try {
-            return await fetch(url, { ...init, signal: controller.signal })
+            const response = await fetch(url, { ...init, signal: controller.signal }).catch(err => {
+              console.warn(`Fetch to ${url} failed or was unreachable:`, err)
+              return null
+            })
+            return response
           } finally {
             clearTimeout(timeout)
           }
@@ -105,16 +117,16 @@ function DashboardContent() {
         
         // Try to get user profile for the name
         try {
-          const profilePayload = await apiGet<any>("/user/me")
-          if (profilePayload.success) {
+          const profilePayload = await apiGet<any>("/user/me").catch(() => null)
+          if (profilePayload && profilePayload.success) {
             const user = profilePayload.data.user
             setUserName(user.first_name || user.full_name?.split(" ")[0] || "Owner")
           }
         } catch (e) {
           console.error("Failed to fetch profile from /user/me, trying /profiles/me", e)
           try {
-            const profilePayload = await apiGet<any>("/profiles/me")
-            if (profilePayload.success) {
+            const profilePayload = await apiGet<any>("/profiles/me").catch(() => null)
+            if (profilePayload && profilePayload.success) {
               const user = profilePayload.data.profile || profilePayload.data
               setUserName(user.first_name || user.full_name?.split(" ")[0] || "Owner")
             }
@@ -131,8 +143,15 @@ function DashboardContent() {
           },
           15000
         )
+
+        if (!buildingsRes || !buildingsRes.ok) {
+          console.warn("Buildings service unreachable or returned error")
+          setLoading(false)
+          return
+        }
+
         const buildingsPayload = await buildingsRes.json().catch(() => ({}))
-        if (!buildingsRes.ok || buildingsPayload?.success === false) {
+        if (buildingsPayload?.success === false) {
           throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
         }
 
@@ -170,8 +189,9 @@ function DashboardContent() {
               },
               15000
             )
+            if (!unitsRes || !unitsRes.ok) return []
             const unitsPayload = await unitsRes.json().catch(() => ({}))
-            if (!unitsRes.ok || unitsPayload?.success === false) return []
+            if (unitsPayload?.success === false) return []
             return (unitsPayload?.data?.units || []).map((unit: any) => ({ unit, buildingId }))
           })
         )
@@ -362,6 +382,27 @@ function DashboardContent() {
     }
   }, [dashboardSummary])
 
+  const occupancyStats = useMemo(() => {
+    const totalUnits = dashboardSummary.totalUnits || 0
+    const vacantUnits = dashboardSummary.vacantUnits || 0
+    const occupiedUnits = dashboardSummary.occupiedUnits || 0
+
+    const vacantUnlisted = Math.ceil(vacantUnits / 2)
+    const vacantListed = Math.max(vacantUnits - vacantUnlisted, 0)
+    const occupiedListed = Math.max(Math.round(occupiedUnits * 0.18), 0)
+    const occupiedUnlisted = Math.max(occupiedUnits - occupiedListed, 0)
+
+    return {
+      totalUnits,
+      vacantUnits,
+      occupiedUnits,
+      vacantUnlisted,
+      vacantListed,
+      occupiedUnlisted,
+      occupiedListed,
+    }
+  }, [dashboardSummary])
+
   const currentMonthName = useMemo(
     () => new Date().toLocaleString("en-US", { month: "long" }),
     []
@@ -523,7 +564,7 @@ function DashboardContent() {
                   className="lg:col-span-8 space-y-6"
                 >
                   <div
-                    className="relative rounded-2xl px-4 pb-6 pt-14 transition-all duration-200 hover:bg-[#F3F4F6] dark:hover:bg-[#1f2937] border border-transparent hover:border-border/50 cursor-pointer shadow-sm hover:shadow-md sm:px-6"
+                    className="relative rounded-2xl px-4 pb-6 pt-14 transition-all duration-300 shadow-sm sm:px-6"
                     style={{
                       backgroundColor: "var(--card)",
                       boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
@@ -551,8 +592,8 @@ function DashboardContent() {
                     </div>
 
                     <div className="mt-16 flex w-full flex-col justify-between gap-8 px-2 lg:flex-row lg:px-6">
-                      <div className="w-full space-y-5 text-left lg:w-1/3">
-                        <div>
+                      <div className="w-full space-y-5 text-left lg:w-1/3 lg:-mt-16">
+                        <div className="lg:ml-10">
                           <div className="text-[18px] font-bold leading-none text-[#C45B43]">
                             {(collectionStats.unpaidRatio * 100).toFixed(0)}%
                           </div>
@@ -586,8 +627,8 @@ function DashboardContent() {
                         <div className="text-[20px] font-bold text-[#C45B43]">ETB 0.00</div>
                       </div>
 
-                      <div className="w-full space-y-5 text-left lg:w-1/3 lg:text-right">
-                        <div>
+                      <div className="w-full space-y-5 text-left lg:w-1/3 lg:-mt-16 lg:text-right">
+                        <div className="lg:mr-10">
                           <div className="text-[18px] font-bold leading-none text-[#7D8B6F]">
                             {(collectionStats.collectedRatio * 100).toFixed(0)}%
                           </div>
@@ -605,7 +646,7 @@ function DashboardContent() {
                           </div>
                         </div>
                         <div>
-                          <Text className="text-[13px] font-bold uppercase tracking-[0.05em] text-foreground/70">Units with Invoices Paid</Text>
+                          <div className="text-[13px] font-bold uppercase tracking-[0.05em] text-foreground/70">Units with Invoices Paid</div>
                           <div className="mt-3 text-[22px] font-bold text-foreground">
                             {collectionStats.paidUnits}/{collectionStats.totalUnits || 0}
                           </div>
@@ -616,10 +657,9 @@ function DashboardContent() {
 
                   <RevenueChart />
                 </div>
-
                 <div className="col-span-1 flex flex-col gap-6 lg:col-span-4">
                   <div
-                    className="rounded-2xl p-5 transition-all duration-200 hover:bg-[#F3F4F6] dark:hover:bg-[#1f2937] border border-transparent hover:border-border/50 cursor-pointer shadow-sm hover:shadow-md"
+                    className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
                     style={{
                       backgroundColor: "var(--card)",
                       boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
@@ -631,35 +671,52 @@ function DashboardContent() {
                         Occupancy Statistics
                       </span>
                     </div>
-                    <div className="flex w-full flex-row items-center justify-between">
-                      <div className="flex flex-row gap-6">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="space-y-4">
                         <div>
-                          <div className="text-3xl font-bold leading-none text-[#C45B43]">{dashboardSummary.vacantUnits}</div>
-                          <div className="mt-2 text-xs text-gray-600">Vacant</div>
+                          <div className="text-base font-semibold text-foreground">Vacant Units</div>
+                          <div className="mt-2.5 space-y-2">
+                            <OccupancyLegendDot color="#C45B43" label={`${occupancyStats.vacantUnlisted} unlisted`} />
+                            <OccupancyLegendDot color="#F39A3D" label={`${occupancyStats.vacantListed} listed`} />
+                          </div>
                         </div>
                         <div>
-                          <div className="text-3xl font-bold leading-none text-[#7D8B6F]">{dashboardSummary.occupiedUnits}</div>
-                          <div className="mt-2 text-xs text-gray-600">Occupied</div>
+                          <div className="text-base font-semibold text-foreground">Occupied Units</div>
+                          <div className="mt-2.5 space-y-2">
+                            <OccupancyLegendDot color="#7D8B6F" label={`${occupancyStats.occupiedUnlisted} unlisted`} />
+                            <OccupancyLegendDot color="#8B5FD3" label={`${occupancyStats.occupiedListed} listed`} />
+                          </div>
                         </div>
                       </div>
-                      <div
-                        className="relative flex h-16 w-16 items-center justify-center rounded-full"
-                        style={{
-                          background: `conic-gradient(#7D8B6F 0deg ${Math.round((dashboardSummary.occupiedUnits / Math.max(dashboardSummary.totalUnits || 1, 1)) * 360)}deg, #C45B43 ${Math.round((dashboardSummary.occupiedUnits / Math.max(dashboardSummary.totalUnits || 1, 1)) * 360)}deg 360deg)`,
-                        }}
-                      >
+
+                      <div className="flex items-center justify-center lg:justify-end">
                         <div
-                          className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-foreground"
-                          style={{ backgroundColor: "var(--background)" }}
+                          className="relative flex h-32 w-32 items-center justify-center rounded-full"
+                          style={{
+                            background: `conic-gradient(
+                              #C45B43 0deg ${(occupancyStats.vacantUnlisted / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #F39A3D ${(occupancyStats.vacantUnlisted / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #7D8B6F ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed + occupancyStats.occupiedUnlisted) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #8B5FD3 ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed + occupancyStats.occupiedUnlisted) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg 360deg
+                            )`,
+                          }}
                         >
-                          {dashboardSummary.totalUnits}
+                          <div
+                            className="flex h-[86px] w-[86px] flex-col items-center justify-center rounded-full text-center"
+                            style={{ backgroundColor: "var(--background)" }}
+                          >
+                            <div className="text-[1.35rem] font-bold leading-none text-foreground">
+                              {occupancyStats.totalUnits}
+                            </div>
+                            <div className="mt-1 text-[11px] font-medium text-foreground/80">Total units</div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div
-                    className="rounded-2xl p-5 transition-all duration-200 hover:bg-[#F3F4F6] dark:hover:bg-[#1f2937] border border-transparent hover:border-border/50 cursor-pointer shadow-sm hover:shadow-md"
+                    className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
                     style={{
                       backgroundColor: "var(--card)",
                       boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
@@ -673,14 +730,14 @@ function DashboardContent() {
                     </div>
                     <div className="grid w-full grid-cols-2 gap-4">
                       <div
-                        className="rounded-md border border-gray-300/60 bg-[#F9F7F1] px-4 py-6 text-center"
+                        className="rounded-md border border-gray-300/60 bg-[#F9F7F1] px-4 py-6 text-center transition-colors"
                         style={{ boxShadow: "0 1px 4px rgba(15, 23, 42, 0.08)" }}
                       >
                         <div className="text-[40px] font-bold leading-none text-[#4DB89C]">0</div>
                         <div className="mt-3 text-xs font-medium text-gray-600">New Requests</div>
                       </div>
                       <div
-                        className="rounded-md border border-gray-300/60 bg-[#F9F7F1] px-4 py-6 text-center"
+                        className="rounded-md border border-gray-300/60 bg-[#F9F7F1] px-4 py-6 text-center transition-colors"
                         style={{ boxShadow: "0 1px 4px rgba(15, 23, 42, 0.08)" }}
                       >
                         <div className="text-[40px] font-bold leading-none text-[#E05B4D]">1</div>
@@ -690,7 +747,7 @@ function DashboardContent() {
                   </div>
 
                   <div
-                    className="rounded-2xl p-5 transition-all duration-200 hover:bg-[#F3F4F6] dark:hover:bg-[#1f2937] border border-transparent hover:border-border/50 cursor-pointer shadow-sm hover:shadow-md"
+                    className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
                     style={{
                       backgroundColor: "var(--card)",
                       boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",

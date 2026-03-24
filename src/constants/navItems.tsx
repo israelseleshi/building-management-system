@@ -21,6 +21,7 @@ import {
   PieChart,
   Calendar,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react"
 
 export interface NavItemBase {
@@ -71,6 +72,7 @@ const landlordGroups: NavGroupBase[] = [
     icon: <Grid className="w-5 h-5" />,
     items: [
       { icon: <Users className="w-5 h-5" />, name: "Employees", path: "/dashboard/employees" },
+      { icon: <ClipboardList className="w-5 h-5" />, name: "Applications", path: "/dashboard/applications" },
       { icon: <Clock3 className="w-5 h-5" />, name: "Attendance", path: "/dashboard/attendance" },
       { icon: <Calendar className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
       { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/dashboard/documents" },

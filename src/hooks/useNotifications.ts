@@ -35,10 +35,13 @@ export function useNotifications() {
       const response = await fetch(`${API_BASE_URL}/notifications`, {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
+      }).catch(err => {
+        console.warn('Notification service unreachable:', err)
+        return null
       })
 
-      if (!response.ok) {
-        // Notifications endpoint is not defined in the API spec yet.
+      if (!response || !response.ok) {
+        // Notifications endpoint is not defined in the API spec yet or server is down.
         setNotifications([])
         setUnreadCount(0)
         return
