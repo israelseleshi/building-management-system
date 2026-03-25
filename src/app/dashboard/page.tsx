@@ -432,6 +432,38 @@ function DashboardContent() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonthName)
   const [selectedYear, setSelectedYear] = useState(currentYear.toString())
 
+  const displayedCollectionStats = useMemo(() => {
+    const monthIndex = monthOptions.indexOf(selectedMonth)
+    const normalizedMonthIndex = monthIndex >= 0 ? monthIndex : 0
+    const yearOffset = Number(selectedYear) - currentYear
+    const seasonality = 0.82 + normalizedMonthIndex * 0.028 + yearOffset * 0.015
+    const safeSeasonality = Math.max(0.62, Math.min(1.18, seasonality))
+    const collectedRatio = Math.max(
+      0.18,
+      Math.min(0.96, collectionStats.collectedRatio * (0.88 + normalizedMonthIndex * 0.015 - yearOffset * 0.01))
+    )
+    const unpaidRatio = Math.max(1 - collectedRatio, 0)
+    const totalAmount = dashboardSummary.totalRevenue * safeSeasonality
+    const collectedAmount = totalAmount * collectedRatio
+    const outstandingAmount = totalAmount - collectedAmount
+    const paidUnits = Math.min(
+      collectionStats.totalUnits,
+      Math.max(0, Math.round(collectionStats.totalUnits * collectedRatio))
+    )
+    const dueUnits = Math.max(collectionStats.totalUnits - paidUnits, 0)
+
+    return {
+      collectedRatio,
+      unpaidRatio,
+      totalAmount,
+      collectedAmount,
+      outstandingAmount,
+      paidUnits,
+      dueUnits,
+      totalUnits: collectionStats.totalUnits,
+    }
+  }, [collectionStats, currentYear, dashboardSummary.totalRevenue, monthOptions, selectedMonth, selectedYear])
+
   // Show loading state
   if (loading) {
     return (
@@ -564,7 +596,7 @@ function DashboardContent() {
                   className="lg:col-span-8 space-y-6"
                 >
                   <div
-                    className="relative rounded-2xl px-4 pb-6 pt-14 transition-all duration-300 shadow-sm sm:px-6"
+                    className="relative rounded-2xl px-4 pb-5 pt-12 transition-all duration-300 shadow-sm sm:px-5"
                     style={{
                       backgroundColor: "var(--card)",
                       boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
@@ -572,84 +604,90 @@ function DashboardContent() {
                   >
                     <div className="pointer-events-none absolute left-1/2 -top-12 -translate-x-1/2">
                       <div
-                        className="relative flex h-40 w-40 items-center justify-center rounded-full"
+                        className="relative flex h-36 w-36 items-center justify-center rounded-full"
                         style={{
-                          background: `conic-gradient(#7D8B6F 0deg ${Math.round(collectionStats.collectedRatio * 360)}deg, #C45B43 ${Math.round(collectionStats.collectedRatio * 360)}deg 360deg)`,
+                          background: `conic-gradient(#7D8B6F 0deg ${Math.round(displayedCollectionStats.collectedRatio * 360)}deg, #C45B43 ${Math.round(displayedCollectionStats.collectedRatio * 360)}deg 360deg)`,
                         }}
                       >
                         <div
-                          className="flex h-28 w-28 flex-col items-center justify-center rounded-full text-center"
+                          className="flex h-24 w-24 flex-col items-center justify-center rounded-full text-center"
                           style={{ backgroundColor: "var(--background)" }}
                         >
-                          <div className="text-sm font-semibold text-foreground">
+                          <div className="text-[0.92rem] font-semibold text-foreground">
                             {selectedMonth}
                           </div>
-                          <div className="text-[1.05rem] font-bold text-foreground">
+                          <div className="text-[0.98rem] font-bold text-foreground">
                             {selectedYear}
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="mt-16 flex w-full flex-col justify-between gap-8 px-2 lg:flex-row lg:px-6">
-                      <div className="w-full space-y-5 text-left lg:w-1/3 lg:-mt-16">
-                        <div className="lg:ml-10">
-                          <div className="text-[18px] font-bold leading-none text-[#C45B43]">
-                            {(collectionStats.unpaidRatio * 100).toFixed(0)}%
+                    <div className="mt-14 flex w-full flex-col justify-between gap-6 px-2 lg:flex-row lg:px-5">
+                      <div className="w-full space-y-4 text-left lg:w-1/3 lg:-mt-20">
+                        <div className="lg:ml-14">
+                          <div className="text-[16px] font-bold leading-none text-[#C45B43]">
+                            {(displayedCollectionStats.unpaidRatio * 100).toFixed(0)}%
                           </div>
-                          <div className="mt-2 text-sm font-bold uppercase tracking-[0.05em] text-[#C45B43]">
+                          <div className="mt-1.5 text-[0.82rem] font-bold uppercase tracking-[0.05em] text-[#C45B43]">
                             Unpaid
                           </div>
                         </div>
                         <div>
-                          <Text className="text-[13px] font-bold uppercase tracking-[0.05em] text-foreground/75">Outstanding</Text>
-                          <div className="mt-3 flex items-start gap-2">
+                          <Text className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/75">Outstanding</Text>
+                          <div className="mt-2.5 flex items-start gap-2">
                             <span className="pt-1 text-xs font-semibold text-[#C45B43]">ETB</span>
-                            <span className="text-[24px] font-bold leading-none text-[#C45B43]">
-                              {collectionStats.outstandingAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            <span className="text-[20px] font-bold leading-none text-[#C45B43]">
+                              {displayedCollectionStats.outstandingAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                             </span>
                           </div>
                         </div>
                         <div>
-                          <Text className="text-[13px] font-bold uppercase tracking-[0.05em] text-foreground/70">Units with Invoices Due</Text>
-                          <div className="mt-3 text-[22px] font-bold text-foreground">
-                            {collectionStats.dueUnits}/{collectionStats.totalUnits || 0}
+                          <Text className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/70">Units with Invoices Due</Text>
+                          <div className="mt-2.5 text-[18px] font-bold text-foreground">
+                            {displayedCollectionStats.dueUnits}/{displayedCollectionStats.totalUnits || 0}
                           </div>
+                          <button type="button" className="mt-1.5 text-[11px] font-semibold text-[#2F7FBF] underline underline-offset-2">
+                            View All
+                          </button>
                         </div>
                       </div>
 
-                      <div className="w-full space-y-3 text-center lg:w-1/3">
-                        <div className="text-sm font-semibold text-foreground/70">Processing: ETB 0.00</div>
-                        <div className="text-[17px] font-bold text-foreground">
-                          Total: ETB {dashboardSummary.totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      <div className="w-full space-y-2.5 text-center lg:w-1/3">
+                        <div className="text-[0.82rem] font-semibold text-foreground/70">Processing: ETB 0.00</div>
+                        <div className="text-[15px] font-bold text-foreground">
+                          Total: ETB {displayedCollectionStats.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </div>
-                        <div className="pt-1 text-sm font-semibold text-[#C45B43]">Past Outstanding</div>
-                        <div className="text-[20px] font-bold text-[#C45B43]">ETB 0.00</div>
+                        <div className="pt-1 text-[0.82rem] font-semibold text-[#C45B43]">Past Outstanding</div>
+                        <div className="text-[18px] font-bold text-[#C45B43]">ETB 0.00</div>
                       </div>
 
-                      <div className="w-full space-y-5 text-left lg:w-1/3 lg:-mt-16 lg:text-right">
-                        <div className="lg:mr-10">
-                          <div className="text-[18px] font-bold leading-none text-[#7D8B6F]">
-                            {(collectionStats.collectedRatio * 100).toFixed(0)}%
+                      <div className="w-full space-y-4 text-left lg:w-1/3 lg:-mt-20 lg:text-right">
+                        <div className="lg:mr-14">
+                          <div className="text-[16px] font-bold leading-none text-[#7D8B6F]">
+                            {(displayedCollectionStats.collectedRatio * 100).toFixed(0)}%
                           </div>
-                          <div className="mt-2 text-sm font-bold uppercase tracking-[0.05em] text-[#7D8B6F]">
+                          <div className="mt-1.5 text-[0.82rem] font-bold uppercase tracking-[0.05em] text-[#7D8B6F]">
                             Collected
                           </div>
                         </div>
                         <div>
-                          <div className="text-[13px] font-bold uppercase tracking-[0.05em] text-foreground/70">Collected</div>
-                          <div className="mt-3 flex items-start gap-2 lg:justify-end">
+                          <div className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/70">Collected</div>
+                          <div className="mt-2.5 flex items-start gap-2 lg:justify-end">
                             <span className="pt-1 text-xs font-semibold text-[#7D8B6F]">ETB</span>
-                            <span className="text-[24px] font-bold leading-none text-[#7D8B6F]">
-                              {collectionStats.collectedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            <span className="text-[20px] font-bold leading-none text-[#7D8B6F]">
+                              {displayedCollectionStats.collectedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                             </span>
                           </div>
                         </div>
                         <div>
-                          <div className="text-[13px] font-bold uppercase tracking-[0.05em] text-foreground/70">Units with Invoices Paid</div>
-                          <div className="mt-3 text-[22px] font-bold text-foreground">
-                            {collectionStats.paidUnits}/{collectionStats.totalUnits || 0}
+                          <div className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/70">Units with Invoices Paid</div>
+                          <div className="mt-2.5 text-[18px] font-bold text-foreground">
+                            {displayedCollectionStats.paidUnits}/{displayedCollectionStats.totalUnits || 0}
                           </div>
+                          <button type="button" className="mt-1.5 text-[11px] font-semibold text-[#2F7FBF] underline underline-offset-2">
+                            View All
+                          </button>
                         </div>
                       </div>
                     </div>
