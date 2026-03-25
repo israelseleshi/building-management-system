@@ -141,6 +141,7 @@ function TenantReportsContent() {
           subtitle={t("reports.header.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
           searchPlaceholder={t("header.searchPlaceholder")}
         />
 

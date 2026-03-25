@@ -201,6 +201,7 @@ function ReportsContent() {
           subtitle="Monitor rent risk, incidents, and top-performing tenants"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         <ScrollArea className="flex-1">

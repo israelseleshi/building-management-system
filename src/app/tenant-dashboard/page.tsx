@@ -183,6 +183,7 @@ function DashboardContent() {
           }
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
           searchPlaceholder={t("header.searchPlaceholder")}
         />
 

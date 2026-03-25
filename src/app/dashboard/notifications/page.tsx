@@ -150,6 +150,7 @@ function NotificationsContent() {
           subtitle="Manage all your notifications and alerts"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         <main className="flex-1 overflow-auto p-6">

@@ -142,6 +142,7 @@ function InvoicesContent() {
           subtitle="Manage tenant invoices"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         <main className="flex-1 overflow-auto p-6">

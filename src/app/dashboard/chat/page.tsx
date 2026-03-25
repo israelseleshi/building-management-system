@@ -411,6 +411,7 @@ function ChatContent() {
           subtitle="Direct messaging"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         {/* Chat Container with padding gap */}

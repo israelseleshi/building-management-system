@@ -265,6 +265,7 @@ function LandlordDocumentsContent() {
           <DashboardHeader
             title="Tenant Documents"
             subtitle="Loading documents..."
+            onToggleSidebar={toggleSidebar}
           />
 
           <main className="p-6 flex items-center justify-center min-h-96">
@@ -292,6 +293,7 @@ function LandlordDocumentsContent() {
         <DashboardHeader
           title="Tenant Documents"
           subtitle="Review and manage tenant documents"
+          onToggleSidebar={toggleSidebar}
         />
 
         <ScrollArea className="flex-1">

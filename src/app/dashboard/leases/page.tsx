@@ -407,6 +407,7 @@ function LeasesContent() {
         <DashboardHeader
           title="Rent Management"
           subtitle="Manage and track all tenant rents"
+          onToggleSidebar={toggleSidebar}
         />
 
         <ScrollArea className="flex-1">

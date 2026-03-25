@@ -399,6 +399,7 @@ function SettingsContent() {
           subtitle={t("settings.page.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
           searchPlaceholder={t("header.searchPlaceholder")}
         />
 

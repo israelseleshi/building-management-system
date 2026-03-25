@@ -1,33 +1,35 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { LogOut, Menu, ChevronDown } from "lucide-react"
+import { LogOut, ChevronDown, Settings, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
 import { getLandlordNavGroups, getTenantNavGroups, NavItem } from "@/constants/navItems"
+import * as React from "react"
 import { useState } from "react"
 import { useTranslations } from "next-intl"
 
 interface DashboardSidebarProps {
   navItems?: NavItem[]
   isSidebarCollapsed: boolean
-  onToggleSidebar: () => void
+  onToggleSidebar?: () => void
   onLogout: () => void
   onNavigate?: (isCurrentlyCollapsed: boolean) => void
+  appBrandName?: string
 }
 
 
 export function DashboardSidebar({
   navItems: _ignoredNavItems,
   isSidebarCollapsed,
-  onToggleSidebar,
+  onToggleSidebar: _ignoredOnToggleSidebar,
   onLogout,
   onNavigate,
+  appBrandName = "BMS",
 }: DashboardSidebarProps) {
   const pathname = usePathname()
   const t = useTranslations("Tenant")
@@ -125,159 +127,235 @@ export function DashboardSidebar({
     router.push(path)
   }
 
-  // When collapsed, show all groups expanded for better UX
-  const getOpenState = (index: number) => {
-    return isSidebarCollapsed ? true : (openGroups[index] ?? false)
-  }
+  const isApplicationsPage = normalizedPathname.startsWith("/dashboard/applications")
+  
+  const sidebarBg = isApplicationsPage ? "bg-[#0A2A43]" : "bg-background"
+  const sidebarHoverBg = isApplicationsPage ? "hover:bg-[#113B5E]" : "hover:bg-[#7D8B6F]"
+  const sidebarHoverText = "hover:text-white"
+  const sidebarBorderColor = isApplicationsPage ? "border-white/10" : "border-border/60"
 
   return (
     <aside
-      className={`bg-background transition-all duration-300 ease-in-out sticky top-0 h-screen overflow-hidden ${
-        isSidebarCollapsed ? "w-20" : "w-[320px]"
+      className={`border-r ${sidebarBorderColor} ${sidebarBg} transition-all duration-300 ease-in-out sticky top-0 h-screen overflow-visible flex flex-col select-none ${
+        isSidebarCollapsed ? "w-[78px]" : "w-[210px]"
       }`}
       style={{
         boxShadow: "0 0 12px rgba(0, 0, 0, 0.05)",
       }}
     >
       <div
-        className={`px-6 py-4 flex items-center border-b border-border/60 ${
-          isSidebarCollapsed ? "justify-center" : "justify-start"
+        className={`px-5 py-4 flex items-center gap-3 border-b ${sidebarBorderColor} ${
+          isSidebarCollapsed ? "justify-center px-2" : "justify-start"
         }`}
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleSidebar}
-          className="h-8 w-8 hover:bg-muted"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${sidebarBorderColor} ${isApplicationsPage ? "bg-white/10" : "bg-card"}`}>
+            <Building2 className={`h-5 w-5 ${isApplicationsPage ? "text-white" : "text-foreground"}`} />
+          </div>
+          {!isSidebarCollapsed && (
+            <div className="min-w-0">
+              <div className={`brand-logo truncate text-[1.95rem] leading-none ${isApplicationsPage ? "text-white" : "text-foreground"}`}>{appBrandName}</div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <nav className={`flex-1 px-4 py-8 overflow-y-auto ${isSidebarCollapsed ? "px-2" : ""}`}>
-        {groups.map((group, groupIndex) => {
-          const isSingleItem = group.items.length === 1
-          const singleItem = isSingleItem ? group.items[0] : null
-
-          if (isSingleItem && singleItem) {
-            return (
-              <button
-                key={groupIndex}
-                onClick={() => handleNavigation(singleItem.path)}
-                className={`flex items-center w-full px-3 py-3 text-sm font-semibold rounded-md transition-all ${
-                  singleItem.active
-                    ? "bg-green-100 text-green-700 border border-green-200"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                } ${
-                  isSidebarCollapsed ? "justify-center" : "justify-start"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={singleItem.active ? "text-green-700" : "text-foreground"}>
-                    {group.icon}
-                  </span>
-                  {!isSidebarCollapsed && (
-                    <span className="whitespace-nowrap">{group.title}</span>
-                  )}
-                </div>
-              </button>
-            )
+      <nav className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 custom-scrollbar ${isSidebarCollapsed ? "" : ""}`}>
+        <style jsx>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
           }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: ${isApplicationsPage ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)"};
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: ${isApplicationsPage ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.1)"};
+          }
+        `}</style>
+        {isSidebarCollapsed ? (
+          <div className="flex flex-col items-center gap-2 px-1.5">
+            {groups.map((group, index) => {
+              const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
+              if (isSettingsGroup) return null
 
-          return (
-            <Collapsible
-              key={groupIndex}
-              open={getOpenState(groupIndex)}
-              onOpenChange={() => toggleGroup(groupIndex)}
-              className="mb-4"
-            >
-              {!isSidebarCollapsed ? (
-                <>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors">
-                    <div className="flex items-center gap-3">
-                      <span className="text-foreground">{group.icon}</span>
-                      <span>{group.title}</span>
-                    </div>
-                    <ChevronDown
-                      className={`h-4 w-4 transition-transform duration-200 ${
-                        openGroups[groupIndex] ? "rotate-180" : ""
-                      }`}
+              const activeItem = group.items.find((item) => item.active)
+              const targetPath = activeItem?.path || group.items[0]?.path
+              const isGroupActive = group.items.some((item) => item.active)
+
+              if (!targetPath) return null
+
+              return (
+                <button
+                  key={`${group.title}-${index}`}
+                  onClick={() => handleNavigation(targetPath)}
+                  title={group.title}
+                  className={`relative flex h-10 w-full items-center justify-center rounded-lg transition-all duration-200 group ${
+                    isGroupActive
+                      ? isApplicationsPage 
+                        ? "bg-[#113B5E] text-white shadow-sm"
+                        : "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C]"
+                      : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`
+                  }`}
+                >
+                  <span className={`transition-colors ${isGroupActive ? (isApplicationsPage ? "text-white" : "text-[#1C8B4C]") : `${isApplicationsPage ? "text-white" : "text-foreground"} group-hover:text-white`}`}>{group.icon}</span>
+                  {isGroupActive && !isTenantDashboard && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-full top-1/2 h-0 w-0 -translate-y-1/2 border-y-[6px] border-y-transparent border-r-[6px] border-r-[#E9EDF3]"
+                      style={{ 
+                        borderRightColor: isApplicationsPage ? "#E9EDF3" : "#E9EDF3"
+                      }}
                     />
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pl-11 mt-1 space-y-1">
-                    {group.items.map((item, itemIndex) => (
-                      <button
-                        key={itemIndex}
-                        onClick={() => handleNavigation(item.path)}
-                        className={`menu-item w-full transition-all duration-200 ${
-                          item.active ? "bg-green-100 text-green-700 border border-green-200" : "menu-item-inactive"
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {groups.map((group, groupIndex) => {
+              const isSingleItem = group.items.length === 1
+              const singleItem = isSingleItem ? group.items[0] : null
+              const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
+
+              if (isSettingsGroup) {
+                return null
+              }
+
+              if (isSingleItem && singleItem) {
+                return (
+                  <button
+                    key={groupIndex}
+                    onClick={() => handleNavigation(singleItem.path)}
+                    className={`relative flex items-center w-full px-3 py-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.045em] transition-all duration-200 group ${
+                      singleItem.active
+                        ? isApplicationsPage
+                          ? "bg-[#113B5E] text-white shadow-sm rounded-none"
+                          : "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C] rounded-lg mx-2 w-[calc(100%-16px)]"
+                        : `rounded-lg mx-2 w-[calc(100%-16px)] ${isApplicationsPage ? "text-white" : "text-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className={`shrink-0 transition-colors ${singleItem.active ? (isApplicationsPage ? "text-white" : "text-[#1C8B4C]") : `${isApplicationsPage ? "text-white" : "text-foreground"} group-hover:text-white`}`}>
+                        {group.icon}
+                      </span>
+                      <span className={`truncate whitespace-nowrap transition-colors ${sidebarHoverText}`}>{group.title}</span>
+                    </div>
+                    {singleItem.active && !isTenantDashboard && (
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -right-[1px] top-1/2 h-0 w-0 -translate-y-1/2 border-y-[8px] border-y-transparent border-r-[8px] border-r-[#E9EDF3]"
+                        style={{ 
+                          borderRightColor: isApplicationsPage ? "#E9EDF3" : "#E9EDF3"
+                        }}
+                      />
+                    )}
+                  </button>
+                )
+              }
+
+              return (
+                <Collapsible
+                  key={groupIndex}
+                  open={openGroups[groupIndex] ?? false}
+                  onOpenChange={() => toggleGroup(groupIndex)}
+                  className="w-full"
+                >
+                  <>
+                    <CollapsibleTrigger className={`flex w-full items-center justify-between px-3 py-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.045em] transition-all duration-200 group mx-2 rounded-lg w-[calc(100%-16px)] ${isApplicationsPage ? "text-white" : "text-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`}>
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className={`shrink-0 ${isApplicationsPage ? "text-white" : "text-foreground"} transition-colors group-hover:text-white`}>{group.icon}</span>
+                        <span className={`truncate transition-colors group-hover:text-white`}>{group.title}</span>
+                      </div>
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 shrink-0 transition-all duration-200 group-hover:text-white ${
+                          openGroups[groupIndex] ? "rotate-180" : ""
                         }`}
+                      />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-1 space-y-1 pl-8">
+                      {group.items.map((item, itemIndex) => (
+                        <button
+                          key={itemIndex}
+                          onClick={() => handleNavigation(item.path)}
+                          className={`relative flex w-full items-center px-3 py-2.5 text-[0.76rem] font-medium uppercase tracking-[0.04em] transition-all duration-200 group ${
+                            item.active
+                              ? isApplicationsPage
+                                ? "bg-[#113B5E] text-white shadow-sm rounded-none -ml-8 w-[calc(100%+32px)] pl-11"
+                                : "border border-[#BFEBCB] bg-[#D8F6DE] text-[#1C8B4C] rounded-lg -ml-2 w-[calc(100%-12px)]"
+                              : `rounded-lg -ml-2 w-[calc(100%-12px)] ${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`
+                          }`}
                         >
-                        <span
-                          className={
-                            item.active ? "text-green-700" : "menu-item-icon-inactive"
-                          }
-                        >
-                          {item.icon}
-                        </span>
-                        <span className="ml-3 whitespace-nowrap">{item.name}</span>
-                      </button>
-                    ))}
-                  </CollapsibleContent>
-                </>
-              ) : (
-                // Collapsed view - show group icon that expands on hover
-                <div className="flex flex-col items-center gap-1">
-                  <CollapsibleTrigger className="flex items-center justify-center w-full p-2 rounded-md hover:bg-muted transition-colors">
-                    <span className="text-foreground">{group.icon}</span>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="w-full mt-1 space-y-1 px-2">
-                    {group.items.map((item, itemIndex) => (
-                      <button
-                        key={itemIndex}
-                        onClick={() => handleNavigation(item.path)}
-                        className={`menu-item w-full flex justify-center p-2 rounded transition-all duration-200 ${
-                          item.active ? "bg-green-100 text-green-700 border border-green-200" : "menu-item-inactive"
-                        }`}
-                        title={item.name}
-                        >
-                        <span
-                          className={
-                            item.active ? "text-green-700" : "menu-item-icon-inactive"
-                          }
-                        >
-                          {item.icon}
-                        </span>
-                      </button>
-                    ))}
-                  </CollapsibleContent>
-                </div>
-              )}
-            </Collapsible>
-          )
-        })}
+                          <span className={`shrink-0 transition-colors ${item.active ? (isApplicationsPage ? "text-white" : "text-[#1C8B4C]") : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} group-hover:text-white`}`}>
+                            {React.cloneElement(item.icon as React.ReactElement, {
+                              className: "h-3.5 w-3.5",
+                            })}
+                          </span>
+                          <span className={`ml-2.5 truncate whitespace-nowrap transition-colors group-hover:text-white`}>{item.name}</span>
+                          {item.active && !isTenantDashboard && (
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute -right-[1px] top-1/2 h-0 w-0 -translate-y-1/2 border-y-[8px] border-y-transparent border-r-[8px] border-r-[#E9EDF3]"
+                              style={{ 
+                                borderRightColor: isApplicationsPage ? "#E9EDF3" : "#E9EDF3"
+                              }}
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </CollapsibleContent>
+                  </>
+                </Collapsible>
+              )
+            })}
+          </div>
+        )}
       </nav>
 
-      <div className={`px-4 pb-6 mt-auto ${isSidebarCollapsed ? "px-2" : ""}`}>
-        <button
-          onClick={handleLogoutClick}
-          className={`menu-item w-full transition-all duration-200 hover:bg-red-50 ${
-            isSidebarCollapsed ? "justify-center px-2" : ""
-          }`}
-          title={isSidebarCollapsed ? t("nav.logout") : ""}
-        >
-          <span
-            className={`${isSidebarCollapsed ? "mx-auto" : ""}`}
-            style={{ color: "#DC2626" }}
+      <div className={`mt-auto border-t ${sidebarBorderColor} px-3 py-3 ${isSidebarCollapsed ? "px-2" : ""}`}>
+        {isTenantDashboard ? (
+          <button
+            onClick={handleLogoutClick}
+            className={`flex w-full items-center rounded-lg px-4 py-3 text-[0.95rem] transition-all duration-200 hover:bg-muted ${
+              isSidebarCollapsed ? "justify-center px-2" : ""
+            }`}
+            title={isSidebarCollapsed ? t("nav.logout") : ""}
           >
-            <LogOut className="w-5 h-5" />
-          </span>
-          {!isSidebarCollapsed && (
-            <span className="ml-3" style={{ color: "#DC2626" }}>
-              {t("nav.logout")}
+            <span className={`${isSidebarCollapsed ? "mx-auto" : ""} text-red-300`}>
+              <LogOut className="w-5 h-5" />
             </span>
-          )}
-        </button>
+            {!isSidebarCollapsed && (
+              <span className="ml-3 text-red-300">
+                {t("nav.logout")}
+              </span>
+            )}
+          </button>
+        ) : (
+          <div className={`flex items-center gap-2 ${isSidebarCollapsed ? "flex-col" : "flex-row justify-between"}`}>
+            <button
+              onClick={() => handleNavigation("/dashboard/settings")}
+              className={`flex h-11 items-center justify-center rounded-lg ${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} transition-colors ${isApplicationsPage ? "hover:bg-white/10 hover:text-white" : "hover:bg-muted hover:text-foreground"} ${
+                isSidebarCollapsed ? "w-full" : "flex-1"
+              }`}
+              title="Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleLogoutClick}
+              className={`flex h-11 items-center justify-center rounded-lg ${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} transition-colors ${isApplicationsPage ? "hover:bg-white/10" : "hover:bg-muted"} hover:text-red-500 ${
+                isSidebarCollapsed ? "w-full" : "flex-1"
+              }`}
+              title="Log Out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   )

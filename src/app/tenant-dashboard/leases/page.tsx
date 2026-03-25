@@ -209,6 +209,7 @@ function TenantLeasesContent() {
         <DashboardHeader
           title={t("leases.header.title")}
           subtitle={t("leases.header.subtitle")}
+          onToggleSidebar={toggleSidebar}
         />
 
         <ScrollArea className="flex-1">

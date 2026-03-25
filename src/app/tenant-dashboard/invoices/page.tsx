@@ -164,6 +164,7 @@ function InvoicesContent() {
           subtitle={t("invoices.header.subtitle")}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
           searchPlaceholder={t("header.searchPlaceholder")}
         />
 

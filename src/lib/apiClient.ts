@@ -1,6 +1,14 @@
-const rawBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ""
+const DEFAULT_API_BASE_URL = "https://bmsbackend-dbdm.onrender.com"
 
-export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, "")
+const sanitizeBaseUrl = (value?: string) =>
+  (value || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/\/+$/, "")
+
+const rawBaseUrl = sanitizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL)
+
+export const API_BASE_URL = rawBaseUrl || DEFAULT_API_BASE_URL
 
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken()

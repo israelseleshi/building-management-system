@@ -200,6 +200,7 @@ function AnalyticsContent() {
           subtitle="Track your property performance and market insights"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         <main className="p-6">

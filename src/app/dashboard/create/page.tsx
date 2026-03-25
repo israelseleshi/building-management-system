@@ -236,6 +236,7 @@ function CreateListingContent() {
           subtitle="Create a unit with essential details"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         {/* Content */}

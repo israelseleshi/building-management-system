@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Heading, Text, Large, MutedText } from "@/components/ui/typography"
+import { Text, MutedText } from "@/components/ui/typography"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
@@ -19,7 +18,10 @@ import {
   Settings,
   Building2,
   Users,
-  FileText
+  FileText,
+  ClipboardList,
+  Clock3,
+  Wrench
 } from "lucide-react"
 
 export default function LandlordDashboard() {
@@ -27,6 +29,15 @@ export default function LandlordDashboard() {
     <ProtectedRoute requiredRole="landlord">
       <DashboardContent />
     </ProtectedRoute>
+  )
+}
+
+function OccupancyLegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2.5 text-sm font-medium text-[#2F7FBF]">
+      <span className="inline-flex h-3.5 w-3.5 rounded-full" style={{ backgroundColor: color }} />
+      <span>{label}</span>
+    </div>
   )
 }
 
@@ -60,18 +71,25 @@ function DashboardContent() {
   } else if (pathname === "/dashboard/settings" || pathname.startsWith("/dashboard/settings/")) {
     activeTab = "settings"
   }
-  const [metrics, setMetrics] = useState([
-    { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
-    { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
-    { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
-    { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
-  ])
   const [loading, setLoading] = useState(true)
   const [buildingInfo, setBuildingInfo] = useState<{ name: string; address: string } | null>(null)
+  const [buildingMotto, setBuildingMotto] = useState("")
   const [userName, setUserName] = useState<string>("Owner")
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false)
   const [buildingLogo, setBuildingLogo] = useState<string | null>(null)
   const [buildingId, setBuildingId] = useState<string | null>(null)
+  const [dashboardSummary, setDashboardSummary] = useState({
+    totalUnits: 0,
+    occupiedUnits: 0,
+    vacantUnits: 0,
+    totalRevenue: 0,
+  })
+
+  const readCachedMotto = (resolvedBuildingId?: string | null) => {
+    if (typeof window === "undefined") return ""
+    const scopedMotto = resolvedBuildingId ? localStorage.getItem(`bms.buildingMotto.${resolvedBuildingId}`) : ""
+    const globalMotto = localStorage.getItem("bms.buildingMotto.current")
+    return (scopedMotto || globalMotto || "").trim()
+  }
 
   // Fetch dashboard metrics from API
   useEffect(() => {
@@ -80,12 +98,6 @@ function DashboardContent() {
         setLoading(true)
         const token = getAuthToken()
         if (!token) {
-          setMetrics([
-            { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
-            { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
-            { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
-            { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
-          ])
           return
         }
 
@@ -93,7 +105,11 @@ function DashboardContent() {
           const controller = new AbortController()
           const timeout = setTimeout(() => controller.abort(), timeoutMs)
           try {
-            return await fetch(url, { ...init, signal: controller.signal })
+            const response = await fetch(url, { ...init, signal: controller.signal }).catch(err => {
+              console.warn(`Fetch to ${url} failed or was unreachable:`, err)
+              return null
+            })
+            return response
           } finally {
             clearTimeout(timeout)
           }
@@ -101,16 +117,16 @@ function DashboardContent() {
         
         // Try to get user profile for the name
         try {
-          const profilePayload = await apiGet<any>("/user/me")
-          if (profilePayload.success) {
+          const profilePayload = await apiGet<any>("/user/me").catch(() => null)
+          if (profilePayload && profilePayload.success) {
             const user = profilePayload.data.user
             setUserName(user.first_name || user.full_name?.split(" ")[0] || "Owner")
           }
         } catch (e) {
           console.error("Failed to fetch profile from /user/me, trying /profiles/me", e)
           try {
-            const profilePayload = await apiGet<any>("/profiles/me")
-            if (profilePayload.success) {
+            const profilePayload = await apiGet<any>("/profiles/me").catch(() => null)
+            if (profilePayload && profilePayload.success) {
               const user = profilePayload.data.profile || profilePayload.data
               setUserName(user.first_name || user.full_name?.split(" ")[0] || "Owner")
             }
@@ -127,8 +143,15 @@ function DashboardContent() {
           },
           15000
         )
+
+        if (!buildingsRes || !buildingsRes.ok) {
+          console.warn("Buildings service unreachable or returned error")
+          setLoading(false)
+          return
+        }
+
         const buildingsPayload = await buildingsRes.json().catch(() => ({}))
-        if (!buildingsRes.ok || buildingsPayload?.success === false) {
+        if (buildingsPayload?.success === false) {
           throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
         }
 
@@ -140,10 +163,12 @@ function DashboardContent() {
         if (buildings.length > 0) {
           const primaryBuildingId = (buildings[0]?.building_id ?? buildings[0]?.id)?.toString?.() || null
           setBuildingId(primaryBuildingId)
+          const cachedMotto = readCachedMotto(primaryBuildingId)
           setBuildingInfo({
             name: buildings[0].name || "My Building",
             address: buildings[0].address || "Addis Ababa, Ethiopia"
           })
+          setBuildingMotto(cachedMotto || buildings[0]?.motto || buildings[0]?.tagline || "")
           // Set initial logo if exists in building data
           if (buildings[0].logo_url) {
             setBuildingLogo(buildings[0].logo_url)
@@ -151,12 +176,6 @@ function DashboardContent() {
         }
 
         if (buildingIds.length === 0) {
-          setMetrics([
-            { title: "Tenants", value: "0", change: "+0%", trend: "up", color: "success" },
-            { title: "Vacant Units", value: "0", change: "+0%", trend: "down", color: "error" },
-            { title: "Active Units", value: "0", change: "+0 this month", trend: "up", color: "success" },
-            { title: "Revenue Generated", value: "ETB 0", change: "+0%", trend: "up", color: "success" }
-          ])
           return
         }
 
@@ -170,8 +189,9 @@ function DashboardContent() {
               },
               15000
             )
+            if (!unitsRes || !unitsRes.ok) return []
             const unitsPayload = await unitsRes.json().catch(() => ({}))
-            if (!unitsRes.ok || unitsPayload?.success === false) return []
+            if (unitsPayload?.success === false) return []
             return (unitsPayload?.data?.units || []).map((unit: any) => ({ unit, buildingId }))
           })
         )
@@ -201,37 +221,13 @@ function DashboardContent() {
         const totalRevenue = units.reduce((sum: number, unit: any) => sum + (unit.rentAmount || 0), 0)
         const occupiedUnits = units.filter((u: any) => u.status === "occupied").length
         const vacantUnits = units.filter((u: any) => u.status === "vacant").length
+        setDashboardSummary({
+          totalUnits,
+          occupiedUnits,
+          vacantUnits,
+          totalRevenue,
+        })
 
-        setMetrics([
-          {
-            title: "Tenants",
-            value: occupiedUnits.toString(),
-            change: "+11.01%",
-            trend: "up",
-            color: "success"
-          },
-          {
-            title: "Vacant Units",
-            value: vacantUnits.toString(),
-            change: "-9.05%",
-            trend: "down",
-            color: "error"
-          },
-          {
-            title: "Active Units",
-            value: totalUnits.toString(),
-            change: "+4 this month",
-            trend: "up",
-            color: "success"
-          },
-          {
-            title: "Revenue Generated",
-            value: `ETB ${totalRevenue.toLocaleString()}`,
-            change: "+15.3%",
-            trend: "up",
-            color: "success"
-          }
-        ])
       } catch (err) {
         console.error('Error fetching metrics:', err)
       } finally {
@@ -246,8 +242,30 @@ function DashboardContent() {
     if (typeof window === "undefined") return
     if (!buildingId) return
     const cachedLogo = localStorage.getItem(`bms.buildingLogo.${buildingId}`)
+    const cachedMotto = readCachedMotto(buildingId)
     if (cachedLogo) {
       setBuildingLogo(cachedLogo)
+    }
+    if (cachedMotto) {
+      setBuildingMotto(cachedMotto)
+    }
+  }, [buildingId])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const syncMotto = () => {
+      const cachedMotto = readCachedMotto(buildingId)
+      if (cachedMotto) {
+        setBuildingMotto(cachedMotto)
+      }
+    }
+
+    window.addEventListener("focus", syncMotto)
+    window.addEventListener("storage", syncMotto)
+    return () => {
+      window.removeEventListener("focus", syncMotto)
+      window.removeEventListener("storage", syncMotto)
     }
   }, [buildingId])
 
@@ -343,43 +361,108 @@ function DashboardContent() {
     }
   }
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !buildingId) return
+  const collectionStats = useMemo(() => {
+    const totalUnits = dashboardSummary.totalUnits || 0
+    const occupiedUnits = dashboardSummary.occupiedUnits || 0
+    const vacantUnits = dashboardSummary.vacantUnits || 0
+    const totalRevenue = dashboardSummary.totalRevenue || 0
+    const collectedRatio = totalUnits > 0 ? occupiedUnits / totalUnits : 0
+    const unpaidRatio = Math.max(1 - collectedRatio, 0)
+    const collectedAmount = totalRevenue * collectedRatio
+    const outstandingAmount = totalRevenue - collectedAmount
 
-    // Basic client-side validation of uploaded logo
-    const MAX_LOGO_FILE_SIZE_BYTES = 2 * 1024 * 1024 // 2 MB
-    const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
-
-    if (!allowedMimeTypes.includes(file.type)) {
-      console.error("Invalid logo file type:", file.type)
-      return
+    return {
+      collectedRatio,
+      unpaidRatio,
+      collectedAmount,
+      outstandingAmount,
+      paidUnits: occupiedUnits,
+      dueUnits: vacantUnits,
+      totalUnits,
     }
+  }, [dashboardSummary])
 
-    if (file.size > MAX_LOGO_FILE_SIZE_BYTES) {
-      console.error("Logo file is too large:", file.size)
-      return
+  const occupancyStats = useMemo(() => {
+    const totalUnits = dashboardSummary.totalUnits || 0
+    const vacantUnits = dashboardSummary.vacantUnits || 0
+    const occupiedUnits = dashboardSummary.occupiedUnits || 0
+
+    const vacantUnlisted = Math.ceil(vacantUnits / 2)
+    const vacantListed = Math.max(vacantUnits - vacantUnlisted, 0)
+    const occupiedListed = Math.max(Math.round(occupiedUnits * 0.18), 0)
+    const occupiedUnlisted = Math.max(occupiedUnits - occupiedListed, 0)
+
+    return {
+      totalUnits,
+      vacantUnits,
+      occupiedUnits,
+      vacantUnlisted,
+      vacantListed,
+      occupiedUnlisted,
+      occupiedListed,
     }
+  }, [dashboardSummary])
 
-    setIsUploadingLogo(true)
-    try {
-      const reader = new FileReader()
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(String(reader.result || ""))
-        reader.onerror = () => reject(reader.error)
-        reader.readAsDataURL(file)
-      })
+  const currentMonthName = useMemo(
+    () => new Date().toLocaleString("en-US", { month: "long" }),
+    []
+  )
+  const currentYear = useMemo(() => new Date().getFullYear(), [])
+  const monthOptions = useMemo(
+    () => [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ],
+    []
+  )
+  const yearOptions = useMemo(
+    () => Array.from({ length: currentYear - 2017 + 1 }, (_, index) => currentYear - index),
+    [currentYear]
+  )
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthName)
+  const [selectedYear, setSelectedYear] = useState(currentYear.toString())
 
-      if (dataUrl) {
-        setBuildingLogo(dataUrl)
-        localStorage.setItem(`bms.buildingLogo.${buildingId}`, dataUrl)
-      }
-    } catch (err) {
-      console.error('Error uploading logo:', err)
-    } finally {
-      setIsUploadingLogo(false)
+  const displayedCollectionStats = useMemo(() => {
+    const monthIndex = monthOptions.indexOf(selectedMonth)
+    const normalizedMonthIndex = monthIndex >= 0 ? monthIndex : 0
+    const yearOffset = Number(selectedYear) - currentYear
+    const seasonality = 0.82 + normalizedMonthIndex * 0.028 + yearOffset * 0.015
+    const safeSeasonality = Math.max(0.62, Math.min(1.18, seasonality))
+    const collectedRatio = Math.max(
+      0.18,
+      Math.min(0.96, collectionStats.collectedRatio * (0.88 + normalizedMonthIndex * 0.015 - yearOffset * 0.01))
+    )
+    const unpaidRatio = Math.max(1 - collectedRatio, 0)
+    const totalAmount = dashboardSummary.totalRevenue * safeSeasonality
+    const collectedAmount = totalAmount * collectedRatio
+    const outstandingAmount = totalAmount - collectedAmount
+    const paidUnits = Math.min(
+      collectionStats.totalUnits,
+      Math.max(0, Math.round(collectionStats.totalUnits * collectedRatio))
+    )
+    const dueUnits = Math.max(collectionStats.totalUnits - paidUnits, 0)
+
+    return {
+      collectedRatio,
+      unpaidRatio,
+      totalAmount,
+      collectedAmount,
+      outstandingAmount,
+      paidUnits,
+      dueUnits,
+      totalUnits: collectionStats.totalUnits,
     }
-  }
+  }, [collectionStats, currentYear, dashboardSummary.totalRevenue, monthOptions, selectedMonth, selectedYear])
 
   // Show loading state
   if (loading) {
@@ -388,20 +471,21 @@ function DashboardContent() {
         <DashboardSidebar
           navItems={navItems}
           isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
           onLogout={handleLogout}
           onNavigate={handleSidebarNavigation}
+          appBrandName="BMS"
         />
 
-        <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden">
+        <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden min-h-0">
           <DashboardHeader
             title="Dashboard"
             subtitle="Loading your dashboard..."
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            onToggleSidebar={toggleSidebar}
           />
 
-          <main className="p-6 flex items-center justify-center min-h-96 flex-1 overflow-y-auto">
+          <main className="p-6 flex items-center justify-center min-h-96 flex-1 overflow-y-auto min-h-0">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
               <Text className="text-muted-foreground">Loading dashboard metrics...</Text>
@@ -417,13 +501,13 @@ function DashboardContent() {
       <DashboardSidebar
         navItems={navItems}
         isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
         onNavigate={handleSidebarNavigation}
+        appBrandName="BMS"
       />
 
       {/* Main Content */}
-      <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden">
+      <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col h-full overflow-hidden min-h-0">
         <DashboardHeader
           title={`Welcome back, ${userName}`}
           subtitle={buildingInfo ? `Managing ${buildingInfo.name}` : "Welcome back to your landlord dashboard"}
@@ -431,161 +515,299 @@ function DashboardContent() {
           onSearchChange={setSearchQuery}
           buildingName={buildingInfo?.name}
           buildingAddress={buildingInfo?.address}
+          buildingMotto={buildingMotto}
           buildingLogo={buildingLogo}
-          onLogoUpload={handleLogoUpload}
-          isUploadingLogo={isUploadingLogo}
+          appBrandName="BMS"
+          onToggleSidebar={toggleSidebar}
         />
 
         {/* Dashboard Content */}
-        <main className="p-6 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-12 gap-4 md:gap-6">
-            <div className="col-span-12 space-y-6 xl:col-span-12">
-              {/* Metrics Grid */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-                {metrics.map((metric, index) => (
-                  <div 
-                    key={index} 
-                    className="rounded-2xl p-5 md:p-6 border-0 transition-transform hover:scale-[1.01]"
-                    style={{ 
-                      backgroundColor: 'var(--card)', 
-                      boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                    }}
-                  >
-                    {(() => {
-                      const isRevenue = metric.title === "Revenue Generated"
-                      const revenueValue = isRevenue ? metric.value.replace(/^ETB\s*/i, "") : metric.value
-                      return (
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Text size="xl" className="text-[#5A5A5A] font-semibold">
-                              {metric.title}
-                            </Text>
-                            {isRevenue ? (
-                              <div className="mt-3">
-                                <div className="flex items-end gap-2">
-                                  <span className="text-xs font-semibold text-muted-foreground">ETB</span>
-                                  <Large className="text-4xl font-bold" style={{ color: "var(--foreground)" }}>
-                                    {revenueValue}
-                                  </Large>
-                                </div>
-                                <MutedText className="text-xs mt-1">from last month</MutedText>
-                              </div>
-                            ) : (
-                              <Large className="mt-3 text-4xl font-bold" style={{ color: "var(--foreground)" }}>
-                                {metric.value}
-                              </Large>
-                            )}
-                          </div>
-                          <Badge
-                            variant={metric.color === "success" ? "default" : "destructive"}
-                            className={`${metric.color === "success" ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"} text-xl px-4 py-2 font-semibold`}
-                          >
-                            {metric.change}
-                          </Badge>
-                        </div>
-                      )
-                    })()}
-                  </div>
-                ))}
-              </div>
-
-              {/* Revenue Overview */}
-              <RevenueChart />
-
-              {/* Quick Actions and Recent Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Quick Actions */}
-                <div 
-                  className="rounded-2xl p-5 md:p-6 border-0"
-                  style={{ 
-                    backgroundColor: 'var(--card)', 
-                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                  }}
-                >
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <Heading level={3} className="text-foreground">Quick Actions</Heading>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-6">
+          <div className="w-full max-w-7xl mx-auto overflow-hidden px-4">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+                <div className="mb-4 grid grid-cols-12 items-end gap-6 lg:col-span-12">
+                  <div className="col-span-12 lg:col-span-8">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div className="text-[13px] font-bold uppercase tracking-[0.05em] text-muted-foreground">
+                        Collection - {selectedMonth}
+                      </div>
+                      <div className="flex items-center gap-3 sm:self-auto">
+                        <span className="text-sm font-semibold text-foreground/70">Show By</span>
+                        <select
+                          aria-label="Show collection by month"
+                          value={selectedMonth}
+                          onChange={(event) => setSelectedMonth(event.target.value)}
+                          className="rounded border border-gray-300 bg-[#F5E9D2] px-2 py-1 text-sm text-foreground outline-none"
+                        >
+                          {monthOptions.map((month) => (
+                            <option key={month} value={month}>
+                              {month}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          aria-label="Show collection by year"
+                          value={selectedYear}
+                          onChange={(event) => setSelectedYear(event.target.value)}
+                          className="rounded border border-gray-300 bg-[#F5E9D2] px-2 py-1 text-sm text-foreground outline-none"
+                        >
+                          {yearOptions.map((year) => (
+                            <option key={year} value={year.toString()}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    <Button 
-                      className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
-                      style={{ 
-                        backgroundColor: '#7D8B6F', 
-                        color: '#FFFFFF',
-                        boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
-                      }}
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Create New Listing
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
-                      style={{ 
-                        backgroundColor: 'transparent',
-                        color: '#7D8B6F',
-                        border: '2px solid #7D8B6F',
-                        boxShadow: '0 4px 12px rgba(125, 139, 111, 0.2)'
-                      }}
-                    >
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      View Messages
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
-                      style={{ 
-                        backgroundColor: 'transparent',
-                        color: '#7D8B6F',
-                        border: '2px solid #7D8B6F',
-                        boxShadow: '0 4px 12px rgba(125, 139, 111, 0.2)'
-                      }}
-                    >
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      Request Payout
-                    </Button>
+
+                  <div className="col-span-12 lg:col-span-4">
+                    <div className="flex gap-3">
+                      <Button
+                        className="h-10 flex-1 justify-center rounded-md px-4 py-2 text-sm font-semibold"
+                        style={{
+                          backgroundColor: "#7D8B6F",
+                          color: "#FFFFFF",
+                          boxShadow: "0 4px 12px rgba(125, 139, 111, 0.28)",
+                        }}
+                        onClick={() => router.push("/dashboard/create")}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Listing
+                      </Button>
+                      <Button
+                        className="h-10 flex-1 justify-center rounded-md px-4 py-2 text-sm font-semibold"
+                        style={{
+                          backgroundColor: "#7D8B6F",
+                          color: "#FFFFFF",
+                          boxShadow: "0 4px 12px rgba(125, 139, 111, 0.28)",
+                        }}
+                        onClick={() => router.push("/dashboard/attendance")}
+                      >
+                        <Clock3 className="mr-2 h-4 w-4" />
+                        Attendance
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                
-                {/* Recent Activity */}
+
                 <div 
-                  className="rounded-2xl p-5 md:p-6 border-0"
-                  style={{ 
-                    backgroundColor: 'var(--card)', 
-                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
-                  }}
+                  className="lg:col-span-8 space-y-6"
                 >
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <Heading level={3} className="text-foreground text-xl">Recent Activity</Heading>
-                      <MutedText className="mt-1 text-base">Latest updates from your properties</MutedText>
+                  <div
+                    className="relative rounded-2xl px-4 pb-5 pt-12 transition-all duration-300 shadow-sm sm:px-5"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
+                    }}
+                  >
+                    <div className="pointer-events-none absolute left-1/2 -top-12 -translate-x-1/2">
+                      <div
+                        className="relative flex h-36 w-36 items-center justify-center rounded-full"
+                        style={{
+                          background: `conic-gradient(#7D8B6F 0deg ${Math.round(displayedCollectionStats.collectedRatio * 360)}deg, #C45B43 ${Math.round(displayedCollectionStats.collectedRatio * 360)}deg 360deg)`,
+                        }}
+                      >
+                        <div
+                          className="flex h-24 w-24 flex-col items-center justify-center rounded-full text-center"
+                          style={{ backgroundColor: "var(--background)" }}
+                        >
+                          <div className="text-[0.92rem] font-semibold text-foreground">
+                            {selectedMonth}
+                          </div>
+                          <div className="text-[0.98rem] font-bold text-foreground">
+                            {selectedYear}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-14 flex w-full flex-col justify-between gap-6 px-2 lg:flex-row lg:px-5">
+                      <div className="w-full space-y-4 text-left lg:w-1/3 lg:-mt-20">
+                        <div className="lg:ml-14">
+                          <div className="text-[16px] font-bold leading-none text-[#C45B43]">
+                            {(displayedCollectionStats.unpaidRatio * 100).toFixed(0)}%
+                          </div>
+                          <div className="mt-1.5 text-[0.82rem] font-bold uppercase tracking-[0.05em] text-[#C45B43]">
+                            Unpaid
+                          </div>
+                        </div>
+                        <div>
+                          <Text className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/75">Outstanding</Text>
+                          <div className="mt-2.5 flex items-start gap-2">
+                            <span className="pt-1 text-xs font-semibold text-[#C45B43]">ETB</span>
+                            <span className="text-[20px] font-bold leading-none text-[#C45B43]">
+                              {displayedCollectionStats.outstandingAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <Text className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/70">Units with Invoices Due</Text>
+                          <div className="mt-2.5 text-[18px] font-bold text-foreground">
+                            {displayedCollectionStats.dueUnits}/{displayedCollectionStats.totalUnits || 0}
+                          </div>
+                          <button type="button" className="mt-1.5 text-[11px] font-semibold text-[#2F7FBF] underline underline-offset-2">
+                            View All
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="w-full space-y-2.5 text-center lg:w-1/3">
+                        <div className="text-[0.82rem] font-semibold text-foreground/70">Processing: ETB 0.00</div>
+                        <div className="text-[15px] font-bold text-foreground">
+                          Total: ETB {displayedCollectionStats.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </div>
+                        <div className="pt-1 text-[0.82rem] font-semibold text-[#C45B43]">Past Outstanding</div>
+                        <div className="text-[18px] font-bold text-[#C45B43]">ETB 0.00</div>
+                      </div>
+
+                      <div className="w-full space-y-4 text-left lg:w-1/3 lg:-mt-20 lg:text-right">
+                        <div className="lg:mr-14">
+                          <div className="text-[16px] font-bold leading-none text-[#7D8B6F]">
+                            {(displayedCollectionStats.collectedRatio * 100).toFixed(0)}%
+                          </div>
+                          <div className="mt-1.5 text-[0.82rem] font-bold uppercase tracking-[0.05em] text-[#7D8B6F]">
+                            Collected
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/70">Collected</div>
+                          <div className="mt-2.5 flex items-start gap-2 lg:justify-end">
+                            <span className="pt-1 text-xs font-semibold text-[#7D8B6F]">ETB</span>
+                            <span className="text-[20px] font-bold leading-none text-[#7D8B6F]">
+                              {displayedCollectionStats.collectedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/70">Units with Invoices Paid</div>
+                          <div className="mt-2.5 text-[18px] font-bold text-foreground">
+                            {displayedCollectionStats.paidUnits}/{displayedCollectionStats.totalUnits || 0}
+                          </div>
+                          <button type="button" className="mt-1.5 text-[11px] font-semibold text-[#2F7FBF] underline underline-offset-2">
+                            View All
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                      <div className="flex-1">
-                        <Text weight="medium" className="text-foreground text-lg">New tenant application received</Text>
-                        <MutedText className="text-base">Apartment 2A - 2 hours ago</MutedText>
-                      </div>
-                      <Badge variant="secondary" className="text-base px-3 py-1">New</Badge>
+
+                  <RevenueChart />
+                </div>
+                <div className="col-span-1 flex flex-col gap-6 lg:col-span-4">
+                  <div
+                    className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
+                    }}
+                  >
+                    <div className="mb-4 flex w-full flex-row items-center gap-2 border-b border-gray-400/40 pb-3 pr-4">
+                      <Building2 className="h-[18px] w-[18px] flex-shrink-0 text-gray-700" />
+                      <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-800">
+                        Occupancy Statistics
+                      </span>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                      <div className="flex-1">
-                        <Text weight="medium" className="text-foreground text-lg">Maintenance request submitted</Text>
-                        <MutedText className="text-base">Unit 3B - Plumbing issue - 4 hours ago</MutedText>
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="space-y-4">
+                        <div>
+                          <div className="text-base font-semibold text-foreground">Vacant Units</div>
+                          <div className="mt-2.5 space-y-2">
+                            <OccupancyLegendDot color="#C45B43" label={`${occupancyStats.vacantUnlisted} unlisted`} />
+                            <OccupancyLegendDot color="#F39A3D" label={`${occupancyStats.vacantListed} listed`} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-base font-semibold text-foreground">Occupied Units</div>
+                          <div className="mt-2.5 space-y-2">
+                            <OccupancyLegendDot color="#7D8B6F" label={`${occupancyStats.occupiedUnlisted} unlisted`} />
+                            <OccupancyLegendDot color="#8B5FD3" label={`${occupancyStats.occupiedListed} listed`} />
+                          </div>
+                        </div>
                       </div>
-                      <Badge variant="outline" className="text-base px-3 py-1">Pending</Badge>
+
+                      <div className="flex items-center justify-center lg:justify-end">
+                        <div
+                          className="relative flex h-32 w-32 items-center justify-center rounded-full"
+                          style={{
+                            background: `conic-gradient(
+                              #C45B43 0deg ${(occupancyStats.vacantUnlisted / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #F39A3D ${(occupancyStats.vacantUnlisted / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #7D8B6F ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed + occupancyStats.occupiedUnlisted) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #8B5FD3 ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed + occupancyStats.occupiedUnlisted) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg 360deg
+                            )`,
+                          }}
+                        >
+                          <div
+                            className="flex h-[86px] w-[86px] flex-col items-center justify-center rounded-full text-center"
+                            style={{ backgroundColor: "var(--background)" }}
+                          >
+                            <div className="text-[1.35rem] font-bold leading-none text-foreground">
+                              {occupancyStats.totalUnits}
+                            </div>
+                            <div className="mt-1 text-[11px] font-medium text-foreground/80">Total units</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                      <div className="flex-1">
-                        <Text weight="medium" className="text-foreground text-lg">Rent payment received</Text>
-                        <MutedText className="text-base">John Doe - Studio 5 - 1 day ago</MutedText>
+                  </div>
+
+                  <div
+                    className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
+                    }}
+                  >
+                    <div className="mb-4 flex w-full flex-row items-center gap-2 border-b border-gray-400/40 pb-3 pr-4">
+                      <Wrench className="h-[18px] w-[18px] flex-shrink-0 text-gray-700" />
+                      <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-800">
+                        Open Maintenance Requests
+                      </span>
+                    </div>
+                    <div className="grid w-full grid-cols-2 gap-4">
+                      <div
+                        className="rounded-md border border-gray-300/60 bg-[#F9F7F1] px-4 py-6 text-center transition-colors"
+                        style={{ boxShadow: "0 1px 4px rgba(15, 23, 42, 0.08)" }}
+                      >
+                        <div className="text-[40px] font-bold leading-none text-[#4DB89C]">0</div>
+                        <div className="mt-3 text-xs font-medium text-gray-600">New Requests</div>
                       </div>
-                      <Badge variant="default" className="text-base px-3 py-1">Completed</Badge>
+                      <div
+                        className="rounded-md border border-gray-300/60 bg-[#F9F7F1] px-4 py-6 text-center transition-colors"
+                        style={{ boxShadow: "0 1px 4px rgba(15, 23, 42, 0.08)" }}
+                      >
+                        <div className="text-[40px] font-bold leading-none text-[#E05B4D]">1</div>
+                        <div className="mt-3 text-xs font-medium text-gray-600">Urgent Requests</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
+                    }}
+                  >
+                    <div className="mb-4 flex w-full flex-row items-center gap-2 border-b border-gray-400/40 pb-3 pr-4">
+                      <ClipboardList className="h-[18px] w-[18px] flex-shrink-0 text-gray-700" />
+                      <span className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-800">
+                        Applications Processing
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between bg-transparent p-2">
+                        <div>
+                          <Text weight="medium" className="text-sm font-semibold text-foreground">Lily Smith</Text>
+                          <MutedText className="mt-1 text-xs text-gray-500">Applied on May 14, 2021</MutedText>
+                        </div>
+                        <div className="flex items-center gap-10 text-lg font-semibold text-foreground">
+                          <span>-</span>
+                          <span>-</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

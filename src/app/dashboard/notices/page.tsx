@@ -54,6 +54,7 @@ function NoticesPageContent() {
           subtitle="Post and view notices for all tenants"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
         />
 
         <main className="p-6 flex-1 flex flex-col items-center justify-center">
