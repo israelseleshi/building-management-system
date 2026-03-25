@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import {
   Bell,
   ChevronDown,
-  ClipboardList,
   Filter,
   Send,
   CircleHelp,
@@ -50,7 +49,9 @@ const theme = {
   line: "#D9E1E8",
   tableHead: "#F5F8FB",
   tabActive: "#3096DA",
-}
+} as const
+
+type Theme = typeof theme
 
 const applicationData: ApplicationRecord[] = [
   {
@@ -103,14 +104,14 @@ function ApplicationsContent() {
     })
   }, [activeStatus, searchQuery])
 
-  const statusCards = useMemo(
+  const statusCards: { label: ApplicationStatus; count: number; tone: string }[] = useMemo(
     () => [
-      { label: "Lease/Term Created", count: 0, tone: theme.neutral as string },
-      { label: "Approved", count: 1, tone: theme.success as string },
-      { label: "For Review", count: 1, tone: theme.primary as string },
-      { label: "Pending", count: 0, tone: theme.warning as string },
-      { label: "Rejected", count: 3, tone: "#B6BCC5" },
-      { label: "Declined", count: 0, tone: theme.danger as string },
+      { label: "Lease/Term Created" as ApplicationStatus, count: 0, tone: theme.neutral },
+      { label: "Approved" as ApplicationStatus, count: 1, tone: theme.success },
+      { label: "For Review" as ApplicationStatus, count: 1, tone: theme.primary },
+      { label: "Pending" as ApplicationStatus, count: 0, tone: theme.warning },
+      { label: "Rejected" as ApplicationStatus, count: 3, tone: "#B6BCC5" },
+      { label: "Declined" as ApplicationStatus, count: 0, tone: theme.danger },
     ],
     []
   )
@@ -242,7 +243,6 @@ function ApplicationsContent() {
                   </Button>
                 </div>
                 <StatusSidebar
-                  theme={theme}
                   cards={statusCards}
                   activeStatus={activeStatus}
                   onSelectStatus={setActiveStatus}
@@ -296,7 +296,7 @@ function FilterBar({
   resultCount,
   totalCount,
 }: {
-  theme: typeof theme
+  theme: Theme
   selectedFilter: string
   onFilterChange: (value: string) => void
   groupBy: GroupBy
@@ -358,7 +358,7 @@ function ApplicationsTable({
   onRowClick,
 }: {
   applications: ApplicationRecord[]
-  theme: typeof theme
+  theme: Theme
   onRowClick: (id: string) => void
 }) {
   const badgeStyles: Record<ApplicationStatus, { backgroundColor: string; color: string }> = {
@@ -455,12 +455,10 @@ function TableHeaderCell({
 }
 
 function StatusSidebar({
-  theme,
   cards,
   activeStatus,
   onSelectStatus,
 }: {
-  theme: typeof theme
   cards: { label: ApplicationStatus; count: number; tone: string }[]
   activeStatus: ApplicationStatus | "All"
   onSelectStatus: (status: ApplicationStatus | "All") => void

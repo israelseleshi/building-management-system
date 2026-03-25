@@ -160,22 +160,7 @@ export function DashboardSidebar({
         </div>
       </div>
 
-      <nav className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 custom-scrollbar ${isSidebarCollapsed ? "" : ""}`}>
-        <style jsx>{`
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: ${isApplicationsPage ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.05)"};
-            border-radius: 10px;
-          }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: ${isApplicationsPage ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.1)"};
-          }
-        `}</style>
+      <nav className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 scrollbar-thin ${isSidebarCollapsed ? "" : ""}`}>
         {isSidebarCollapsed ? (
           <div className="flex flex-col items-center gap-2 px-1.5">
             {groups.map((group, index) => {
@@ -291,9 +276,11 @@ export function DashboardSidebar({
                           }`}
                         >
                           <span className={`shrink-0 transition-colors ${item.active ? (isApplicationsPage ? "text-white" : "text-[#1C8B4C]") : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} group-hover:text-white`}`}>
-                            {React.cloneElement(item.icon as React.ReactElement, {
-                              className: "h-3.5 w-3.5",
-                            })}
+                            {typeof item.icon === 'object' && item.icon !== null && 'props' in item.icon
+                              ? React.cloneElement(item.icon as React.ReactElement<{ className?: string }>, {
+                                  className: "h-3.5 w-3.5",
+                                })
+                              : item.icon}
                           </span>
                           <span className={`ml-2.5 truncate whitespace-nowrap transition-colors group-hover:text-white`}>{item.name}</span>
                           {item.active && !isTenantDashboard && (
