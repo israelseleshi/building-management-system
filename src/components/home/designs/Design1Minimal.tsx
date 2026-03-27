@@ -28,7 +28,22 @@ const NAVY = "#1F3549"
 const NAVY_DARK = "#152A3D"
 const BROKEN_WHITE = "#fafaf8"
 
-function OrbitingFeature({ feature, index, x, y }: { feature: any; index: number; x: number; y: number }) {
+function OrbitingFeature({ feature, index }: { feature: any; index: number }) {
+  const positions = [
+    { left: 'calc(50% - 45px)', top: 'calc(50% - 265px)' },
+    { left: 'calc(50% + 135px)', top: 'calc(50% - 227px)' },
+    { left: 'calc(50% + 220px)', top: 'calc(50% - 110px)' },
+    { left: 'calc(50% + 220px)', top: 'calc(50% + 45px)' },
+    { left: 'calc(50% + 135px)', top: 'calc(50% + 162px)' },
+    { left: 'calc(50% - 45px)', top: 'calc(50% + 200px)' },
+    { left: 'calc(50% - 225px)', top: 'calc(50% + 162px)' },
+    { left: 'calc(50% - 315px)', top: 'calc(50% + 45px)' },
+    { left: 'calc(50% - 315px)', top: 'calc(50% - 110px)' },
+    { left: 'calc(50% - 225px)', top: 'calc(50% - 227px)' },
+    { left: 'calc(50% - 45px)', top: 'calc(50% - 227px)' },
+    { left: 'calc(50% + 135px)', top: 'calc(50% - 265px)' },
+  ];
+  
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0 }}
@@ -36,8 +51,8 @@ function OrbitingFeature({ feature, index, x, y }: { feature: any; index: number
       transition={{ duration: 0.5, delay: 0.5 + index * 0.05 }}
       style={{
         position: 'absolute',
-        left: `calc(50% + ${x}px - 45px)`,
-        top: `calc(50% + ${y}px - 45px)`,
+        left: positions[index].left,
+        top: positions[index].top,
         width: '90px',
         display: 'flex',
         flexDirection: 'column',
@@ -144,7 +159,6 @@ function CircularOrbitHero() {
     { icon: Clock, label: "Attendance" },
   ]
   const radius = 220;
-  const totalFeatures = heroFeatures.length;
   
   return (
     <motion.div
@@ -224,21 +238,13 @@ function CircularOrbitHero() {
         }}
       />
 
-      {heroFeatures.map((feature, index) => {
-        const baseAngle = (index / totalFeatures) * 2 * Math.PI - Math.PI / 2;
-        const x = Math.cos(baseAngle) * radius;
-        const y = Math.sin(baseAngle) * radius;
-        
-        return (
-          <OrbitingFeature
-            key={feature.label}
-            feature={feature}
-            index={index}
-            x={x}
-            y={y}
-          />
-        )
-      })}
+      {heroFeatures.map((feature, index) => (
+        <OrbitingFeature
+          key={feature.label}
+          feature={feature}
+          index={index}
+        />
+      ))}
     </motion.div>
   )
 }
