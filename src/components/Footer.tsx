@@ -1,142 +1,115 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useTranslations } from "next-intl";
+import React from 'react';
+import type { ComponentProps } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
+import Link from 'next/link';
+import { Building2 } from 'lucide-react';
+
+interface FooterLink {
+	title: string;
+	href: string;
+}
+
+interface FooterSection {
+	label: string;
+	links: FooterLink[];
+}
+
+const footerLinks: FooterSection[] = [
+	{
+		label: 'Product',
+		links: [
+			{ title: 'Listings', href: '/home/listings' },
+			{ title: 'Services', href: '/home/services' },
+			{ title: 'Pricing', href: '#' },
+			{ title: 'Virtual Tours', href: '#' },
+		],
+	},
+	{
+		label: 'Company',
+		links: [
+			{ title: 'About Us', href: '/home/about' },
+			{ title: 'Contact', href: '/home/contact' },
+			{ title: 'Careers', href: '#' },
+			{ title: 'Press', href: '#' },
+		],
+	},
+	{
+		label: 'Resources',
+		links: [
+			{ title: 'Blog', href: '#' },
+			{ title: 'Help Center', href: '#' },
+			{ title: 'Privacy Policy', href: '#' },
+			{ title: 'Terms of Service', href: '#' },
+		],
+	},
+];
 
 export function Footer() {
-  const t = useTranslations("Tenant");
-  return (
-    <footer className="border-t border-slate-800 bg-slate-950 text-slate-200">
-      {/* Main footer content */}
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
-        <div className="grid gap-10 sm:gap-12 md:grid-cols-2 lg:grid-cols-4">
-          {/* Brand column */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/40">
-                BMS
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold tracking-wide text-slate-100">
-                  BMS
-                </span>
-                <span className="text-xs font-medium uppercase tracking-[0.18em] text-emerald-400">
-                  Building Management System
-                </span>
-              </div>
-            </div>
-            <p className="max-w-xs text-sm text-slate-400">
-              {t("footer.description")}
-            </p>
-          </div>
+	return (
+		<footer className="md:rounded-t-6xl relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)] px-6 py-12 lg:py-16">
+			<div className="bg-[#1F3549]/20 absolute top-0 right-1/2 left-1/2 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full blur" />
 
-          {/* Product column */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-              {t("footer.quickLinks")}
-            </h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="#features"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>{t("nav.services")}</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/home/listings"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>{t("nav.listings")}</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-            </ul>
-          </div>
+			<div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-8">
+				<AnimatedContainer className="space-y-4">
+					<div className="flex items-center gap-2">
+						<Building2 className="size-8 text-[#1F3549]" />
+						<span className="font-mono text-lg font-bold text-[#1F3549]">BMS</span>
+					</div>
+					<p className="text-muted-foreground mt-8 text-sm md:mt-0">
+						© {new Date().getFullYear()} Building Management System. All rights reserved.
+					</p>
+				</AnimatedContainer>
 
-          {/* Company column */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-              {t("footer.support")}
-            </h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="#"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>{t("nav.about")}</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>{t("nav.contact")}</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-            </ul>
-          </div>
+				<div className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-3 xl:col-span-2 xl:mt-0">
+					{footerLinks.map((section, index) => (
+						<AnimatedContainer key={section.label} delay={0.1 + index * 0.1}>
+							<div className="mb-10 md:mb-0">
+								<h3 className="text-xs font-semibold text-[#1F3549]">{section.label}</h3>
+								<ul className="text-muted-foreground mt-4 space-y-2 text-sm">
+									{section.links.map((link) => (
+										<li key={link.title}>
+											<Link
+												href={link.href}
+												className="hover:text-[#1F3549] inline-flex items-center transition-all duration-300"
+											>
+												{link.title}
+											</Link>
+										</li>
+									))}
+								</ul>
+							</div>
+						</AnimatedContainer>
+					))}
+				</div>
+			</div>
+		</footer>
+	);
+};
 
-          {/* Legal column */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-              {t("footer.legal")}
-            </h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="#"
-                  className="group inline-flex items-center text-slate-400 transition-colors hover:text-emerald-400"
-                >
-                  <span>Privacy</span>
-                  <span className="ml-1 h-px w-0 bg-emerald-400 transition-all duration-200 group-hover:w-5" />
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+type ViewAnimationProps = {
+	delay?: number;
+	className?: ComponentProps<typeof motion.div>['className'];
+	children: React.ReactNode;
+};
 
-      {/* Bottom bar */}
-      <div className="border-t border-slate-800/80 bg-slate-950/95">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:px-6 lg:px-8">
-          <p className="text-center sm:text-left">
-            © 2025 Building Management System. {t("footer.rights")}
-          </p>
+function AnimatedContainer({ className, delay = 0.1, children }: ViewAnimationProps) {
+	const shouldReduceMotion = useReducedMotion();
 
-          {/* Optional social icons */}
-          <div className="flex items-center gap-4 text-slate-500">
-            <Link
-              href="#"
-              aria-label="BMS on LinkedIn"
-              className="transition-colors hover:text-emerald-400"
-            >
-              <span className="text-sm">in</span>
-            </Link>
-            <Link
-              href="#"
-              aria-label="BMS on Twitter"
-              className="transition-colors hover:text-emerald-400"
-            >
-              <span className="text-sm">X</span>
-            </Link>
-            <Link
-              href="#"
-              aria-label="BMS on YouTube"
-              className="transition-colors hover:text-emerald-400"
-            >
-              <span className="text-sm">▶</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+	if (shouldReduceMotion) {
+		return children;
+	}
+
+	return (
+		<motion.div
+			initial={{ filter: 'blur(4px)', translateY: -8, opacity: 0 }}
+			whileInView={{ filter: 'blur(0px)', translateY: 0, opacity: 1 }}
+			viewport={{ once: true }}
+			transition={{ delay, duration: 0.8 }}
+			className={className}
+		>
+			{children}
+		</motion.div>
+	);
 }

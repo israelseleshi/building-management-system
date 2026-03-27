@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { LanguageToggle } from "./LanguageToggle"
-import { Menu, X } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { Menu, X, Building2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 
 type PageKey = 'home' | 'listings' | 'about' | 'services' | 'contact'
 
@@ -52,172 +53,160 @@ export function Header({ currentPage = 'home' }: HeaderProps) {
   }, [])
 
   return (
-    <nav
-      className={`sticky top-0 z-50 transition-all duration-300 backdrop-blur-md border-b ${
+    <header
+      className={cn(
+        "sticky top-5 z-50 mx-auto w-full max-w-6xl rounded-lg border shadow transition-all duration-300",
         hasScrolled
-          ? "bg-card shadow-xl border-border"
-          : "bg-card/60 border-transparent"
-      }`}
+          ? "bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur-lg border-[#1F3549] shadow-lg"
+          : "bg-background/80 supports-[backdrop-filter]:bg-background/60 border-[#1F3549] shadow-sm"
+      )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo - Left Side */}
-          <div className="flex items-center">
-            <button 
-              onClick={handleLogoClick}
-              className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">BMS</span>
-              </div>
-            </button>
-          </div>
-
-          {/* Navigation Links - Center (Desktop) */}
-          <div className="hidden md:flex items-center gap-6">
-            {navLinks.map((link) => {
-              const isActive = currentPage === link.page
-              return (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className={`relative px-3 py-2 text-sm font-semibold transition-all duration-200 border-b-2 ${
-                    isActive
-                      ? 'text-primary border-primary'
-                      : 'text-muted-foreground border-transparent hover:text-foreground hover:border-primary/60'
-                  }`}
-                >
-                  {link.label}
-                  <span
-                    className={`absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-primary transition-all duration-250 ${
-                      isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-0 group-hover:opacity-70 group-hover:scale-100'
-                    }`}
-                  />
-                </a>
-              )
-            })}
-          </div>
-
-          {/* Action Buttons - Right Side (Desktop) */}
-          <div className="hidden md:flex items-center gap-4">
-            <LanguageToggle />
-            <Button 
-              variant="ghost" 
-              onClick={handleSignIn}
-              className="px-4 py-2 text-sm font-medium"
-            >
-              {t("auth.signIn")}
-            </Button>
-            <Button 
-              onClick={handleRegisterAsOwner}
-              style={{ 
-                backgroundColor: '#7D8B6F', 
-                color: '#FFFFFF',
-                boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
-              }}
-              className="hover:opacity-90 transition-opacity text-sm font-medium px-4 py-2"
-            >
-              {t("auth.registerOwner")}
-            </Button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-3">
-            <LanguageToggle />
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-foreground hover:bg-accent rounded-lg transition-colors"
-            >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
+      <nav className="mx-auto flex items-center justify-between p-1.5">
+        {/* Logo - Left Side */}
+        <div className="flex items-center">
+          <button 
+            onClick={handleLogoClick}
+            className="hover:bg-[#1F3549]/10 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 duration-100"
+          >
+            <Building2 className="size-5 text-[#1F3549]" />
+            <p className="font-mono text-base font-bold text-[#1F3549]">BMS</p>
+          </button>
         </div>
-      </div>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
-            />
-            
-            {/* Drawer */}
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 w-3/4 max-w-sm bg-card border-l border-border shadow-2xl z-50 md:hidden overflow-y-auto"
-            >
-              <div className="p-6 space-y-8">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                    <span className="text-primary-foreground font-bold text-lg">BMS</span>
-                  </div>
-                  <button
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2 hover:bg-accent rounded-full transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
+        {/* Navigation Links - Center (Desktop) */}
+        <div className="hidden items-center gap-1 lg:flex">
+          {navLinks.map((link) => {
+            const isActive = currentPage === link.page
+            return (
+              <a
+                key={link.label}
+                href={link.href}
+                className={cn(
+                  "relative px-3 py-2 text-sm font-semibold transition-all duration-200 border-b-2",
+                  isActive
+                    ? 'text-[#1F3549] border-[#1F3549]'
+                    : 'text-muted-foreground border-transparent hover:text-[#1F3549] hover:border-[#1F3549]/60'
+                )}
+              >
+                {link.label}
+                {isActive && (
+                  <span className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-[#1F3549]" />
+                )}
+              </a>
+            )
+          })}
+        </div>
 
-                <div className="flex flex-col gap-2">
-                  {navLinks.map((link) => {
-                    const isActive = currentPage === link.page
-                    return (
-                      <a
-                        key={link.label}
-                        href={link.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={`px-4 py-3 rounded-xl text-base font-semibold transition-all ${
-                          isActive
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                        }`}
-                      >
-                        {link.label}
-                      </a>
-                    )
-                  })}
-                </div>
+        {/* Action Buttons - Right Side (Desktop) */}
+        <div className="hidden items-center gap-2 lg:flex">
+          <LanguageToggle />
+          <Button 
+            variant="ghost" 
+            onClick={handleSignIn}
+            size="sm"
+            className="text-sm font-medium text-[#1F3549] hover:bg-[#1F3549]/10"
+          >
+            {t("auth.signIn")}
+          </Button>
+          <Button 
+            onClick={handleRegisterAsOwner}
+            size="sm"
+            style={{ 
+              backgroundColor: '#1F3549', 
+              color: '#FFFFFF',
+            }}
+            className="hover:opacity-90 transition-opacity text-sm font-medium"
+          >
+            {t("auth.registerOwner")}
+          </Button>
+        </div>
 
-                <div className="pt-6 border-t border-border flex flex-col gap-3">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      handleSignIn()
-                      setIsMobileMenuOpen(false)
-                    }}
-                    className="w-full h-12 rounded-xl text-base font-medium"
-                  >
-                    {t("auth.signIn")}
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      handleRegisterAsOwner()
-                      setIsMobileMenuOpen(false)
-                    }}
-                    style={{ 
-                      backgroundColor: '#7D8B6F', 
-                      color: '#FFFFFF'
-                    }}
-                    className="w-full h-12 rounded-xl text-base font-medium shadow-lg shadow-[#7D8B6F]/20"
-                  >
-                    {t("auth.registerOwner")}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </nav>
+        {/* Mobile Menu Button */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <LanguageToggle />
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="lg:hidden"
+          >
+            <Menu className="size-4" />
+          </Button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu Sheet */}
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetContent 
+          className="bg-background/95 supports-[backdrop-filter]:bg-background/80 gap-0 backdrop-blur-lg w-[300px] sm:w-[350px]"
+          showClose={false}
+          side="left"
+        >
+          <div className="flex items-center justify-between p-4 border-b">
+          <button 
+            onClick={handleLogoClick}
+            className="flex items-center gap-2"
+          >
+            <Building2 className="size-5 text-[#1F3549]" />
+            <p className="font-mono text-base font-bold text-[#1F3549]">BMS</p>
+          </button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+        
+        <div className="grid gap-y-2 overflow-y-auto px-4 py-6">
+          {navLinks.map((link) => {
+            const isActive = currentPage === link.page
+            return (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={cn(
+                  "justify-start px-4 py-3 rounded-lg text-base font-semibold transition-all",
+                  isActive
+                    ? "bg-[#1F3549]/10 text-[#1F3549]"
+                    : "text-muted-foreground hover:bg-[#1F3549]/10 hover:text-[#1F3549]"
+                )}
+              >
+                {link.label}
+              </a>
+            )
+          })}
+        </div>
+        
+        <div className="p-4 border-t space-y-3">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              handleSignIn()
+              setIsMobileMenuOpen(false)
+            }}
+            className="w-full border-[#1F3549] text-[#1F3549] hover:bg-[#1F3549] hover:text-white"
+          >
+            {t("auth.signIn")}
+          </Button>
+          <Button 
+            onClick={() => {
+              handleRegisterAsOwner()
+              setIsMobileMenuOpen(false)
+            }}
+            style={{ 
+              backgroundColor: '#1F3549', 
+              color: '#FFFFFF'
+            }}
+            className="w-full"
+          >
+            {t("auth.registerOwner")}
+          </Button>
+        </div>
+        </SheetContent>
+      </Sheet>
+    </header>
   )
 }

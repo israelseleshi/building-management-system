@@ -201,7 +201,7 @@ export default function OwnerRegisterPage() {
               </div>
 
               {/* Social Proof - Moved to Top */}
-              <div className="mb-12 p-6 rounded-lg" style={{ backgroundColor: '#7D8B6F10', borderLeft: '4px solid #7D8B6F' }}>
+              <div className="mb-12 p-6 rounded-lg" style={{ backgroundColor: '#1F354910', borderLeft: '4px solid #1F3549' }}>
                 <Text className="text-sm font-semibold text-primary mb-3">✓ TRUSTED BY PROPERTY OWNERS</Text>
                 <div className="grid grid-cols-3 gap-6">
                   <div>
@@ -223,7 +223,7 @@ export default function OwnerRegisterPage() {
               <div className="space-y-6">
                 <div className="flex gap-4 p-4 rounded-lg hover:bg-secondary/30 transition-colors">
                   <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-lg" style={{ backgroundColor: '#7D8B6F' }}>
+                    <div className="flex items-center justify-center h-12 w-12 rounded-lg" style={{ backgroundColor: '#1F3549' }}>
                       <TrendingUp className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -239,7 +239,7 @@ export default function OwnerRegisterPage() {
 
                 <div className="flex gap-4 p-4 rounded-lg hover:bg-secondary/30 transition-colors">
                   <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-lg" style={{ backgroundColor: '#7D8B6F' }}>
+                    <div className="flex items-center justify-center h-12 w-12 rounded-lg" style={{ backgroundColor: '#1F3549' }}>
                       <Users className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -255,7 +255,7 @@ export default function OwnerRegisterPage() {
 
                 <div className="flex gap-4 p-4 rounded-lg hover:bg-secondary/30 transition-colors">
                   <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-lg" style={{ backgroundColor: '#7D8B6F' }}>
+                    <div className="flex items-center justify-center h-12 w-12 rounded-lg" style={{ backgroundColor: '#1F3549' }}>
                       <Building className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -271,7 +271,7 @@ export default function OwnerRegisterPage() {
 
                 <div className="flex gap-4 p-4 rounded-lg hover:bg-secondary/30 transition-colors">
                   <div className="flex-shrink-0">
-                    <div className="flex items-center justify-center h-12 w-12 rounded-lg" style={{ backgroundColor: '#7D8B6F' }}>
+                    <div className="flex items-center justify-center h-12 w-12 rounded-lg" style={{ backgroundColor: '#1F3549' }}>
                       <CheckCircle2 className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -484,7 +484,7 @@ export default function OwnerRegisterPage() {
                     type="submit"
                     className="w-full h-11 mt-6 gap-2 font-semibold text-base"
                     style={{ 
-                      backgroundColor: '#7D8B6F', 
+                      backgroundColor: '#1F3549', 
                       color: '#FFFFFF'
                     }}
                   >
@@ -577,7 +577,7 @@ export default function OwnerRegisterPage() {
                       disabled={isLoading}
                       className="flex-1 h-11 gap-2 font-semibold text-base"
                       style={{ 
-                        backgroundColor: '#7D8B6F', 
+                        backgroundColor: '#1F3549', 
                         color: '#FFFFFF'
                       }}
                     >
@@ -596,3 +596,4 @@ export default function OwnerRegisterPage() {
     </div>
   )
 }
+
