@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Heading } from "@/components/ui/typography"
 import { Header } from "@/components/home/Header"
 import { Footer } from "@/components/Footer"
+import { useLocale } from "next-intl"
 import { 
   Building2,
   MessageSquare,
@@ -21,71 +22,132 @@ import {
   CreditCard,
   ShieldCheck,
   Clock,
-  Wrench
+  Wrench,
+  Layers
 } from "lucide-react"
 
 const NAVY = "#1F3549"
 const NAVY_DARK = "#152A3D"
 const BROKEN_WHITE = "#fafaf8"
 
-function OrbitingFeature({ feature, index }: { feature: any; index: number }) {
-  const positions = [
-    { left: 'calc(50% - 45px)', top: 'calc(50% - 265px)' },
-    { left: 'calc(50% + 135px)', top: 'calc(50% - 227px)' },
-    { left: 'calc(50% + 220px)', top: 'calc(50% - 110px)' },
-    { left: 'calc(50% + 220px)', top: 'calc(50% + 45px)' },
-    { left: 'calc(50% + 135px)', top: 'calc(50% + 162px)' },
-    { left: 'calc(50% - 45px)', top: 'calc(50% + 200px)' },
-    { left: 'calc(50% - 225px)', top: 'calc(50% + 162px)' },
-    { left: 'calc(50% - 315px)', top: 'calc(50% + 45px)' },
-    { left: 'calc(50% - 315px)', top: 'calc(50% - 110px)' },
-    { left: 'calc(50% - 225px)', top: 'calc(50% - 227px)' },
-    { left: 'calc(50% - 45px)', top: 'calc(50% - 227px)' },
-    { left: 'calc(50% + 135px)', top: 'calc(50% - 265px)' },
-  ];
-  
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.5 + index * 0.05 }}
-      style={{
-        position: 'absolute',
-        left: positions[index].left,
-        top: positions[index].top,
-        width: '90px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.25rem',
-      }}
-    >
-      <motion.div
-        whileHover={{ scale: 1.15, y: -5 }}
-        style={{
-          width: '56px',
-          height: '56px',
-          borderRadius: '0.875rem',
-          backgroundColor: 'white',
-          border: `2px solid ${NAVY}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: `0 8px 24px ${NAVY}15`,
-        }}
-      >
-        <feature.icon style={{ width: '20px', height: '20px', color: NAVY }} />
-      </motion.div>
-      <span style={{ 
-        fontSize: '0.625rem', 
-        fontWeight: 600, 
-        color: NAVY_DARK,
-        textAlign: 'center',
-      }}>
-        {feature.label}
-      </span>
-    </motion.div>
-  );
+const content = {
+  en: {
+    title1: "Property Management",
+    title2: "Reimagined",
+    subtitle: "Stop juggling multiple apps and spreadsheets. BMS brings everything together — ",
+    subtitleHighlight: "tenants, finances, maintenance, and communications",
+    subtitleEnd: " — in one beautiful platform.",
+    cta1: "Get Started Free",
+    cta2: "View Features",
+    feature1: "No credit card required",
+    feature2: "14-day free trial",
+    feature3: "Cancel anytime",
+    featuresTitle: "Features",
+    featuresSubtitle: "Everything You Need to Succeed",
+    featuresDesc: "Purpose-built tools designed for modern property management",
+    dashboardTitle: "Centralized Dashboard",
+    dashboardSubtitle: "Manage Everything From One Place",
+    dashboardDesc: "Get complete visibility of your property portfolio. Track buildings, units, tenants, and finances all from a single, intuitive dashboard designed for Ethiopian property managers.",
+    dashboardTags: ['Real-time data', 'Custom reports', 'Mobile friendly'],
+    dashboardBadge: "Most Popular Feature",
+    propertyTitle: "Multi-Property Support",
+    propertySubtitle: "Oversee All Your Buildings",
+    propertyDesc: "Manage multiple properties from a single platform. Whether you have 2 buildings or 200, our system scales with your portfolio.",
+    propertyTags: ['Unlimited buildings', 'Portfolio overview', 'Bulk actions'],
+    messagingTitle: "In-App Messaging",
+    messagingSubtitle: "Communicate Instantly",
+    messagingDesc: "Stay connected with tenants and staff through built-in messaging. Share updates, resolve issues, and build relationships without exchanging personal contact information.",
+    messagingTags: ['Real-time chat', 'File sharing', 'Read receipts'],
+    documentsTitle: "Digital Documents",
+    documentsSubtitle: "Go Paperless",
+    documentsDesc: "Store all your leases, contracts, and important documents digitally. Sign agreements electronically and never worry about losing paperwork again.",
+    documentsTags: ['E-signatures', 'Cloud storage', 'Auto-expiry alerts'],
+    attendanceTitle: "Attendance Tracking",
+    attendanceSubtitle: "Monitor Staff & Security",
+    attendanceDesc: "Track employee hours, security guard shifts, and maintenance staff schedules. Generate payroll reports and ensure proper coverage across all your properties.",
+    attendanceTags: ['Shift scheduling', 'Payroll integration', 'GPS check-in'],
+    notificationsTitle: "Smart Notifications",
+    notificationsSubtitle: "Stay Updated Always",
+    notificationsDesc: "Receive automated alerts for rent payments, lease renewals, maintenance requests, and more. Never miss an important update again.",
+    notificationsTags: ['Payment alerts', 'Renewal reminders', 'Customizable'],
+    ownerTitle: "For Property Owners",
+    ownerHeadline: "Maximize Your Investment Returns",
+    ownerDesc: "Stop managing spreadsheets and multiple apps. Get complete visibility of your property portfolio with automated workflows that save hours every week.",
+    ownerCta: "Start Managing",
+    analyticsTitle: "Real-time Analytics",
+    analyticsDesc: "Track occupancy, revenue, and expenses with visual dashboards",
+    rentTitle: "Automated Rent Collection",
+    rentDesc: "Collect payments on time with automated reminders",
+    tenantTitle: "Tenant Management",
+    tenantDesc: "Screen, onboard, and manage all tenants from one dashboard",
+    legalTitle: "Legal Compliance",
+    legalDesc: "Stay compliant with automated document generation",
+    checklist1: "Automated rent collection with instant notifications",
+    checklist2: "Real-time financial reports and analytics",
+    checklist3: "Occupancy tracking across all properties",
+    checklist4: "Legal compliance and document management",
+    checklist5: "Tenant screening and background checks",
+    checklist6: "Maintenance request tracking system",
+  },
+  am: {
+
+    title1: "የንብረት አስተዳደር",
+    title2: "በአዲስ መልክ!",
+    subtitle: "የተለያዩ አፕሊኬሽኖችን እና ፋይሎችን መጠቀም ያቁሙ። የኛ ሲስተም ሁሉንም ነገር በአንድ ላይ በማገናኘት — ",
+    subtitleHighlight: "ተከራዮች፣ ፋይናንስ፣ ጥገና እና የዕለት ተዕለት ግንኙነቶችን",
+    subtitleEnd: " — በአንድ ዘመናዊ መድረክ ያቀርባል።",
+    cta1: "በነፃ ይጀምሩ",
+    cta2: "አገልግሎቶችን ይመልከቱ",
+    feature1: "የክፍያ ካርድ አያስፈልግም",
+    feature2: "የ 14 ቀናት ነፃ ሙከራ",
+    feature3: "በማንኛውም ጊዜ ማቋረጥ ይችላሉ",
+    featuresTitle: "አገልግሎቶች",
+    featuresSubtitle: "ለስራዎ እድገት የሚያስፈልግዎ ነገሮች በሙሉ",
+    featuresDesc: "ለዘመናዊ የንብረት አስተዳደር የተዘጋጀ የተሟላ ሲስተም።",
+    dashboardTitle: "ማዕከላዊ ዳሽቦርድ",
+    dashboardSubtitle: "ሁሉንም ነገር ከአንድ ቦታ ሆነው ያስተዳድሩ",
+    dashboardDesc: "ስለንብረትዎ የተሟላ መረጃ ያግኙ። ህንፃዎችን፣ ቤቶችን፣ ተከራዮችን እና ፋይናንስን ለኢትዮጵያውያን የንብረት አስተዳዳሪዎች ተብሎ በተሰራ ቀላል ዳሽቦርድ ይከታተሉ።",
+    dashboardTags: ['በቅጽበት የሚታደስ መረጃ', 'እንደፍላጎትዎ የሚዘጋጅ ሪፖርት', 'ለሞባይል አመቺ'],
+    dashboardBadge: "በብዛት ጥቅም ላይ የዋለ",
+    propertyTitle: "የበርካታ ንብረቶች አስተዳደር",
+    propertySubtitle: "ሁሉንም ህንፃዎችዎን ይቆጣጠሩ",
+    propertyDesc: "ከአንድ ሲስተም ላይ ሆነው በርካታ ንብረቶችን ያስተዳድሩ። 2 ወይም 200 ህንፃዎች ቢኖሩዎትም ሲስተማችን አብሮዎት ያድጋል።",
+    propertyTags: ['ያልተገደቡ ህንፃዎች', 'አጠቃላይ እይታ', 'የጅምላ ትዕዛዞች'],
+    messagingTitle: "ውስጣዊ የመልዕክት ልውውጥ",
+    messagingSubtitle: "በፍጥነት ይገናኙ",
+    messagingDesc: "በሲስተሙ የውስጥ መልዕክት አማካኝነት ከተከራዮች እና ሰራተኞች ጋር ይገናኙ። አዳዲስ መረጃዎችን ያካፍሉ፣ ችግሮችን ይፍቱ፣ የግል ስልክ ቁጥር ሳይለዋወጡ ግንኙነትዎን ያጠናክሩ።",
+    messagingTags: ['የቀጥታ ልውውጥ', 'ፋይሎችን መላክ', 'የተነበበ መሆኑን ማወቅ'],
+    documentsTitle: "ዲጂታል ሰነዶች",
+    documentsSubtitle: "ወረቀት አልባ አሰራር",
+    documentsDesc: "የኪራይ ውሎችን፣ ኮንትራቶችን እና ቁልፍ ሰነዶችን በዲጂታል መንገድ ያስቀምጡ። ስምምነቶችን በኤሌክትሮኒክ ፊርማ ያፅድቁ፣ ወረቀት ጠፋብኝ ብለው አይጨነቁ።",
+    documentsTags: ['የዲጂታል ፊርማ', 'በደመና ላይ ማከማቸት', 'የጊዜ ማብቂያ ማሳወቂያዎች'],
+    attendanceTitle: "የመገኘት ክትትል",
+    attendanceSubtitle: "ሰራተኞችን እና የጥበቃ አባላትን ይቆጣጠሩ",
+    attendanceDesc: "የሰራተኞችን የስራ ሰዓት፣ የጥበቃ ፈረቃዎችን እና የጥገና ሰራተኞችን መርሃግብር ይከታተሉ። የደሞዝ ሪፖርቶችን በማውጣት በሁሉም ንብረቶችዎ በቂ ሰራተኛ መኖሩን ያረጋግጡ።",
+    attendanceTags: ['የፈረቃ መርሃግብር', 'ከደሞዝ ጋር የተሳሰረ', 'የጂፒኤስ ልየታ (GPS)'],
+    notificationsTitle: "ብልጥ ማሳወቂያዎች",
+    notificationsSubtitle: "ሁልጊዜም ወቅታዊ መረጃ ያግኙ",
+    notificationsDesc: "ለኪራይ ክፍያዎች፣ የውል እድሳት፣ የጥገና ጥያቄዎች እና ሌሎችም አውቶማቲክ ማሳወቂያዎችን ይቀበሉ። ምንም አይነት ወሳኝ መረጃ አያምልጥዎ።",
+    notificationsTags: ['የክፍያ ማሳወቂያዎች', 'የእድሳት ማስታወሻዎች', 'እንደፍላጎትዎ የሚዘጋጁ'],
+    ownerTitle: "ለንብረት ባለቤቶች",
+    ownerHeadline: "የኢንቨስትመንት ገቢዎን ያሳድጉ",
+    ownerDesc: "በተለያዩ ፋይሎችና አፕሊኬሽኖች መጨነቅዎን ያቁሙ። በየሳምንቱ በርካታ ሰዓታትን በሚያቆጥብ አውቶማቲክ አሰራር ስለንብረቶችዎ የተሟላ መረጃ እና ቁጥጥር ይኑርዎት።",
+    ownerCta: "ማስተዳደር ይጀምሩ",
+    analyticsTitle: "ወቅታዊ ትንታኔዎች",
+    analyticsDesc: "ቤቶቹ የተከራዩበትን መጠን፣ ገቢን እና ወጪን በዘመናዊ ዳሽቦርዶች ይከታተሉ",
+    rentTitle: "አውቶማቲክ የኪራይ ስብሰባ",
+    rentDesc: "በአውቶማቲክ ማስታወሻዎች ክፍያዎችን በጊዜ ይሰብስቡ",
+    tenantTitle: "የተከራይ አስተዳደር",
+    tenantDesc: "ሁሉንም ተከራዮች ከአንድ ዳሽቦርድ ላይ ሆነው ይምረጡ፣ ይመዝግቡ እና ያስተዳድሩ",
+    legalTitle: "ህጋዊ ተገዢነት",
+    legalDesc: "ሰነዶችን በራስሰር በማመንጨት ህጋዊ የሆኑ አሰራሮችን ይከተሉ",
+    checklist1: "አውቶማቲክ የኪራይ ስብሰባ ከፈጣን ማሳወቂያዎች ጋር",
+    checklist2: "ወቅታዊ የፋይናንስ ሪፖርቶች እና ትንታኔዎች",
+    checklist3: "በሁሉም ንብረቶች ላይ ያሉ የተከራዩ እና ክፍት ቤቶች ክትትል",
+    checklist4: "ህጋዊ ተገዢነት እና የሰነድ አስተዳደር",
+    checklist5: "የተከራይ ታሪክን እና ማንነትን ማጣራት",
+    checklist6: "የጥገና ጥያቄዎችን የመከታተያ ስርዓት",
+  },
 }
 
 function FloatingParticles() {
@@ -158,48 +220,39 @@ function CircularOrbitHero() {
     { icon: ShieldCheck, label: "Documents" },
     { icon: Clock, label: "Attendance" },
   ]
-  const radius = 220;
+  
+  const positions = [
+    { x: 0, y: -180 },
+    { x: 90, y: -155.88 },
+    { x: 155.88, y: -90 },
+    { x: 180, y: 0 },
+    { x: 155.88, y: 90 },
+    { x: 90, y: 155.88 },
+    { x: 0, y: 180 },
+    { x: -90, y: 155.88 },
+    { x: -155.88, y: 90 },
+    { x: -180, y: 0 },
+    { x: -155.88, y: -90 },
+    { x: -90, y: -155.88 },
+  ];
   
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.8, delay: 0.5 }}
-      style={{ 
-        position: 'relative', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        minHeight: '600px',
-        width: '100%',
-        maxWidth: '650px',
-        margin: '0 auto'
-      }}
-    >
-      <div style={{
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${NAVY}08 0%, transparent 70%)`,
-        animation: 'orbitPulse 4s ease-in-out infinite',
-      }} />
-      
-      <style>{`
-        @keyframes orbitPulse {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.05); opacity: 0.8; }
-        }
-      `}</style>
-      
+    <div style={{ 
+      position: 'relative', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      minHeight: '500px'
+    }}>
       <motion.div
         initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ duration: 0.8, type: 'spring', delay: 0.3 }}
+        whileInView={{ scale: 1, rotate: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, type: 'spring' }}
         style={{
           position: 'absolute',
-          width: '120px',
-          height: '120px',
+          width: '100px',
+          height: '100px',
           borderRadius: '50%',
           backgroundColor: NAVY,
           display: 'flex',
@@ -207,49 +260,86 @@ function CircularOrbitHero() {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 10,
-          boxShadow: `0 25px 50px ${NAVY}40, 0 0 60px ${NAVY}20`,
+          boxShadow: `0 25px 50px ${NAVY}40`,
         }}
       >
-        <LayoutDashboard style={{ width: '28px', height: '28px', color: 'white', marginBottom: '0.25rem' }} />
-        <span style={{ color: 'white', fontSize: '0.6875rem', fontWeight: 700 }}>Smart BMS</span>
+        <Layers style={{ width: '32px', height: '32px', color: 'white' }} />
       </motion.div>
 
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-        style={{
-          position: 'absolute',
-          width: `${radius * 2 + 140}px`,
-          height: `${radius * 2 + 140}px`,
-          borderRadius: '50%',
-          border: `1px dashed ${NAVY}20`,
-        }}
-      />
+      <div style={{
+        position: 'absolute',
+        width: '500px',
+        height: '500px',
+        borderRadius: '50%',
+        border: `1px dashed ${NAVY}30`,
+      }} />
       
-      <motion.div
-        animate={{ rotate: -360 }}
-        transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
-        style={{
-          position: 'absolute',
-          width: `${radius * 2 + 60}px`,
-          height: `${radius * 2 + 60}px`,
-          borderRadius: '50%',
-          border: `1px dashed ${NAVY}15`,
-        }}
-      />
+      <div style={{
+        position: 'absolute',
+        width: '340px',
+        height: '340px',
+        borderRadius: '50%',
+        border: `1px dashed ${NAVY}20`,
+      }} />
 
-      {heroFeatures.map((feature, index) => (
-        <OrbitingFeature
-          key={feature.label}
-          feature={feature}
-          index={index}
-        />
-      ))}
-    </motion.div>
+      {heroFeatures.map((feature, index) => {
+        const pos = positions[index];
+        
+        return (
+          <motion.div
+            key={feature.label}
+            initial={{ opacity: 0, scale: 0 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 + index * 0.08 }}
+            style={{
+              position: 'absolute',
+              left: `calc(50% + ${pos.x}px - 50px)`,
+              top: `calc(50% + ${pos.y}px - 50px)`,
+              width: '100px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+            whileHover={{ scale: 1.1, zIndex: 20 }}
+          >
+            <motion.div
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                backgroundColor: 'white',
+                border: `3px solid ${NAVY}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: `0 10px 30px ${NAVY}20`,
+                transition: 'all 0.3s'
+              }}
+            >
+              <feature.icon style={{ width: '24px', height: '24px', color: NAVY }} />
+            </motion.div>
+            <span style={{ 
+              fontSize: '0.625rem', 
+              fontWeight: 600, 
+              color: NAVY_DARK,
+              textAlign: 'center',
+            }}>
+              {feature.label}
+            </span>
+          </motion.div>
+        )
+      })}
+    </div>
   )
 }
 
 function HeroDesign5({ router }: { router: any }) {
+  const locale = useLocale() as 'en' | 'am'
+  const c = content[locale]
+  const isAmharic = locale === 'am'
+  
   return (
     <section style={{ 
       position: 'relative', 
@@ -317,16 +407,18 @@ function HeroDesign5({ router }: { router: any }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                 style={{ display: 'block', color: NAVY_DARK }}
+                className={isAmharic ? 'amharic' : ''}
               >
-                Property Management
+                {c.title1}
               </motion.span>
               <motion.span
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                 style={{ display: 'block', color: NAVY }}
+                className={isAmharic ? 'amharic' : ''}
               >
-                Reimagined
+                {c.title2}
               </motion.span>
             </Heading>
             
@@ -340,10 +432,11 @@ function HeroDesign5({ router }: { router: any }) {
                 marginBottom: '2.5rem',
                 lineHeight: 1.75
               }}
+              className={isAmharic ? 'amharic' : ''}
             >
-              Stop juggling multiple apps and spreadsheets. BMS brings everything together — 
-              <span style={{ fontWeight: 600, color: NAVY_DARK }}> tenants, finances, maintenance, and communications</span> — 
-              in one beautiful platform.
+              {c.subtitle}
+              <span style={{ fontWeight: 600, color: NAVY_DARK }}>{c.subtitleHighlight}</span>
+              {c.subtitleEnd}
             </motion.p>
             
             <motion.div
@@ -372,8 +465,9 @@ function HeroDesign5({ router }: { router: any }) {
                   alignItems: 'center',
                   gap: '0.5rem',
                 }}
+                className={isAmharic ? 'amharic' : ''}
               >
-                Get Started Free
+                {c.cta1}
                 <ArrowRight style={{ width: '20px', height: '20px' }} />
               </Button>
               <Button 
@@ -390,8 +484,9 @@ function HeroDesign5({ router }: { router: any }) {
                   cursor: 'pointer',
                   boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
                 }}
+                className={isAmharic ? 'amharic' : ''}
               >
-                View Features
+                {c.cta2}
               </Button>
             </motion.div>
             
@@ -407,14 +502,16 @@ function HeroDesign5({ router }: { router: any }) {
                 marginTop: '2rem'
               }}
             >
-              {['No credit card required', '14-day free trial', 'Cancel anytime'].map((text, i) => (
+              {[c.feature1, c.feature2, c.feature3].map((text, i) => (
                 <div key={i} style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
                   color: '#9ca3af',
                   fontSize: '0.875rem'
-                }}>
+                }}
+                className={isAmharic ? 'amharic' : ''}
+                >
                   <CheckCircle style={{ width: '16px', height: '16px', color: '#22c55e' }} />
                   <span>{text}</span>
                 </div>
@@ -444,85 +541,88 @@ function HeroDesign5({ router }: { router: any }) {
 
 export function Design1Minimal() {
   const router = useRouter()
+  const locale = useLocale() as 'en' | 'am'
+  const c = content[locale]
+  const isAmharic = locale === 'am'
 
   const features = [
     { 
       icon: LayoutDashboard, 
-      title: "Centralized Dashboard", 
-      subtitle: "Manage Everything From One Place",
-      desc: "Get complete visibility of your property portfolio. Track buildings, units, tenants, and finances all from a single, intuitive dashboard designed for Ethiopian property managers.",
-      tags: ['Real-time data', 'Custom reports', 'Mobile friendly'],
+      title: c.dashboardTitle, 
+      subtitle: c.dashboardSubtitle,
+      desc: c.dashboardDesc,
+      tags: c.dashboardTags,
       image: "/Centralized-Dashboard.png",
-      imageAlt: "Centralized Dashboard",
-      badge: "Most Popular Feature",
+      imageAlt: c.dashboardTitle,
+      badge: c.dashboardBadge,
       imageLeft: true
     },
     { 
       icon: Building2, 
-      title: "Multi-Property Support", 
-      subtitle: "Oversee All Your Buildings",
-      desc: "Manage multiple properties from a single platform. Whether you have 2 buildings or 200, our system scales with your portfolio.",
-      tags: ['Unlimited buildings', 'Portfolio overview', 'Bulk actions'],
+      title: c.propertyTitle, 
+      subtitle: c.propertySubtitle,
+      desc: c.propertyDesc,
+      tags: c.propertyTags,
       image: "/Multi-Property-Support.png",
-      imageAlt: "Multi-Property Management",
+      imageAlt: c.propertyTitle,
       imageLeft: false
     },
     { 
       icon: MessageSquare, 
-      title: "In-App Messaging", 
-      subtitle: "Communicate Instantly",
-      desc: "Stay connected with tenants and staff through built-in messaging. Share updates, resolve issues, and build relationships without exchanging personal contact information.",
-      tags: ['Real-time chat', 'File sharing', 'Read receipts'],
+      title: c.messagingTitle, 
+      subtitle: c.messagingSubtitle,
+      desc: c.messagingDesc,
+      tags: c.messagingTags,
       image: "/In-App-Messaging.png",
-      imageAlt: "In-App Messaging",
+      imageAlt: c.messagingTitle,
       imageLeft: true
     },
     { 
       icon: FileText, 
-      title: "Digital Documents", 
-      subtitle: "Go Paperless",
-      desc: "Store all your leases, contracts, and important documents digitally. Sign agreements electronically and never worry about losing paperwork again.",
-      tags: ['E-signatures', 'Cloud storage', 'Auto-expiry alerts'],
+      title: c.documentsTitle, 
+      subtitle: c.documentsSubtitle,
+      desc: c.documentsDesc,
+      tags: c.documentsTags,
       image: "/Digital-Documents.png",
-      imageAlt: "Digital Documents",
+      imageAlt: c.documentsTitle,
       imageLeft: false
     },
     { 
       icon: BarChart3, 
-      title: "Attendance Tracking", 
-      subtitle: "Monitor Staff & Security",
-      desc: "Track employee hours, security guard shifts, and maintenance staff schedules. Generate payroll reports and ensure proper coverage across all your properties.",
-      tags: ['Shift scheduling', 'Payroll integration', 'GPS check-in'],
+      title: c.attendanceTitle, 
+      subtitle: c.attendanceSubtitle,
+      desc: c.attendanceDesc,
+      tags: c.attendanceTags,
       image: "/Attendance-Tracking.png",
-      imageAlt: "Attendance Tracking",
+      imageAlt: c.attendanceTitle,
       imageLeft: true
     },
     { 
       icon: Settings2, 
-      title: "Smart Notifications", 
-      subtitle: "Stay Updated Always",
-      desc: "Receive automated alerts for rent payments, lease renewals, maintenance requests, and more. Never miss an important update again.",
-      tags: ['Payment alerts', 'Renewal reminders', 'Customizable'],
+      title: c.notificationsTitle, 
+      subtitle: c.notificationsSubtitle,
+      desc: c.notificationsDesc,
+      tags: c.notificationsTags,
       image: "/Smart-Notifications.png",
-      imageAlt: "Smart Notifications",
+      imageAlt: c.notificationsTitle,
       imageLeft: false
     },
   ]
 
   const ownerBenefits = [
-    { icon: BarChart3, title: "Real-time Analytics", desc: "Track occupancy, revenue, and expenses with visual dashboards" },
-    { icon: DollarSign, title: "Automated Rent Collection", desc: "Collect payments on time with automated reminders" },
-    { icon: Users2, title: "Tenant Management", desc: "Screen, onboard, and manage all tenants from one dashboard" },
-    { icon: FileText, title: "Legal Compliance", desc: "Stay compliant with automated document generation" },
+    { icon: BarChart3, title: c.analyticsTitle, desc: c.analyticsDesc },
+    { icon: DollarSign, title: c.rentTitle, desc: c.rentDesc },
+    { icon: Users2, title: c.tenantTitle, desc: c.tenantDesc },
+    { icon: FileText, title: c.legalTitle, desc: c.legalDesc },
   ]
 
   const ownerChecklist = [
-    "Automated rent collection with instant notifications",
-    "Real-time financial reports and analytics",
-    "Occupancy tracking across all properties",
-    "Legal compliance and document management",
-    "Tenant screening and background checks",
-    "Maintenance request tracking system"
+    c.checklist1,
+    c.checklist2,
+    c.checklist3,
+    c.checklist4,
+    c.checklist5,
+    c.checklist6,
   ]
 
   return (
@@ -647,7 +747,7 @@ export function Design1Minimal() {
               borderRadius: '0 0 1rem 1rem',
               marginBottom: '1.5rem'
             }}>
-              Features
+              {c.featuresTitle}
             </div>
             <h2 style={{ 
               fontSize: 'clamp(1.75rem, 5vw, 3.5rem)', 
@@ -655,8 +755,10 @@ export function Design1Minimal() {
               color: NAVY_DARK, 
               marginBottom: '1rem',
               letterSpacing: '-0.02em'
-            }}>
-              Everything You Need to <span style={{ color: NAVY }}>Succeed</span>
+            }}
+            className={isAmharic ? 'amharic' : ''}
+            >
+              {c.featuresSubtitle}
             </h2>
             <p style={{ 
               fontSize: 'clamp(0.875rem, 2vw, 1.125rem)', 
@@ -664,8 +766,10 @@ export function Design1Minimal() {
               maxWidth: '600px', 
               margin: '0 auto',
               lineHeight: 1.75
-            }}>
-              Purpose-built tools designed for modern property management
+            }}
+            className={isAmharic ? 'amharic' : ''}
+            >
+              {c.featuresDesc}
             </p>
           </motion.div>
 

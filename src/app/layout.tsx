@@ -20,6 +20,21 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: `
+          @font-face {
+            font-family: 'Addis Sans';
+            src: url('/fonts/Addis-Sans.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+          }
+          html[lang="am"] body,
+          .amharic {
+            font-family: 'Addis Sans', sans-serif !important;
+          }
+        `}} />
+      </head>
       <body suppressHydrationWarning>
         <NextIntlClientProvider messages={messages} locale={locale}>
           {children}
