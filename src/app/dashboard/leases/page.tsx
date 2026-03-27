@@ -71,6 +71,28 @@ interface Property {
   address_line1: string
 }
 
+type AnyRecord = Record<string, unknown>
+
+function pickStringField(obj: AnyRecord | null | undefined, keys: string[]): string | null {
+  for (const k of keys) {
+    const v = obj?.[k]
+    if (v === undefined || v === null) continue
+    const s = String(v).trim()
+    if (s) return s
+  }
+  return null
+}
+
+function pickNumberField(obj: AnyRecord | null | undefined, keys: string[], fallback = 0): number {
+  for (const k of keys) {
+    const v = obj?.[k]
+    if (v === undefined || v === null) continue
+    const n = Number(v)
+    if (Number.isFinite(n)) return n
+  }
+  return fallback
+}
+
 function LeasesContent() {
   const router = useRouter()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
@@ -180,21 +202,75 @@ function LeasesContent() {
           headers: { Authorization: `Bearer ${token}` }
         })
         const leasesPayload = await leasesRes.json()
-        setLeases(leasesPayload.data?.leases || [])
+        const rawLeases = (leasesPayload.data?.leases || []) as AnyRecord[]
+        const normalizedLeases: Lease[] = rawLeases.map((l) => {
+          const tenantId = pickStringField(l, ["tenant_id", "tenantId", "tenant_id_fk", "tenantID"]) || ""
+          const propertyId = pickStringField(l, ["property_id", "propertyId", "building_id", "buildingId"]) || ""
+          const startDate = pickStringField(l, ["start_date", "startDate"]) || ""
+          const endDate = pickStringField(l, ["end_date", "endDate"]) || ""
+          const monthlyRent = pickNumberField(l, ["monthly_rent", "monthlyRent"], 0)
+
+          const id =
+            pickStringField(l, ["id", "lease_id", "leaseId"]) ||
+            [tenantId, propertyId, startDate, endDate, String(monthlyRent)].filter(Boolean).join("|") ||
+            `${Math.random()}`
+
+          const statusRaw = pickStringField(l, ["status"]) || "pending"
+          const status = (["pending", "active", "inactive", "expired"].includes(statusRaw) ? statusRaw : "pending") as Lease["status"]
+
+          return {
+            id,
+            tenant_id: tenantId,
+            property_id: propertyId,
+            landlord_id: pickStringField(l, ["landlord_id", "landlordId"]) || "",
+            monthly_rent: monthlyRent,
+            status,
+            start_date: startDate,
+            end_date: endDate,
+            is_active: Boolean(l.is_active ?? l.isActive ?? true),
+            created_at: pickStringField(l, ["created_at", "createdAt"]) || new Date().toISOString(),
+            tenant_name: pickStringField(l, ["tenant_name", "tenantName"]) || undefined,
+            property_title: pickStringField(l, ["property_title", "propertyTitle", "building_title", "buildingTitle"]) || undefined,
+          }
+        })
+        setLeases(normalizedLeases)
 
         // Fetch tenants (Search/List all)
         const tenantsRes = await fetch(`${API_BASE_URL}/tenants/search?q=`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         const tenantsPayload = await tenantsRes.json()
-        setTenants(tenantsPayload.data?.tenants || [])
+        const rawTenants = (tenantsPayload.data?.tenants || []) as AnyRecord[]
+        const normalizedTenants: Tenant[] = rawTenants.map((t) => {
+          const id = pickStringField(t, ["id", "tenant_id", "tenantId", "user_id", "userId"]) || `${Math.random()}`
+          const fullName =
+            pickStringField(t, ["full_name", "fullName", "name"]) ||
+            [pickStringField(t, ["first_name", "firstName"]) || "", pickStringField(t, ["last_name", "lastName"]) || ""].join(" ").trim() ||
+            "Unknown"
+          return {
+            id,
+            full_name: fullName,
+            email: pickStringField(t, ["email"]) || "",
+          }
+        })
+        setTenants(normalizedTenants)
 
         // Fetch properties (Listings)
         const propertiesRes = await fetch(`${API_BASE_URL}/buildings`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         const propertiesPayload = await propertiesRes.json()
-        setProperties(propertiesPayload.data?.buildings || [])
+        const rawProperties = (propertiesPayload.data?.buildings || []) as AnyRecord[]
+        const normalizedProperties: Property[] = rawProperties.map((p) => {
+          const id = pickStringField(p, ["id", "building_id", "buildingId", "property_id", "propertyId"]) || `${Math.random()}`
+          return {
+            id,
+            title: pickStringField(p, ["title", "name", "building_name", "buildingName"]) || "Unknown",
+            monthly_rent: pickNumberField(p, ["monthly_rent", "monthlyRent", "rent"], 0),
+            address_line1: pickStringField(p, ["address_line1", "addressLine1", "address"]) || "",
+          }
+        })
+        setProperties(normalizedProperties)
 
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -416,7 +492,7 @@ function LeasesContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {stats.map((stat, index) => (
                 <div
-                  key={index}
+                  key={stat.title ?? index}
                   className="rounded-2xl p-5 md:p-6 border-0 group hover:shadow-lg transition-all duration-300"
                   style={{
                     backgroundColor: "var(--card)",
