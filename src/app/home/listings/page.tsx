@@ -184,9 +184,9 @@ function ListingsPageContent() {
   // If a listing is selected, show detail view
   if (selectedListing) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', flexDirection: 'column' }}>
         <Header currentPage="listings" />
-        <section style={{ padding: '2rem 1rem' }}>
+        <main style={{ flex: 1, padding: '2rem 1rem' }}>
           <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
             <ListingDetailView
               listing={selectedListing}
@@ -195,7 +195,7 @@ function ListingsPageContent() {
               onToggleSave={() => toggleSaveListing(selectedListing.id)}
             />
           </div>
-        </section>
+        </main>
       </div>
     )
   }
@@ -203,12 +203,14 @@ function ListingsPageContent() {
   // Show loading state
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', flexDirection: 'column' }}>
         <Header currentPage="listings" />
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <Loader style={{ width: '48px', height: '48px', color: '#1F3549', animation: 'spin 1s linear infinite' }} />
-          <Text style={{ color: '#6b7280' }}>Loading properties...</Text>
-        </div>
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <Loader style={{ width: '48px', height: '48px', color: '#1F3549', animation: 'spin 1s linear infinite' }} />
+            <Text style={{ color: '#6b7280' }}>Loading properties...</Text>
+          </div>
+        </main>
       </div>
     )
   }
@@ -216,9 +218,9 @@ function ListingsPageContent() {
   // Show error state
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', flexDirection: 'column' }}>
         <Header currentPage="listings" />
-        <section style={{ padding: '3rem 1rem' }}>
+        <main style={{ flex: 1, padding: '3rem 1rem' }}>
           <div style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center', padding: '3rem', backgroundColor: 'white', borderRadius: '1rem' }}>
             <Building style={{ width: '64px', height: '64px', color: '#ef4444', margin: '0 auto 1rem' }} />
             <Heading level={3} style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1F3549', marginBottom: '0.5rem' }}>
@@ -234,15 +236,15 @@ function ListingsPageContent() {
               Try Again
             </Button>
           </div>
-        </section>
+        </main>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', flexDirection: 'column' }}>
       <Header currentPage="listings" />
-
+      <main style={{ flex: 1 }}>
       {/* Search and Filters Section */}
       <section style={{ padding: 'clamp(2rem, 5vw, 3rem) 1rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e5e3' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
@@ -520,7 +522,7 @@ function ListingsPageContent() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {filteredListings.map((listing, index) => (
+              {filteredListings.map((listing) => (
                 <div 
                   key={listing.id} 
                   style={{ 
@@ -715,6 +717,7 @@ function ListingsPageContent() {
           )}
         </div>
       </section>
+      </main>
 
       <Footer />
     </div>

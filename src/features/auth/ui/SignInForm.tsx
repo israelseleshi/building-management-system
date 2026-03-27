@@ -97,8 +97,8 @@ export function SignInForm() {
     <div 
       className="w-full max-w-md mx-auto rounded-2xl p-6 md:p-8 border-0"
       style={{ 
-        backgroundColor: 'var(--card)', 
-        boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' 
+        backgroundColor: '#FFFFFF',
+        boxShadow: '0 4px 12px rgba(31, 53, 73, 0.1)'
       }}
     >
       <div className="space-y-1 mb-6">
@@ -181,13 +181,13 @@ export function SignInForm() {
               </FormItem>
             )}
           />
-          <Button 
-            type="submit" 
-            className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]" 
-            style={{ 
-              backgroundColor: '#7D8B6F', 
+          <Button
+            type="submit"
+            className="w-full h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              backgroundColor: '#1F3549',
               color: '#FFFFFF',
-              boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
+              boxShadow: '0 4px 12px rgba(31, 53, 73, 0.3)'
             }}
             disabled={isLoading}
           >

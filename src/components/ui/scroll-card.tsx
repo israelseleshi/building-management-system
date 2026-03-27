@@ -1,6 +1,6 @@
 'use client';
 import { ReactLenis } from 'lenis/react';
-import React, { useRef, forwardRef } from 'react';
+import { forwardRef } from 'react';
 
 interface ArticleCardData {
   title: string;
@@ -45,7 +45,7 @@ const articleCardsData: ArticleCardData[] = [
   },
 ];
 
-const Component = forwardRef<HTMLElement>((props, ref) => {
+const Component = forwardRef<HTMLElement>((_props, ref) => {
   return (
     <ReactLenis root>
       <main className='bg-black' ref={ref}>

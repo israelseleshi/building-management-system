@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 import { LanguageToggle } from "./LanguageToggle"
-import { Menu, X, Building2 } from "lucide-react"
+import { Menu, X, Landmark } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 
@@ -23,9 +23,9 @@ export function Header({ currentPage = 'home' }: HeaderProps) {
 
   const navLinks = [
     { label: t("nav.home"), href: '/home', page: 'home' },
+    { label: t("nav.services"), href: '/home/services', page: 'services' },
     { label: t("nav.listings"), href: '/home/listings', page: 'listings' },
     { label: t("nav.about"), href: '/home/about', page: 'about' },
-    { label: t("nav.services"), href: '/home/services', page: 'services' },
     { label: t("nav.contact"), href: '/home/contact', page: 'contact' },
   ]
 
@@ -55,11 +55,21 @@ export function Header({ currentPage = 'home' }: HeaderProps) {
   return (
     <header
       className={cn(
-        "sticky top-5 z-50 mx-auto w-full max-w-6xl rounded-lg border shadow transition-all duration-300",
+        "sticky top-5 z-50 mx-auto w-full max-w-6xl rounded-2xl border shadow-lg transition-all duration-500",
         hasScrolled
-          ? "bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur-lg border-[#1F3549] shadow-lg"
-          : "bg-background/80 supports-[backdrop-filter]:bg-background/60 border-[#1F3549] shadow-sm"
+          ? "bg-white/70 supports-[backdrop-filter]:bg-white/60 backdrop-blur-2xl border-white/50 shadow-2xl"
+          : "bg-white/50 supports-[backdrop-filter]:bg-white/30 backdrop-blur-xl border-white/30 shadow-md"
       )}
+      style={{
+        background: hasScrolled
+          ? 'rgba(255, 255, 255, 0.7)'
+          : 'rgba(255, 255, 255, 0.5)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: hasScrolled
+          ? '0 8px 32px rgba(31, 53, 73, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.5) inset'
+          : '0 4px 16px rgba(31, 53, 73, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.3) inset',
+      }}
     >
       <nav className="mx-auto flex items-center justify-between p-1.5">
         {/* Logo - Left Side */}
@@ -67,9 +77,10 @@ export function Header({ currentPage = 'home' }: HeaderProps) {
           <button 
             onClick={handleLogoClick}
             className="hover:bg-[#1F3549]/10 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 duration-100"
+            style={{ display: 'flex', alignItems: 'center' }}
           >
-            <Building2 className="size-5 text-[#1F3549]" />
-            <p className="font-mono text-base font-bold text-[#1F3549]">BMS</p>
+            <Landmark className="size-6 text-[#1F3549]" />
+            <span className="text-base font-bold tracking-tight text-[#1F3549]">BMS</span>
           </button>
         </div>
 
@@ -82,15 +93,15 @@ export function Header({ currentPage = 'home' }: HeaderProps) {
                 key={link.label}
                 href={link.href}
                 className={cn(
-                  "relative px-3 py-2 text-sm font-semibold transition-all duration-200 border-b-2",
+                  "relative px-3 py-2 text-sm font-semibold transition-all duration-200",
                   isActive
-                    ? 'text-[#1F3549] border-[#1F3549]'
-                    : 'text-muted-foreground border-transparent hover:text-[#1F3549] hover:border-[#1F3549]/60'
+                    ? 'text-[#1F3549]'
+                    : 'text-muted-foreground hover:text-[#1F3549]'
                 )}
               >
                 {link.label}
                 {isActive && (
-                  <span className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-[#1F3549]" />
+                  <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-[#1F3549]" />
                 )}
               </a>
             )
@@ -146,9 +157,10 @@ export function Header({ currentPage = 'home' }: HeaderProps) {
           <button 
             onClick={handleLogoClick}
             className="flex items-center gap-2"
+            style={{ display: 'flex', alignItems: 'center' }}
           >
-            <Building2 className="size-5 text-[#1F3549]" />
-            <p className="font-mono text-base font-bold text-[#1F3549]">BMS</p>
+            <Landmark className="size-6 text-[#1F3549]" />
+            <span className="text-base font-bold tracking-tight text-[#1F3549]">BMS</span>
           </button>
           <Button
             size="icon"
