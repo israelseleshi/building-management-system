@@ -49,27 +49,60 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8' }}>
       <Header currentPage="about" />
       
       <main>
         {/* Hero Section */}
-        <section className="relative py-12 lg:py-20 overflow-hidden bg-slate-950 text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-emerald-900/20 via-transparent to-transparent" />
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <section style={{ 
+          position: 'relative', 
+          padding: 'clamp(4rem, 10vw, 6rem) 1rem 5rem',
+          overflow: 'hidden',
+          backgroundColor: '#1F3549',
+          color: 'white'
+        }}>
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: `radial-gradient(ellipse at 20% 30%, #152A3D 0%, transparent 50%),
+                         radial-gradient(ellipse at 80% 80%, #152A3D 0%, transparent 50%)`,
+            opacity: 0.5
+          }} />
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem', position: 'relative', zIndex: 10 }}>
             <motion.div 
-              className="max-w-3xl"
+              style={{ maxWidth: '900px' }}
               initial="initial"
               animate="animate"
               variants={fadeInUp}
             >
-              <span className="inline-block px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-semibold mb-4">
+              <div style={{
+                display: 'inline-block',
+                padding: '0.5rem 1rem',
+                borderRadius: '9999px',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                marginBottom: '1rem',
+                fontSize: '0.875rem',
+                fontWeight: 600
+              }}>
                 Our Story
-              </span>
-              <Heading level={1} className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                Redefining the <span className="text-emerald-400">Future</span> of Real Estate
+              </div>
+              <Heading level={1} style={{ 
+                fontSize: 'clamp(2rem, 6vw, 4rem)', 
+                fontWeight: 800, 
+                marginBottom: '1.5rem', 
+                lineHeight: 1.1,
+                letterSpacing: '-0.02em'
+              }}>
+                Redefining the <span style={{ color: 'rgba(255,255,255,0.6)' }}>Future</span> of Real Estate
               </Heading>
-              <Text size="lg" className="text-slate-400 max-w-2xl mb-8 text-base md:text-lg leading-relaxed">
+              <Text size="lg" style={{ 
+                color: 'rgba(255,255,255,0.7)', 
+                maxWidth: '700px', 
+                marginBottom: '2rem',
+                lineHeight: 1.75,
+                fontSize: 'clamp(1rem, 2vw, 1.125rem)'
+              }}>
                 BMS started with a simple idea: property management should be effortless, 
                 transparent, and accessible to everyone. Today, we're building the infrastructure 
                 for the modern rental economy.
@@ -79,9 +112,13 @@ export default function AboutPage() {
         </section>
 
         {/* Stats Section */}
-        <section className="py-12 border-b border-border bg-card">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <section style={{ padding: 'clamp(2rem, 5vw, 3rem) 1rem', borderBottom: '1px solid #e5e5e3', backgroundColor: 'white' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '2rem'
+            }}>
               {stats.map((stat, index) => (
                 <motion.div 
                   key={stat.label}
@@ -89,13 +126,31 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-slate-50 transition-colors"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    padding: '1.5rem',
+                    borderRadius: '1rem',
+                    transition: 'all 0.2s'
+                  }}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: '#f0f4f8',
+                    color: '#1F3549',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1rem'
+                  }}>
                     {stat.icon}
                   </div>
-                  <span className="text-3xl md:text-4xl font-bold text-foreground mb-1">{stat.value}</span>
-                  <span className="text-sm text-muted-foreground font-medium">{stat.label}</span>
+                  <span style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 800, color: '#1F3549', marginBottom: '0.25rem' }}>{stat.value}</span>
+                  <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: 500 }}>{stat.label}</span>
                 </motion.div>
               ))}
             </div>
@@ -103,37 +158,60 @@ export default function AboutPage() {
         </section>
 
         {/* Vision & Mission */}
-        <section className="py-24 lg:py-32 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+        <section style={{ padding: 'clamp(3rem, 8vw, 6rem) 1rem', backgroundColor: '#fafaf8' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: 'clamp(2rem, 5vw, 4rem)',
+              alignItems: 'center'
+            }}>
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="space-y-12"
+                style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}
               >
-                <div className="group">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-                      <Target className="w-6 h-6" />
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div style={{
+                      width: '3rem',
+                      height: '3rem',
+                      borderRadius: '0.75rem',
+                      backgroundColor: '#f0f4f8',
+                      color: '#1F3549',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Target style={{ width: '24px', height: '24px' }} />
                     </div>
-                    <Heading level={2} className="text-3xl font-bold">Our Mission</Heading>
+                    <Heading level={2} style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, color: '#1F3549' }}>Our Mission</Heading>
                   </div>
-                  <Text className="text-lg text-muted-foreground leading-relaxed">
+                  <Text style={{ fontSize: 'clamp(1rem, 2vw, 1.125rem)', color: '#6b7280', lineHeight: 1.75 }}>
                     To empower property owners and tenants through innovative technology, 
                     creating a seamless, secure, and data-driven ecosystem that maximizes 
                     value and enhances the living experience for all.
                   </Text>
                 </div>
 
-                <div className="group">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-                      <Eye className="w-6 h-6" />
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div style={{
+                      width: '3rem',
+                      height: '3rem',
+                      borderRadius: '0.75rem',
+                      backgroundColor: '#f0f4f8',
+                      color: '#1F3549',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Eye style={{ width: '24px', height: '24px' }} />
                     </div>
-                    <Heading level={2} className="text-3xl font-bold">Our Vision</Heading>
+                    <Heading level={2} style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, color: '#1F3549' }}>Our Vision</Heading>
                   </div>
-                  <Text className="text-lg text-muted-foreground leading-relaxed">
+                  <Text style={{ fontSize: 'clamp(1rem, 2vw, 1.125rem)', color: '#6b7288', lineHeight: 1.75 }}>
                     To be the global standard for property management software, 
                     transforming how people interact with real estate through 
                     intelligence, automation, and unparalleled user experience.
@@ -145,19 +223,40 @@ export default function AboutPage() {
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="relative"
+                style={{ position: 'relative' }}
               >
-                <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl">
+                <div style={{
+                  aspectRatio: '1',
+                  borderRadius: '1.5rem',
+                  overflow: 'hidden',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
+                }}>
                   <img 
                     src="/ethiopian-building.jpg" 
                     alt="BMS Vision" 
-                    className="w-full h-full object-cover"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/60 to-transparent" />
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(to top, rgba(31, 53, 73, 0.6) 0%, transparent 50%)'
+                  }} />
                 </div>
-                <div className="absolute -bottom-8 -left-8 bg-white p-8 rounded-2xl shadow-xl hidden md:block max-w-[280px]">
-                  <Text className="font-semibold text-emerald-600 mb-2 italic">"Efficiency is our obsession."</Text>
-                  <Text size="sm" className="text-muted-foreground">— The BMS Product Team</Text>
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-1rem',
+                  left: '-1rem',
+                  backgroundColor: 'white',
+                  padding: '1.5rem',
+                  borderRadius: '1rem',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                  maxWidth: '280px',
+                  display: 'none'
+                }}
+                className="md:block"
+                >
+                  <Text style={{ fontWeight: 600, color: '#1F3549', marginBottom: '0.5rem', fontStyle: 'italic' }}>"Efficiency is our obsession."</Text>
+                  <Text size="sm" style={{ color: '#6b7280' }}>— The BMS Product Team</Text>
                 </div>
               </motion.div>
             </div>
@@ -165,14 +264,18 @@ export default function AboutPage() {
         </section>
 
         {/* Values Section */}
-        <section className="py-24 bg-slate-50 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <Heading level={2} className="text-3xl md:text-4xl font-bold mb-6">Our Core Values</Heading>
-              <Text className="text-muted-foreground">The principles that guide every decision we make and every line of code we write.</Text>
+        <section style={{ padding: 'clamp(3rem, 8vw, 6rem) 1rem', backgroundColor: 'white' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', maxWidth: '700px', margin: '0 auto 4rem' }}>
+              <Heading level={2} style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', fontWeight: 800, color: '#1F3549', marginBottom: '1rem' }}>Our Core Values</Heading>
+              <Text style={{ color: '#6b7280' }}>The principles that guide every decision we make and every line of code we write.</Text>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '2rem'
+            }}>
               {values.map((value, index) => (
                 <motion.div
                   key={value.title}
@@ -180,13 +283,29 @@ export default function AboutPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-white p-8 rounded-2xl shadow-sm border border-border/50 hover:shadow-xl hover:-translate-y-1 transition-all"
+                  style={{
+                    backgroundColor: '#fafaf8',
+                    padding: '2rem',
+                    borderRadius: '1rem',
+                    border: '1px solid #e5e5e3',
+                    transition: 'all 0.3s'
+                  }}
                 >
-                  <div className="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6">
+                  <div style={{
+                    width: '3.5rem',
+                    height: '3.5rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: '#f0f4f8',
+                    color: '#1F3549',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1.5rem'
+                  }}>
                     {value.icon}
                   </div>
-                  <Heading level={3} className="text-xl font-bold mb-4">{value.title}</Heading>
-                  <Text className="text-muted-foreground leading-relaxed">{value.desc}</Text>
+                  <Heading level={3} style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1F3549', marginBottom: '0.75rem' }}>{value.title}</Heading>
+                  <Text style={{ color: '#6b7280', lineHeight: 1.75 }}>{value.desc}</Text>
                 </motion.div>
               ))}
             </div>
@@ -198,4 +317,5 @@ export default function AboutPage() {
     </div>
   )
 }
+
 

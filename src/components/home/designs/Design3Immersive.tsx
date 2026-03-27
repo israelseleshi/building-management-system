@@ -85,8 +85,8 @@ export function Design3Immersive() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-[#7D8B6F]/20" />
-          <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-[#7D8B6F]/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-[#1F3549]/20" />
+          <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-[#1F3549]/20 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
           
           {/* Grid Pattern */}
@@ -94,7 +94,7 @@ export function Design3Immersive() {
         </div>
 
         {/* Floating Elements */}
-        <motion.div style={{ y: y1 }} className="absolute top-20 left-10 w-64 h-64 border border-[#7D8B6F]/20 rounded-3xl rotate-12" />
+        <motion.div style={{ y: y1 }} className="absolute top-20 left-10 w-64 h-64 border border-[#1F3549]/20 rounded-3xl rotate-12" />
         <motion.div style={{ y: y2 }} className="absolute bottom-20 right-10 w-48 h-48 border border-blue-500/20 rounded-3xl -rotate-12" />
 
         {/* Content */}
@@ -108,7 +108,7 @@ export function Design3Immersive() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.3, type: "spring" }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7D8B6F]/20 border border-[#7D8B6F]/30 text-[#7D8B6F] text-sm font-medium mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1F3549]/20 border border-[#1F3549]/30 text-[#1F3549] text-sm font-medium mb-6"
             >
               <Sparkles className="w-4 h-4" />
               {t("home.hero.trusted")}
@@ -116,7 +116,7 @@ export function Design3Immersive() {
             
             <Heading level={1} className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
               Find Your Perfect
-              <span className="block bg-gradient-to-r from-[#7D8B6F] via-green-400 to-[#7D8B6F] bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-[#1F3549] via-green-400 to-[#1F3549] bg-clip-text text-transparent">
                 Rental Property
               </span>
             </Heading>
@@ -128,7 +128,7 @@ export function Design3Immersive() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button 
                 onClick={() => router.push("/home/listings")}
-                className="bg-gradient-to-r from-[#7D8B6F] to-[#5a6b4f] hover:from-[#6a7a5e] hover:to-[#4a5a3e] text-white px-8 py-4 rounded-xl font-medium shadow-lg shadow-[#7D8B6F]/25"
+                className="bg-gradient-to-r from-[#1F3549] to-[#5a6b4f] hover:from-[#6a7a5e] hover:to-[#4a5a3e] text-white px-8 py-4 rounded-xl font-medium shadow-lg shadow-[#1F3549]/25"
               >
                 <Search className="w-5 h-5 mr-2" />
                 {t("home.hero.browseButton")}
@@ -153,7 +153,7 @@ export function Design3Immersive() {
               className="max-w-xl mx-auto"
             >
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#7D8B6F]/20 to-blue-500/20 rounded-2xl blur-xl" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1F3549]/20 to-blue-500/20 rounded-2xl blur-xl" />
                 <div className="relative bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-2">
                   <div className="flex items-center gap-2">
                     <div className="flex-1 flex items-center gap-2 px-4">
@@ -168,7 +168,7 @@ export function Design3Immersive() {
                     </div>
                     <Button 
                       type="submit"
-                      className="bg-gradient-to-r from-[#7D8B6F] to-[#5a6b4f] text-white px-6 py-3 rounded-xl"
+                      className="bg-gradient-to-r from-[#1F3549] to-[#5a6b4f] text-white px-6 py-3 rounded-xl"
                     >
                       Search
                     </Button>
@@ -251,7 +251,7 @@ export function Design3Immersive() {
 
           <div className="relative">
             {/* Line */}
-            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#7D8B6F] via-[#7D8B6F]/50 to-transparent hidden md:block" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#1F3549] via-[#1F3549]/50 to-transparent hidden md:block" />
 
             {[
               { icon: Search, title: "Search", desc: "Browse thousands of verified properties", color: "from-blue-500 to-cyan-500" },
@@ -271,7 +271,7 @@ export function Design3Immersive() {
                     <step.icon className="w-8 h-8 text-white" />
                   </div>
                 </div>
-                <div className="w-4 h-4 rounded-full bg-[#7D8B6F] border-4 border-slate-900 hidden md:block" />
+                <div className="w-4 h-4 rounded-full bg-[#1F3549] border-4 border-slate-900 hidden md:block" />
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-white mb-2">{step.title}</h3>
                   <p className="text-slate-400">{step.desc}</p>
@@ -284,7 +284,7 @@ export function Design3Immersive() {
 
       {/* Stats Section - Glowing */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#7D8B6F]/10 via-transparent to-blue-500/10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1F3549]/10 via-transparent to-blue-500/10" />
         <div className="max-w-5xl mx-auto relative">
           <div className="grid grid-cols-3 gap-8 text-center">
             {[
@@ -299,7 +299,7 @@ export function Design3Immersive() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, type: "spring" }}
               >
-                <div className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-[#7D8B6F] to-green-400 bg-clip-text text-transparent mb-2">
+                <div className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-[#1F3549] to-green-400 bg-clip-text text-transparent mb-2">
                   {stat.value}
                 </div>
                 <div className="text-slate-400">{stat.label}</div>
@@ -311,8 +311,8 @@ export function Design3Immersive() {
 
       {/* CTA - Glowing Gradient */}
       <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#7D8B6F]/20 via-slate-900 to-slate-950" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#7D8B6F]/30 rounded-full blur-[120px]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1F3549]/20 via-slate-900 to-slate-950" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#1F3549]/30 rounded-full blur-[120px]" />
         
         <div className="max-w-4xl mx-auto text-center relative">
           <motion.div
@@ -329,7 +329,7 @@ export function Design3Immersive() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 onClick={() => router.push("/home/listings")}
-                className="bg-gradient-to-r from-[#7D8B6F] to-[#5a6b4f] hover:from-[#6a7a5e] hover:to-[#4a5a3e] text-white px-8 py-4 rounded-xl font-medium shadow-lg shadow-[#7D8B6F]/25"
+                className="bg-gradient-to-r from-[#1F3549] to-[#5a6b4f] hover:from-[#6a7a5e] hover:to-[#4a5a3e] text-white px-8 py-4 rounded-xl font-medium shadow-lg shadow-[#1F3549]/25"
               >
                 Browse Properties
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -350,3 +350,4 @@ export function Design3Immersive() {
     </div>
   )
 }
+
