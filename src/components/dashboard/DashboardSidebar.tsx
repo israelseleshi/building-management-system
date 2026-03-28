@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
 import { getLandlordNavGroups, getTenantNavGroups, NavItem } from "@/constants/navItems"
 import * as React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
 
 interface DashboardSidebarProps {
@@ -25,6 +25,8 @@ export function DashboardSidebar({
   onNavigate,
   appBrandName = "BMS",
 }: DashboardSidebarProps) {
+  const PANEL_STORAGE_KEY = "bms.dashboard.activePanelGroup"
+  const PANEL_CLOSED_VALUE = "closed"
   const pathname = usePathname()
   const t = useTranslations("Tenant")
   const normalizedPathname = pathname.replace(/^\/(en|am)(?=\/|$)/, "")
@@ -78,12 +80,25 @@ export function DashboardSidebar({
   const [hoveredGroup, setHoveredGroup] = useState<number | null>(null)
 
   const handleGroupClick = (index: number) => {
-    setActivePanelGroup(activePanelGroup === index ? null : index)
+    setActivePanelGroup((current) => {
+      const next = current === index ? null : index
+      try {
+        if (next === null) {
+          localStorage.setItem(PANEL_STORAGE_KEY, PANEL_CLOSED_VALUE)
+        } else {
+          localStorage.setItem(PANEL_STORAGE_KEY, String(next))
+        }
+      } catch {}
+      return next
+    })
   }
 
   const closePanel = () => {
     setActivePanelGroup(null)
     setHoveredGroup(null)
+    try {
+      localStorage.setItem(PANEL_STORAGE_KEY, PANEL_CLOSED_VALUE)
+    } catch {}
   }
 
   const clearClientAuth = () => {
@@ -110,29 +125,56 @@ export function DashboardSidebar({
     router.push(path)
   }
 
-  const isApplicationsPage = normalizedPathname.startsWith("/dashboard/applications")
+  const isApplicationsPage = true
 
-  const sidebarBg = isApplicationsPage ? "bg-[#0A2A43]" : "bg-background"
-  const sidebarBorderColor = isApplicationsPage ? "border-white/10" : "border-border/60"
+  const sidebarBg = "bg-[#0A2A43]"
+  const sidebarBorderColor = "border-white/10"
 
   // Active item highlight — warm neutral to match the sandy background
-  const activeHighlightClass = isApplicationsPage
-    ? "bg-[#113B5E] text-white"
-    : "bg-[#D6C9A8] text-[#5C4A1E]"
+  const activeHighlightClass = "bg-[#113B5E] text-white"
   
   // Highlight class to connect separated icon & label with a pseudo-element behind them
-  const connectedHighlightClass = isApplicationsPage
-    ? "bg-[#113B5E] text-white before:bg-[#113B5E]"
-    : "bg-[#D6C9A8] text-[#5C4A1E] before:bg-[#D6C9A8]"
+  const connectedHighlightClass = "bg-[#113B5E] text-white before:bg-[#113B5E]"
     
   // Hover style for non-active items
-  const sidebarHoverBg = isApplicationsPage ? "hover:bg-[#113B5E]" : "hover:bg-[#C8B99A]"
+  const sidebarHoverBg = "hover:bg-[#113B5E]"
   const sidebarHoverText = "hover:text-white"
-  const hoverClass = isApplicationsPage
-    ? "hover:bg-[#113B5E] hover:text-white"
-    : "hover:bg-[#C8B99A] hover:text-[#3D2E10]"
+  const hoverClass = "hover:bg-[#113B5E] hover:text-white"
 
   const isPanelOpen = activePanelGroup !== null
+
+  useEffect(() => {
+    let restoredIndex: number | null = null
+    try {
+      const raw = localStorage.getItem(PANEL_STORAGE_KEY)
+      if (raw !== null) {
+        if (raw === PANEL_CLOSED_VALUE) {
+          restoredIndex = null
+        } else {
+        const parsed = Number(raw)
+        if (Number.isInteger(parsed) && groups[parsed] && groups[parsed].items.length > 1) {
+          restoredIndex = parsed
+        }
+        }
+      }
+    } catch {}
+
+    if (restoredIndex !== null || (typeof window !== "undefined" && localStorage.getItem(PANEL_STORAGE_KEY) === PANEL_CLOSED_VALUE)) {
+      setActivePanelGroup(restoredIndex)
+      return
+    }
+
+    const currentGroupIndex = groups.findIndex(
+      (group) => group.items.length > 1 && group.items.some((item) => item.active)
+    )
+
+    if (currentGroupIndex >= 0) {
+      setActivePanelGroup(currentGroupIndex)
+      try {
+        localStorage.setItem(PANEL_STORAGE_KEY, String(currentGroupIndex))
+      } catch {}
+    }
+  }, [pathname, groups])
 
   return (
     <aside
@@ -223,7 +265,7 @@ export function DashboardSidebar({
                           : `${isApplicationsPage ? "text-white" : "text-foreground"}`
                       }`}
                     >
-                      {React.cloneElement(group.icon as React.ReactElement<any>, { className: "w-5 h-5" })}
+                      {React.cloneElement(group.icon as React.ReactElement<any>, { className: "w-5 h-5 text-white" })}
                     </span>
                   </button>
                 )
@@ -269,8 +311,8 @@ export function DashboardSidebar({
                           : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${hoverClass}`
                       }`}
                     >
-                      <span className={`transition-colors ${isLit ? (isApplicationsPage ? "text-white" : "text-[#5C4A1E]") : (isApplicationsPage ? "text-white" : "text-foreground")}`}>
-                        {React.cloneElement(group.icon as React.ReactElement<any>, { className: "w-4 h-4" })}
+                      <span className="text-white transition-colors">
+                        {React.cloneElement(group.icon as React.ReactElement<any>, { className: "w-4 h-4 text-white" })}
                       </span>
                     </button>
                   </div>
@@ -363,7 +405,7 @@ export function DashboardSidebar({
                       {groups[activePanelGroup].items.map((item, itemIndex) => (
                         <button
                           key={itemIndex}
-                          onClick={() => { handleNavigation(item.path); closePanel() }}
+                          onClick={() => { handleNavigation(item.path) }}
                           className={`flex w-full items-center px-2 py-2 rounded-md text-[0.74rem] font-medium transition-all duration-200 ${
                             item.active
                               ? isApplicationsPage
@@ -469,7 +511,7 @@ export function DashboardSidebar({
                 {groups[activePanelGroup].items.map((item, itemIndex) => (
                   <button
                     key={itemIndex}
-                    onClick={() => { handleNavigation(item.path); closePanel() }}
+                    onClick={() => { handleNavigation(item.path) }}
                     className={`flex w-full items-center px-3 py-2.5 rounded-lg text-[0.80rem] font-medium transition-all duration-200 ${
                       item.active
                         ? isApplicationsPage

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -8,12 +8,15 @@ import { Button } from "@/components/ui/button"
 import {
   Bell,
   ChevronDown,
-  ClipboardList,
   Filter,
   Send,
   CircleHelp,
   AlignLeft,
   Search,
+  Link2,
+  Copy,
+  Check,
+  X,
 } from "lucide-react"
 
 type ApplicationStatus =
@@ -25,7 +28,8 @@ type ApplicationStatus =
   | "Declined"
 
 type GroupBy = "Not Grouped" | "Group by Property" | "Group by Status"
-type ActiveTab = "Applications" | "Templates" | "Requests Sent"
+type ShareMethod = "email" | "url"
+type SendCardPhase = "closed" | "start" | "rising" | "splash" | "sliding" | "open"
 
 interface ApplicationRecord {
   id: string
@@ -37,7 +41,7 @@ interface ApplicationRecord {
   backgroundCheck: string
 }
 
-const theme = {
+const theme: Record<string, string> = {
   primary: "#3498DB",
   success: "#4DB6A1",
   warning: "#F5A24E",
@@ -64,25 +68,32 @@ const applicationData: ApplicationRecord[] = [
   },
 ]
 
-const tabs: ActiveTab[] = ["Applications", "Templates", "Requests Sent"]
 const groupOptions: GroupBy[] = ["Not Grouped", "Group by Property", "Group by Status"]
 
-export default function ApplicationsPage() {
+export default function ApplicantsPage() {
   return (
     <ProtectedRoute requiredRole="landlord">
-      <ApplicationsContent />
+      <ApplicantsContent />
     </ProtectedRoute>
   )
 }
 
-function ApplicationsContent() {
+function ApplicantsContent() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activeTab, setActiveTab] = useState<ActiveTab>("Applications")
   const [activeStatus, setActiveStatus] = useState<ApplicationStatus | "All">("All")
   const [groupBy, setGroupBy] = useState<GroupBy>("Not Grouped")
   const [selectedFilter, setSelectedFilter] = useState("Filter...")
+  const [isSendApplicationOpen, setIsSendApplicationOpen] = useState(false)
+  const [sendCardPhase, setSendCardPhase] = useState<SendCardPhase>("closed")
+  const [shareMethod, setShareMethod] = useState<ShareMethod>("email")
+  const [selectedTemplate, setSelectedTemplate] = useState("Standard Addis Rental Form")
+  const [recipientEmail, setRecipientEmail] = useState("")
+  const [recipientPhone, setRecipientPhone] = useState("")
+  const [customMessage, setCustomMessage] = useState("Please complete your rental application at your earliest convenience.")
+  const [generatedUrl] = useState("https://apply.smartbms.et/a/addis-rental-form-9f4a1")
+  const [copied, setCopied] = useState(false)
 
   const filteredApplications = useMemo(() => {
     return applicationData.filter((application) => {
@@ -104,7 +115,7 @@ function ApplicationsContent() {
   }, [activeStatus, searchQuery])
 
   const statusCards = useMemo(
-    () => [
+    (): { label: ApplicationStatus; count: number; tone: string }[] => [
       { label: "Lease/Term Created", count: 0, tone: theme.neutral as string },
       { label: "Approved", count: 1, tone: theme.success as string },
       { label: "For Review", count: 1, tone: theme.primary as string },
@@ -135,17 +146,55 @@ function ApplicationsContent() {
     }
   }
 
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!isSendApplicationOpen) {
+      setSendCardPhase("closed")
+      return
+    }
+
+    setSendCardPhase("start")
+    const raf = requestAnimationFrame(() => setSendCardPhase("rising"))
+    const toSplash = setTimeout(() => setSendCardPhase("splash"), 520)
+    const toSliding = setTimeout(() => setSendCardPhase("sliding"), 1300)
+    const toOpen = setTimeout(() => setSendCardPhase("open"), 1360)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(toSplash)
+      clearTimeout(toSliding)
+      clearTimeout(toOpen)
+    }
+  }, [isSendApplicationOpen])
+
+  const sendCardMotionClass =
+    sendCardPhase === "start" ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
+  const sendSplashVisible = sendCardPhase === "rising" || sendCardPhase === "splash"
+  const sendContentMotionClass =
+    sendCardPhase === "sliding"
+      ? "translate-x-20 opacity-0"
+      : sendCardPhase === "open"
+      ? "translate-x-0 opacity-100"
+      : "translate-x-0 opacity-0"
+
   return (
     <div
       className="min-h-screen flex overflow-x-hidden"
-      style={
-        {
-          backgroundColor: theme.background,
-          ["--card" as string]: theme.card,
-          ["--background" as string]: theme.background,
-          ["--border" as string]: theme.line,
-        } as React.CSSProperties
-      }
+      style={{
+        backgroundColor: theme.background,
+        ["--card" as string]: theme.card,
+        ["--background" as string]: theme.background,
+        ["--border" as string]: theme.line,
+      } as React.CSSProperties}
     >
       <DashboardSidebar
         isSidebarCollapsed={isSidebarCollapsed}
@@ -168,7 +217,7 @@ function ApplicationsContent() {
                 <AlignLeft className="h-[1.05rem] w-[1.05rem]" />
               </button>
               <div className="truncate text-[0.8rem] font-semibold uppercase tracking-[0.08em]" style={{ color: theme.ink }}>
-                Applications
+                Applicant's
               </div>
             </div>
 
@@ -209,10 +258,6 @@ function ApplicationsContent() {
                   className="rounded-xl border px-5 py-4 shadow-[0_6px_18px_rgba(94,118,145,0.05)] md:px-6"
                   style={{ backgroundColor: theme.card, borderColor: theme.line }}
                 >
-                  <div className="mb-4">
-                    <ApplicationsTabs activeTab={activeTab} onChange={setActiveTab} />
-                  </div>
-
                   <FilterBar
                     theme={theme}
                     selectedFilter={selectedFilter}
@@ -221,6 +266,7 @@ function ApplicationsContent() {
                     onGroupByChange={setGroupBy}
                     resultCount={filteredApplications.length}
                     totalCount={applicationData.length}
+                    onSendApplication={() => setIsSendApplicationOpen(true)}
                   />
 
                   <ApplicationsTable
@@ -236,13 +282,13 @@ function ApplicationsContent() {
                   <Button
                     className="h-11 w-full rounded-md px-5 text-[0.85rem] font-medium shadow-sm"
                     style={{ backgroundColor: theme.primary, color: "#FFFFFF" }}
+                    onClick={() => setIsSendApplicationOpen(true)}
                   >
                     <Send className="mr-2 h-4 w-4" />
-                    Request Application
+                    Send Application
                   </Button>
                 </div>
                 <StatusSidebar
-                  theme={theme}
                   cards={statusCards}
                   activeStatus={activeStatus}
                   onSelectStatus={setActiveStatus}
@@ -251,38 +297,180 @@ function ApplicationsContent() {
             </div>
           </div>
         </main>
-      </div>
-    </div>
-  )
-}
 
-function ApplicationsTabs({
-  activeTab,
-  onChange,
-}: {
-  activeTab: ActiveTab
-  onChange: (tab: ActiveTab) => void
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-8 border-b pb-1" style={{ borderColor: theme.line }}>
-      {tabs.map((tab) => {
-        const isActive = tab === activeTab
-        return (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => onChange(tab)}
-            className={`relative pb-3 text-[0.8rem] uppercase tracking-[0.045em] transition-colors ${isActive ? "font-semibold" : "font-medium"}`}
-            style={{ color: isActive ? theme.tabActive : theme.muted }}
-          >
-            {tab}
-            <span
-              className={`absolute inset-x-0 -bottom-[1px] h-0.5 rounded-full transition-opacity ${isActive ? "opacity-100" : "opacity-0"}`}
-              style={{ backgroundColor: theme.tabActive }}
-            />
-          </button>
-        )
-      })}
+        {isSendApplicationOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-900/45">
+            <div className={`absolute right-6 top-8 flex h-[min(690px,calc(100vh-64px))] w-[min(980px,calc(100vw-260px))] overflow-hidden rounded-2xl border bg-white shadow-[0_24px_80px_rgba(18,30,53,0.35)] transition-all duration-700 ${sendCardMotionClass}`}>
+              <div
+                className={`absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-200 ${sendSplashVisible ? "opacity-100" : "pointer-events-none opacity-0"}`}
+                style={{ backgroundColor: "#0A2A43" }}
+              >
+                <div className="text-center text-white transition-all duration-500" style={{ transform: sendCardPhase === "rising" ? "translateY(40px)" : "translateY(0)" }}>
+                  <div className="text-xs uppercase tracking-[0.3em] text-white/70">Launching</div>
+                  <div className="mt-2 text-4xl font-bold tracking-tight">SMART BMS</div>
+                </div>
+              </div>
+
+              <div className={`flex min-w-0 flex-1 flex-col transition-all duration-500 ${sendContentMotionClass}`}>
+                <header className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#0A2A43" }}>
+                  <h3 className="text-sm font-semibold text-white">How would you like to share your application?</h3>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
+                    onClick={() => setIsSendApplicationOpen(false)}
+                    aria-label="Close send application modal"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </header>
+
+                <div className="grid min-h-0 flex-1 grid-cols-[200px_minmax(0,1fr)_250px]">
+                  <aside className="border-r p-3" style={{ borderColor: theme.line, backgroundColor: "#0A2A43" }}>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Share Method</div>
+                    <button
+                      type="button"
+                      onClick={() => setShareMethod("email")}
+                      className={`mb-1 flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm ${shareMethod === "email" ? "text-white" : "text-white/75 hover:text-white"}`}
+                      style={{ backgroundColor: shareMethod === "email" ? "#113B5E" : "transparent" }}
+                    >
+                      Via Email
+                      <ChevronDown className={`h-3.5 w-3.5 ${shareMethod === "email" ? "rotate-[-90deg]" : "rotate-[-90deg] opacity-0"}`} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShareMethod("url")}
+                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm ${shareMethod === "url" ? "text-white" : "text-white/75 hover:text-white"}`}
+                      style={{ backgroundColor: shareMethod === "url" ? "#113B5E" : "transparent" }}
+                    >
+                      Via URL
+                      <ChevronDown className={`h-3.5 w-3.5 ${shareMethod === "url" ? "rotate-[-90deg]" : "rotate-[-90deg] opacity-0"}`} />
+                    </button>
+                  </aside>
+
+                  <div className="min-h-0 overflow-y-auto p-5">
+
+                    {shareMethod === "email" && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Select Template</label>
+                          <select
+                            value={selectedTemplate}
+                            onChange={(event) => setSelectedTemplate(event.target.value)}
+                            className="h-10 w-full rounded-md border bg-white px-3 text-sm outline-none"
+                            style={{ borderColor: theme.line, color: theme.ink }}
+                          >
+                            <option>Standard Addis Rental Form</option>
+                            <option>Commercial Tenant Form</option>
+                            <option>Shared Housing Form</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Share Via Email</label>
+                          <input
+                            type="email"
+                            placeholder="applicant@email.com"
+                            value={recipientEmail}
+                            onChange={(event) => setRecipientEmail(event.target.value)}
+                            className="h-10 w-full rounded-md border bg-white px-3 text-sm outline-none"
+                            style={{ borderColor: theme.line, color: theme.ink }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Ethio Telecom Number (Optional)</label>
+                          <input
+                            type="text"
+                            placeholder="+2519..."
+                            value={recipientPhone}
+                            onChange={(event) => setRecipientPhone(event.target.value)}
+                            className="h-10 w-full rounded-md border bg-white px-3 text-sm outline-none"
+                            style={{ borderColor: theme.line, color: theme.ink }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Message</label>
+                          <textarea
+                            value={customMessage}
+                            onChange={(event) => setCustomMessage(event.target.value)}
+                            className="min-h-[92px] w-full rounded-md border bg-white px-3 py-2 text-sm outline-none"
+                            style={{ borderColor: theme.line, color: theme.ink }}
+                          />
+                        </div>
+
+                        <div className="flex justify-end">
+                          <Button className="h-9 px-5" style={{ backgroundColor: theme.primary, color: "#fff" }}>
+                            <Send className="mr-2 h-4 w-4" />
+                            Send Application
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {shareMethod === "url" && (
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.muted }}>Default Settings</p>
+                          <div className="mt-1 text-sm font-semibold" style={{ color: theme.ink }}>Application Only</div>
+                        </div>
+
+                        <div>
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Share Via URL</label>
+                          <div className="flex rounded-md border" style={{ borderColor: theme.line }}>
+                            <input
+                              type="text"
+                              value={generatedUrl}
+                              readOnly
+                              className="h-10 flex-1 bg-white px-3 text-sm outline-none"
+                              style={{ color: theme.ink }}
+                            />
+                            <button
+                              type="button"
+                              onClick={handleCopyUrl}
+                              className="inline-flex h-10 items-center gap-1 border-l px-3 text-sm font-medium"
+                              style={{ borderColor: theme.line, color: theme.primary }}
+                            >
+                              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                              {copied ? "Copied" : "Copy"}
+                            </button>
+                          </div>
+                          <p className="mt-2 text-xs" style={{ color: theme.muted }}>
+                            Share this URL publicly on your building page so applicants can apply directly.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <aside className="border-l p-4" style={{ borderColor: theme.line, backgroundColor: "#F7FAFD" }}>
+                    <div className="rounded-md border p-3" style={{ borderColor: theme.line, backgroundColor: "#fff" }}>
+                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>SMART BMS</p>
+                      <div className="mt-2 h-24 rounded-md border bg-[#EAF3FB]" style={{ borderColor: theme.line }} />
+                    </div>
+                    <div className="mt-4 text-xs leading-5" style={{ color: theme.muted }}>
+                      <p className="mb-2 font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>How It Works</p>
+                      <p>1. Share by email or URL.</p>
+                      <p>2. Applicant submits the form online.</p>
+                      <p>3. You review applications in this dashboard.</p>
+                      <p>4. Optional Ethiopian contact channels can be added for reach.</p>
+                    </div>
+                    {shareMethod === "url" && (
+                      <div className="mt-4 rounded-md border p-3 text-xs" style={{ borderColor: theme.line, backgroundColor: "#fff", color: theme.muted }}>
+                        <div className="mb-1 flex items-center gap-1 font-semibold" style={{ color: theme.ink }}>
+                          <Link2 className="h-3.5 w-3.5" />
+                          Public Link Tip
+                        </div>
+                        Add this URL to your property page button: "Apply Now".
+                      </div>
+                    )}
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -295,14 +483,16 @@ function FilterBar({
   onGroupByChange,
   resultCount,
   totalCount,
+  onSendApplication,
 }: {
-  theme: typeof theme
+  theme: Record<string, string>
   selectedFilter: string
   onFilterChange: (value: string) => void
   groupBy: GroupBy
   onGroupByChange: (value: GroupBy) => void
   resultCount: number
   totalCount: number
+  onSendApplication: () => void
 }) {
   return (
     <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -344,9 +534,10 @@ function FilterBar({
       <Button
         className="h-10 rounded-md px-5 text-[0.82rem] font-medium shadow-sm xl:hidden"
         style={{ backgroundColor: theme.primary, color: "#FFFFFF" }}
+        onClick={onSendApplication}
       >
         <Send className="mr-2 h-4 w-4" />
-        Request Application
+        Send Application
       </Button>
     </div>
   )
@@ -358,7 +549,7 @@ function ApplicationsTable({
   onRowClick,
 }: {
   applications: ApplicationRecord[]
-  theme: typeof theme
+  theme: Record<string, string>
   onRowClick: (id: string) => void
 }) {
   const badgeStyles: Record<ApplicationStatus, { backgroundColor: string; color: string }> = {
@@ -376,12 +567,12 @@ function ApplicationsTable({
         <table className="w-full table-fixed border-collapse">
           <thead style={{ backgroundColor: theme.tableHead }}>
             <tr className="border-b" style={{ borderColor: theme.line }}>
-              <TableHeaderCell label="Status" />
-              <TableHeaderCell label="Applicant Name" />
-              <TableHeaderCell label="Property" />
-              <TableHeaderCell label="Residential Score" align="center" help />
-              <TableHeaderCell label="Annual Income" align="center" help />
-              <TableHeaderCell label="Background Check" align="center" />
+              <TableHeaderCell label="Status" theme={theme} />
+              <TableHeaderCell label="Applicant Name" theme={theme} />
+              <TableHeaderCell label="Property" theme={theme} />
+              <TableHeaderCell label="Residential Score" align="center" help theme={theme} />
+              <TableHeaderCell label="Annual Income" align="center" help theme={theme} />
+              <TableHeaderCell label="Background Check" align="center" theme={theme} />
             </tr>
           </thead>
           <tbody style={{ backgroundColor: theme.card }}>
@@ -436,10 +627,12 @@ function TableHeaderCell({
   label,
   align = "left",
   help = false,
+  theme,
 }: {
   label: string
   align?: "left" | "center"
   help?: boolean
+  theme: Record<string, string>
 }) {
   return (
     <th
@@ -455,12 +648,10 @@ function TableHeaderCell({
 }
 
 function StatusSidebar({
-  theme,
   cards,
   activeStatus,
   onSelectStatus,
 }: {
-  theme: typeof theme
   cards: { label: ApplicationStatus; count: number; tone: string }[]
   activeStatus: ApplicationStatus | "All"
   onSelectStatus: (status: ApplicationStatus | "All") => void

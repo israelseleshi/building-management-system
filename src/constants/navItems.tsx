@@ -22,6 +22,8 @@ import {
   Calendar,
   ShieldCheck,
   ClipboardList,
+  Send,
+  FileInput,
 } from "lucide-react"
 
 export interface NavItemBase {
@@ -69,11 +71,12 @@ const landlordGroups: NavGroupBase[] = [
     defaultOpen: true,
   },
   {
-    title: "Leasing",
+    title: "Applications",
     icon: <Grid className="w-5 h-5" />,
     items: [
-      { icon: <ClipboardList className="w-5 h-5" />, name: "Applications", path: "/dashboard/applications" },
-      { icon: <Clock3 className="w-5 h-5" />, name: "Attendance", path: "/dashboard/attendance" },
+      { icon: <ClipboardList className="w-5 h-5" />, name: "Applicant's", path: "/dashboard/applications/applicants" },
+      { icon: <FileInput className="w-5 h-5" />, name: "Forms", path: "/dashboard/applications/forms" },
+      { icon: <Send className="w-5 h-5" />, name: "Requests Sent", path: "/dashboard/applications/requests" },
     ],
   },
   {
@@ -81,7 +84,7 @@ const landlordGroups: NavGroupBase[] = [
     icon: <Users className="w-5 h-5" />,
     items: [
       { icon: <Users className="w-5 h-5" />, name: "Employees", path: "/dashboard/employees" },
-      { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/dashboard/chat" },
+      { icon: <Clock3 className="w-5 h-5" />, name: "Attendance", path: "/dashboard/attendance" },
     ],
   },
   {

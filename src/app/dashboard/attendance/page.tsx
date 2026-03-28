@@ -571,7 +571,14 @@ function AttendanceContent() {
                 { label: "Late", value: summary.late, icon: Clock3, tone: "bg-amber-100 text-amber-700" },
                 { label: "Closed", value: summary.closed, icon: BellRing, tone: "bg-red-100 text-red-700" },
               ].map((card, index) => (
-                <div key={`${card.label}-${index}`} className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <div 
+                  key={`${card.label}-${index}`} 
+                  className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
+                  style={{
+                    backgroundColor: "var(--card)",
+                    boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
+                  }}
+                >
                   <div className="mb-4 flex items-center justify-between">
                     <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${card.tone}`}>
                       <card.icon className="h-5 w-5" />
