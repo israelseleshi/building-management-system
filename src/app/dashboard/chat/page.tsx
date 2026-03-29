@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { Combobox } from "@/components/ui/combobox"
 import {
   LayoutDashboard,
   Building2,
@@ -18,8 +17,7 @@ import {
   Send,
   Search,
   MoreVertical,
-  Phone,
-  Video,
+  Mail,
   Smile,
   Paperclip,
   Users,
@@ -81,17 +79,27 @@ function ChatContent() {
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [messagingMode, setMessagingMode] = useState<"chat" | "email">("chat")
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Building/Floor filters
-  const [buildings, setBuildings] = useState<Array<{ value: string; label: string }>>([])
-  const [floors, setFloors] = useState<Array<{ value: string; label: string }>>([])
-  const [selectedBuilding, setSelectedBuilding] = useState<string>("all")
-  const [selectedFloor, setSelectedFloor] = useState<string>("all")
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
 
-  // Top 15 used emojis
-  const topEmojis = ["😀", "😂", "❤️", "👍", "🔥", "😍", "🎉", "✨", "😢", "😡", "👏", "🙏", "💯", "🚀", "😎"]
+  const topEmojis = [
+    "\u{1F600}",
+    "\u{1F602}",
+    "\u2764\uFE0F",
+    "\u{1F44D}",
+    "\u{1F525}",
+    "\u{1F60D}",
+    "\u{1F389}",
+    "\u2728",
+    "\u{1F622}",
+    "\u{1F621}",
+    "\u{1F44F}",
+    "\u{1F64F}",
+    "\u{1F4AF}",
+    "\u{1F680}",
+    "\u{1F60E}",
+  ]
 
   const navItems = [
     {
@@ -150,15 +158,15 @@ function ChatContent() {
     },
   ]
 
-  // Local search filtering
-  const filteredContacts = (contacts || []).filter(contact => {
-    if (!contact) return false;
-    return !chatSearch || 
+  const filteredContacts = (contacts || []).filter((contact) => {
+    if (!contact) return false
+    return (
+      !chatSearch ||
       (contact.full_name && contact.full_name.toLowerCase().includes(chatSearch.toLowerCase())) ||
       (contact.username && contact.username.toLowerCase().includes(chatSearch.toLowerCase()))
+    )
   })
 
-  // Load contacts and conversations on mount
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -168,7 +176,6 @@ function ChatContent() {
           return
         }
 
-        // Fetch user info
         const userResponse = await fetch(`${API_BASE_URL}/user/me`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -177,33 +184,6 @@ function ChatContent() {
           setCurrentUserId(String(userData.data.user.user_id))
         }
 
-        // Fetch user's buildings and floors for filters
-        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const buildingsData = await buildingsRes.json()
-        if (buildingsData.success) {
-          const formattedBuildings = buildingsData.data.buildings.map((b: any) => ({
-            value: String(b.building_id),
-            label: b.name
-          }))
-          setBuildings([{ value: "all", label: "All Buildings" }, ...formattedBuildings])
-          
-          const allFloors = new Set<number>()
-          buildingsData.data.buildings.forEach((b: any) => {
-            if (b.number_of_floors) {
-              for (let i = 1; i <= b.number_of_floors; i++) {
-                allFloors.add(i)
-              }
-            }
-          })
-          const formattedFloors = Array.from(allFloors)
-            .sort((a, b) => a - b)
-            .map(f => ({ value: String(f), label: `Floor ${f}` }))
-          setFloors([{ value: "all", label: "All Floors" }, ...formattedFloors])
-        }
-
-        // Fetch existing conversations
         const convsResponse = await fetch(`${API_BASE_URL}/conversations`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -219,18 +199,13 @@ function ChatContent() {
     loadData()
   }, [router])
 
-  // Fetch contacts whenever filters change
   useEffect(() => {
     const fetchContacts = async () => {
       const token = getAuthToken()
       if (!token) return
 
       try {
-        const queryParams = new URLSearchParams()
-        if (selectedBuilding !== "all") queryParams.append("buildingId", selectedBuilding)
-        if (selectedFloor !== "all") queryParams.append("floor", selectedFloor)
-
-        const contactsRes = await fetch(`${API_BASE_URL}/conversations/contacts?${queryParams.toString()}`, {
+        const contactsRes = await fetch(`${API_BASE_URL}/conversations/contacts`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         const contactsData = await contactsRes.json()
@@ -243,18 +218,36 @@ function ChatContent() {
     }
 
     fetchContacts()
-  }, [selectedBuilding, selectedFloor])
+  }, [])
 
-  // Start conversation with a contact
+  const loadMessagesForConversation = async (conversationId: number, token: string) => {
+    try {
+      const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const msgsData = await msgsResponse.json()
+
+      if (msgsData.success) {
+        const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
+          id: String(m.message_id),
+          senderId: String(m.sender_id),
+          message: m.content,
+          timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          isOwn: String(m.sender_id) === currentUserId,
+        }))
+        setMessages(builtMessages)
+      }
+    } catch (error) {
+      console.error("Error loading messages:", error)
+    }
+  }
+
   const startConversationWithContact = async (contact: ContactItem) => {
     const token = getAuthToken()
     if (!token) return
 
     try {
-      // Check if conversation already exists
-      const existingConv = conversations.find(conv => 
-        conv.participants.some(p => p.user.user_id === contact.user_id)
-      )
+      const existingConv = conversations.find((conv) => conv.participants.some((p) => p.user.user_id === contact.user_id))
 
       if (existingConv) {
         setActiveConversationId(existingConv.conversation_id)
@@ -262,7 +255,6 @@ function ChatContent() {
         return
       }
 
-      // Create new conversation
       const response = await fetch(`${API_BASE_URL}/conversations`, {
         method: "POST",
         headers: {
@@ -276,8 +268,7 @@ function ChatContent() {
       if (data.success) {
         const newConvId = data.data.conversation?.conversation_id || data.data.conversationId
         setActiveConversationId(newConvId)
-        
-        // Refresh conversations list
+
         const convsResponse = await fetch(`${API_BASE_URL}/conversations`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -293,28 +284,6 @@ function ChatContent() {
     }
   }
 
-  const loadMessagesForConversation = async (conversationId: number, token: string) => {
-    try {
-      const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      const msgsData = await msgsResponse.json()
-
-      if (msgsData.success) {
-        const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
-          id: String(m.message_id),
-          senderId: String(m.sender_id),
-          message: m.content,
-          timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          isOwn: String(m.sender_id) === currentUserId
-        }))
-        setMessages(builtMessages)
-      }
-    } catch (error) {
-      console.error("Error loading messages:", error)
-    }
-  }
-
   const handlePersonClick = async (index: number) => {
     setSelectedPersonIndex(index)
     const contact = filteredContacts[index]
@@ -324,7 +293,7 @@ function ChatContent() {
   }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !activeConversationId) return
+    if (messagingMode !== "chat" || !newMessage.trim() || !activeConversationId) return
 
     const token = getAuthToken()
     if (!token) return
@@ -341,16 +310,19 @@ function ChatContent() {
         },
         body: JSON.stringify({ content }),
       })
-      
+
       const data = await response.json()
       if (data.success) {
-        setMessages((prev) => [...prev, {
-          id: String(data.data.message.message_id),
-          senderId: currentUserId || "",
-          message: content,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          isOwn: true
-        }])
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: String(data.data.message.message_id),
+            senderId: currentUserId || "",
+            message: content,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isOwn: true,
+          },
+        ])
       }
     } catch (error) {
       console.error("Error sending message:", error)
@@ -385,10 +357,8 @@ function ChatContent() {
     if (files && files.length > 0) {
       const file = files[0]
       const fileName = file.name
-      // Add file name to message
       setNewMessage(newMessage + ` [File: ${fileName}]`)
       console.log("File selected:", file)
-      // In a real app, you would upload to Supabase storage here
     }
   }
 
@@ -404,82 +374,82 @@ function ChatContent() {
         onNavigate={handleSidebarNavigation}
       />
 
-      {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col">
         <DashboardHeader
-          title="Chat"
-          subtitle="Direct messaging"
+          title="Messaging"
+          subtitle={messagingMode === "chat" ? "Direct chat messaging" : "Email messaging"}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onToggleSidebar={toggleSidebar}
         />
 
-        {/* Chat Container with padding gap */}
-        <div className="flex-1 p-4 flex overflow-hidden" style={{ backgroundColor: '#F5EFE7' }}>
-          {/* Conversations Sidebar */}
-          <div className="w-96 border border-border rounded-lg overflow-hidden flex flex-col mr-4" style={{ backgroundColor: '#F5EFE7' }}>
-            {/* Filters */}
-            <div className="p-4 border-b border-border space-y-3">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search contacts..."
-                  value={chatSearch}
-                  onChange={(e) => setChatSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+        <div className="flex-1 p-4 flex overflow-hidden bg-[#F3F6FA]">
+          <div className="w-[360px] border border-[#dbe4ee] rounded-lg overflow-hidden flex flex-col mr-4 bg-white">
+            <div className="p-3 border-b border-[#e2e8f0] space-y-3">
+              <div className="grid grid-cols-2 rounded-md bg-[#eef3f9] p-1">
+                <button
+                  type="button"
+                  onClick={() => setMessagingMode("email")}
+                  className={`h-9 rounded text-sm font-medium transition-colors ${
+                    messagingMode === "email" ? "bg-white text-[#0F4C81] shadow-sm" : "text-[#506176] hover:text-[#0F4C81]"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMessagingMode("chat")}
+                  className={`h-9 rounded text-sm font-medium transition-colors ${
+                    messagingMode === "chat" ? "bg-white text-[#0F4C81] shadow-sm" : "text-[#506176] hover:text-[#0F4C81]"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Chat
+                  </span>
+                </button>
               </div>
 
-              {/* Building Filter */}
-              <Combobox
-                options={buildings}
-                value={selectedBuilding}
-                onValueChange={setSelectedBuilding}
-                placeholder="All Buildings"
-                className="w-full"
-              />
-
-              {/* Floor Filter */}
-              <Combobox
-                options={floors}
-                value={selectedFloor}
-                onValueChange={setSelectedFloor}
-                placeholder="All Floors"
-                className="w-full"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#7a8ea5]" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={chatSearch}
+                  onChange={(e) => setChatSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-md border border-[#d2dce8] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
+                />
+              </div>
             </div>
 
-            {/* Contacts list */}
             <div className="flex-1 overflow-y-auto">
               {filteredContacts.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  No contacts found
-                </div>
+                <div className="p-4 text-center text-muted-foreground">No contacts found</div>
               ) : (
                 filteredContacts.map((contact, idx) => (
                   <button
                     key={contact.user_id}
                     onClick={() => handlePersonClick(idx)}
-                    className={`w-full px-4 py-3 border-b border-border text-left transition-all duration-200 transform hover:scale-[1.02] hover:shadow-md ${
-                      selectedPersonIndex === idx ? 'bg-white/60 shadow-sm' : 'hover:bg-white/40'
+                    className={`w-full px-4 py-3 border-b border-[#edf2f7] text-left transition-colors ${
+                      selectedPersonIndex === idx ? "bg-[#edf4fb]" : "hover:bg-[#f8fbff]"
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="relative">
-                        <Avatar className="w-10 h-10">
-                          {contact.profile_picture && <AvatarImage src={contact.profile_picture} />}
-                          <AvatarFallback>{contact.full_name[0]}</AvatarFallback>
-                        </Avatar>
-                      </div>
+                      <Avatar className="w-10 h-10">
+                        {contact.profile_picture && <AvatarImage src={contact.profile_picture} />}
+                        <AvatarFallback>{contact.full_name[0]}</AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h3 className="font-medium text-foreground text-sm">{contact.full_name}</h3>
                           <span className="text-xs text-muted-foreground capitalize">{contact.role}</span>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
-                          {contact.building_name} {contact.floor !== null && `• Floor ${contact.floor}`}
+                          {contact.building_name}
+                          {contact.floor !== null ? ` - Floor ${contact.floor}` : ""}
                         </p>
                       </div>
                     </div>
@@ -489,10 +459,8 @@ function ChatContent() {
             </div>
           </div>
 
-          {/* Messages Area */}
-          <div className="flex-1 border border-border rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: '#F5EFE7' }}>
-            {/* Chat Header */}
-            <div className="border-b border-border px-6 py-4 flex items-center justify-between">
+          <div className="flex-1 border border-[#dbe4ee] rounded-lg overflow-hidden flex flex-col bg-[#f8fbff]">
+            <div className="border-b border-[#e2e8f0] bg-white px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
                   {currentPerson?.profile_picture && <AvatarImage src={currentPerson.profile_picture} />}
@@ -502,48 +470,41 @@ function ChatContent() {
                   <h2 className="font-semibold text-foreground">{currentPerson?.full_name || "Select a contact"}</h2>
                   {currentPerson && (
                     <p className="text-xs text-muted-foreground">
-                      {currentPerson.building_name} {currentPerson.floor !== null && `• Floor ${currentPerson.floor}`}
+                      {currentPerson.building_name}
+                      {currentPerson.floor !== null ? ` - Floor ${currentPerson.floor}` : ""}
                     </p>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Phone className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Video className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </div>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-[#5f6e82] hover:text-[#0F4C81]">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-              {!activeConversationId ? (
+              {messagingMode === "email" ? (
+                <div className="h-full flex items-center justify-center text-center text-[#5f6e82]">
+                  Email option is available in this screen. Switch to Chat to send real-time messages.
+                </div>
+              ) : !activeConversationId ? (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   Select a contact to start messaging
                 </div>
               ) : (
                 messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}
-                  >
-                    <div className={`flex items-end gap-2 max-w-md ${msg.isOwn ? 'flex-row-reverse' : ''}`}>
+                  <div key={msg.id} className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}>
+                    <div className={`flex items-end gap-2 max-w-md ${msg.isOwn ? "flex-row-reverse" : ""}`}>
                       {!msg.isOwn && currentPerson && (
                         <Avatar className="w-8 h-8 flex-shrink-0">
                           <AvatarFallback>{currentPerson.full_name[0]}</AvatarFallback>
                         </Avatar>
                       )}
-                      <div className={`${msg.isOwn ? 'text-right' : 'text-left'}`}>
+                      <div className={msg.isOwn ? "text-right" : "text-left"}>
                         <div
-                          className={`px-4 py-2 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-md ${
+                          className={`px-4 py-2 rounded-lg ${
                             msg.isOwn
-                              ? 'bg-gray-200 text-foreground rounded-br-none'
-                              : 'bg-gray-100 text-foreground rounded-bl-none'
+                              ? "bg-[#2F80ED] text-white rounded-br-none"
+                              : "bg-white text-foreground border border-[#e4ebf3] rounded-bl-none"
                           }`}
                         >
                           <p className="text-sm">{msg.message}</p>
@@ -556,23 +517,21 @@ function ChatContent() {
               )}
             </div>
 
-            {/* Message Input */}
-            <div className="border-t border-border px-6 py-4">
+            <div className="border-t border-[#e2e8f0] bg-white px-6 py-4">
               <div className="flex items-center gap-3 relative">
-                {/* Emoji Picker Button */}
                 <div className="relative">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95"
+                    className="h-9 w-9 text-[#5f6e82] hover:bg-[#eef4fb] hover:text-[#0F4C81]"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    disabled={messagingMode !== "chat"}
                   >
                     <Smile className="w-4 h-4" />
                   </Button>
-                  
-                  {/* Emoji Picker Dropdown */}
+
                   {showEmojiPicker && (
-                    <div className="absolute bottom-12 left-0 bg-white border border-border rounded-lg p-3 shadow-lg z-50 w-64">
+                    <div className="absolute bottom-12 left-0 bg-white border border-[#d2dce8] rounded-lg p-3 shadow-lg z-50 w-64">
                       <div className="grid grid-cols-5 gap-2">
                         {topEmojis.map((emoji, index) => (
                           <button
@@ -588,38 +547,38 @@ function ChatContent() {
                   )}
                 </div>
 
-                {/* File Upload Button */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95"
+                  className="h-9 w-9 text-[#5f6e82] hover:bg-[#eef4fb] hover:text-[#0F4C81] disabled:opacity-50"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={messagingMode !== "chat"}
                 >
                   <Paperclip className="w-4 h-4" />
                 </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  accept="*/*"
-                />
+                <input ref={fileInputRef} type="file" onChange={handleFileUpload} className="hidden" accept="*/*" />
 
                 <input
                   type="text"
-                  placeholder={activeConversationId ? "Enter message..." : "Select a contact first"}
+                  placeholder={
+                    messagingMode === "email"
+                      ? "Email mode selected"
+                      : activeConversationId
+                        ? "Type a message..."
+                        : "Select a contact first"
+                  }
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  disabled={!activeConversationId}
-                  className="flex-1 px-4 py-2 rounded-lg border border-border bg-white/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all duration-200 disabled:opacity-50"
+                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                  disabled={!activeConversationId || messagingMode !== "chat"}
+                  className="flex-1 px-4 py-2 rounded-md border border-[#d2dce8] bg-white focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20 disabled:opacity-50"
                 />
                 <Button
                   onClick={handleSendMessage}
                   variant="ghost"
                   size="icon"
-                  disabled={!activeConversationId}
-                  className="h-9 w-9 transition-all duration-200 hover:scale-110 hover:bg-white/50 active:scale-95 disabled:opacity-50"
+                  disabled={!activeConversationId || messagingMode !== "chat"}
+                  className="h-9 w-9 text-[#5f6e82] hover:bg-[#eef4fb] hover:text-[#0F4C81] disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                 </Button>

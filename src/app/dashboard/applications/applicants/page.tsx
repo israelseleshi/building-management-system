@@ -89,10 +89,11 @@ function ApplicantsContent() {
   const [sendCardPhase, setSendCardPhase] = useState<SendCardPhase>("closed")
   const [shareMethod, setShareMethod] = useState<ShareMethod>("email")
   const [selectedTemplate, setSelectedTemplate] = useState("Standard Addis Rental Form")
-  const [recipientEmail, setRecipientEmail] = useState("")
+  const [recipientEmails, setRecipientEmails] = useState<string[]>([])
+  const [emailInput, setEmailInput] = useState("")
   const [recipientPhone, setRecipientPhone] = useState("")
   const [customMessage, setCustomMessage] = useState("Please complete your rental application at your earliest convenience.")
-  const [generatedUrl] = useState("https://apply.smartbms.et/a/addis-rental-form-9f4a1")
+  const [origin, setOrigin] = useState("")
   const [copied, setCopied] = useState(false)
 
   const filteredApplications = useMemo(() => {
@@ -156,6 +157,29 @@ function ApplicantsContent() {
     }
   }
 
+  const isValidEmail = (value: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+
+  const addEmailsFromInput = () => {
+    const tokens = emailInput
+      .split(/[,\s;]+/)
+      .map((token) => token.trim().toLowerCase())
+      .filter(Boolean)
+
+    if (tokens.length === 0) return
+
+    setRecipientEmails((current) => {
+      const next = [...current]
+      for (const token of tokens) {
+        if (isValidEmail(token) && !next.includes(token)) {
+          next.push(token)
+        }
+      }
+      return next
+    })
+    setEmailInput("")
+  }
+
   useEffect(() => {
     if (!isSendApplicationOpen) {
       setSendCardPhase("closed")
@@ -175,6 +199,21 @@ function ApplicantsContent() {
       clearTimeout(toOpen)
     }
   }, [isSendApplicationOpen])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin)
+    }
+  }, [])
+
+  const ownerSlug = "oak-tree-homes"
+  const formSlugByTemplate: Record<string, string> = {
+    "Standard Addis Rental Form": "standard-addis-rental-form",
+    "Commercial Tenant Form": "commercial-tenant-form",
+    "Shared Housing Form": "shared-housing-form",
+  }
+  const selectedFormSlug = formSlugByTemplate[selectedTemplate] || "standard-addis-rental-form"
+  const generatedUrl = `${origin || "http://localhost:3000"}/apply/${ownerSlug}/${selectedFormSlug}`
 
   const sendCardMotionClass =
     sendCardPhase === "start" ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
@@ -366,15 +405,54 @@ function ApplicantsContent() {
                         </div>
 
                         <div>
-                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Share Via Email</label>
-                          <input
-                            type="email"
-                            placeholder="applicant@email.com"
-                            value={recipientEmail}
-                            onChange={(event) => setRecipientEmail(event.target.value)}
-                            className="h-10 w-full rounded-md border bg-white px-3 text-sm outline-none"
-                            style={{ borderColor: theme.line, color: theme.ink }}
-                          />
+                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>
+                            Share Via Email (Multiple)
+                          </label>
+                          <div className="rounded-md border bg-white p-2" style={{ borderColor: theme.line }}>
+                            {recipientEmails.length > 0 && (
+                              <div className="mb-2 flex flex-wrap gap-1.5">
+                                {recipientEmails.map((email) => (
+                                  <span
+                                    key={email}
+                                    className="inline-flex items-center gap-1 rounded-full bg-[#E8F2FF] px-2 py-1 text-xs font-medium"
+                                    style={{ color: theme.primary }}
+                                  >
+                                    {email}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setRecipientEmails((current) =>
+                                          current.filter((item) => item !== email)
+                                        )
+                                      }
+                                      className="rounded-full p-0.5 hover:bg-white"
+                                      aria-label={`Remove ${email}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            <input
+                              type="text"
+                              placeholder="Type email then press Enter or comma"
+                              value={emailInput}
+                              onChange={(event) => setEmailInput(event.target.value)}
+                              onBlur={addEmailsFromInput}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === ",") {
+                                  event.preventDefault()
+                                  addEmailsFromInput()
+                                }
+                              }}
+                              className="h-9 w-full border-0 bg-transparent px-1 text-sm outline-none"
+                              style={{ color: theme.ink }}
+                            />
+                          </div>
+                          <p className="mt-1 text-xs" style={{ color: theme.muted }}>
+                            You can paste multiple emails separated by comma or space.
+                          </p>
                         </div>
 
                         <div>
@@ -400,9 +478,13 @@ function ApplicantsContent() {
                         </div>
 
                         <div className="flex justify-end">
-                          <Button className="h-9 px-5" style={{ backgroundColor: theme.primary, color: "#fff" }}>
+                          <Button
+                            className="h-9 px-5"
+                            style={{ backgroundColor: theme.primary, color: "#fff" }}
+                            disabled={recipientEmails.length === 0}
+                          >
                             <Send className="mr-2 h-4 w-4" />
-                            Send Application
+                            Send Application ({recipientEmails.length})
                           </Button>
                         </div>
                       </div>
@@ -434,6 +516,16 @@ function ApplicantsContent() {
                               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                               {copied ? "Copied" : "Copy"}
                             </button>
+                            <a
+                              href={generatedUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex h-10 items-center gap-1 border-l px-3 text-sm font-medium"
+                              style={{ borderColor: theme.line, color: theme.primary }}
+                            >
+                              <Link2 className="h-4 w-4" />
+                              Open
+                            </a>
                           </div>
                           <p className="mt-2 text-xs" style={{ color: theme.muted }}>
                             Share this URL publicly on your building page so applicants can apply directly.
