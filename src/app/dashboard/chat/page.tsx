@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
@@ -67,21 +67,39 @@ type MessageItem = {
   isOwn: boolean
 }
 
+type HistoryItem = {
+  conversationId: number
+  userId: number
+  fullName: string
+  username: string
+  profilePicture: string | null
+  role: string
+  buildingName: string
+  floor: number | null
+  unreadCount: number
+}
+
 function ChatContent() {
   const router = useRouter()
+
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
   const [chatSearch, setChatSearch] = useState("")
-  const [selectedPersonIndex, setSelectedPersonIndex] = useState(0)
   const [contacts, setContacts] = useState<ContactItem[]>([])
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [messages, setMessages] = useState<MessageItem[]>([])
+
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [messagingMode, setMessagingMode] = useState<"chat" | "email">("chat")
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
+
+  const [emailSubject, setEmailSubject] = useState("")
+  const [emailBody, setEmailBody] = useState("")
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const topEmojis = [
     "\u{1F600}",
@@ -158,17 +176,8 @@ function ChatContent() {
     },
   ]
 
-  const filteredContacts = (contacts || []).filter((contact) => {
-    if (!contact) return false
-    return (
-      !chatSearch ||
-      (contact.full_name && contact.full_name.toLowerCase().includes(chatSearch.toLowerCase())) ||
-      (contact.username && contact.username.toLowerCase().includes(chatSearch.toLowerCase()))
-    )
-  })
-
   useEffect(() => {
-    const loadData = async () => {
+    const loadInitialData = async () => {
       try {
         const token = getAuthToken()
         if (!token) {
@@ -176,120 +185,127 @@ function ChatContent() {
           return
         }
 
-        const userResponse = await fetch(`${API_BASE_URL}/user/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const [userResponse, convsResponse, contactsResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/user/me`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/conversations`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/conversations/contacts`, { headers: { Authorization: `Bearer ${token}` } }),
+        ])
+
         const userData = await userResponse.json()
         if (userData.success) {
           setCurrentUserId(String(userData.data.user.user_id))
         }
 
-        const convsResponse = await fetch(`${API_BASE_URL}/conversations`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
         const convsData = await convsResponse.json()
         if (convsData.success) {
-          setConversations(convsData.data.conversations)
+          setConversations(convsData.data.conversations || [])
+        }
+
+        const contactsData = await contactsResponse.json()
+        if (contactsData.success) {
+          setContacts(contactsData.data.contacts || [])
         }
       } catch (error) {
         console.error("Error loading initial data:", error)
       }
     }
 
-    loadData()
+    loadInitialData()
   }, [router])
 
+  const contactsByUserId = useMemo(() => {
+    const map = new Map<number, ContactItem>()
+    for (const contact of contacts) {
+      map.set(contact.user_id, contact)
+    }
+    return map
+  }, [contacts])
+
+  const historyItems = useMemo<HistoryItem[]>(() => {
+    return conversations
+      .map((conv) => {
+        const participant =
+          conv.participants.find((p) => String(p.user.user_id) !== currentUserId)?.user || conv.participants[0]?.user
+
+        if (!participant) return null
+
+        const contact = contactsByUserId.get(participant.user_id)
+
+        return {
+          conversationId: conv.conversation_id,
+          userId: participant.user_id,
+          fullName: participant.full_name || contact?.full_name || "Unknown User",
+          username: contact?.username || "",
+          profilePicture: participant.profile_picture || contact?.profile_picture || null,
+          role: participant.role || contact?.role || "tenant",
+          buildingName: contact?.building_name || "",
+          floor: contact?.floor ?? null,
+          unreadCount: conv.unreadCount || 0,
+        }
+      })
+      .filter((item): item is HistoryItem => Boolean(item))
+  }, [conversations, contactsByUserId, currentUserId])
+
+  const filteredHistory = useMemo(() => {
+    if (!chatSearch.trim()) return historyItems
+    const query = chatSearch.toLowerCase()
+    return historyItems.filter((item) => {
+      return (
+        item.fullName.toLowerCase().includes(query) ||
+        item.username.toLowerCase().includes(query) ||
+        item.buildingName.toLowerCase().includes(query)
+      )
+    })
+  }, [chatSearch, historyItems])
+
+  const activeHistoryItem = useMemo(() => {
+    return historyItems.find((item) => item.conversationId === activeConversationId) || null
+  }, [historyItems, activeConversationId])
+
   useEffect(() => {
-    const fetchContacts = async () => {
+    if (historyItems.length === 0) {
+      setActiveConversationId(null)
+      setMessages([])
+      return
+    }
+
+    if (!activeConversationId || !historyItems.some((item) => item.conversationId === activeConversationId)) {
+      setActiveConversationId(historyItems[0].conversationId)
+    }
+  }, [historyItems, activeConversationId])
+
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!activeConversationId) return
       const token = getAuthToken()
       if (!token) return
 
       try {
-        const contactsRes = await fetch(`${API_BASE_URL}/conversations/contacts`, {
+        const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${activeConversationId}/messages`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        const contactsData = await contactsRes.json()
-        if (contactsData.success) {
-          setContacts(contactsData.data.contacts)
+        const msgsData = await msgsResponse.json()
+
+        if (msgsData.success) {
+          const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
+            id: String(m.message_id),
+            senderId: String(m.sender_id),
+            message: m.content,
+            timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isOwn: String(m.sender_id) === currentUserId,
+          }))
+          setMessages(builtMessages)
         }
       } catch (error) {
-        console.error("Error fetching contacts:", error)
+        console.error("Error loading messages:", error)
       }
     }
 
-    fetchContacts()
-  }, [])
+    loadMessages()
+  }, [activeConversationId, currentUserId])
 
-  const loadMessagesForConversation = async (conversationId: number, token: string) => {
-    try {
-      const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      const msgsData = await msgsResponse.json()
-
-      if (msgsData.success) {
-        const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
-          id: String(m.message_id),
-          senderId: String(m.sender_id),
-          message: m.content,
-          timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          isOwn: String(m.sender_id) === currentUserId,
-        }))
-        setMessages(builtMessages)
-      }
-    } catch (error) {
-      console.error("Error loading messages:", error)
-    }
-  }
-
-  const startConversationWithContact = async (contact: ContactItem) => {
-    const token = getAuthToken()
-    if (!token) return
-
-    try {
-      const existingConv = conversations.find((conv) => conv.participants.some((p) => p.user.user_id === contact.user_id))
-
-      if (existingConv) {
-        setActiveConversationId(existingConv.conversation_id)
-        await loadMessagesForConversation(existingConv.conversation_id, token)
-        return
-      }
-
-      const response = await fetch(`${API_BASE_URL}/conversations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ participantIds: [contact.user_id] }),
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        const newConvId = data.data.conversation?.conversation_id || data.data.conversationId
-        setActiveConversationId(newConvId)
-
-        const convsResponse = await fetch(`${API_BASE_URL}/conversations`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const convsData = await convsResponse.json()
-        if (convsData.success) {
-          setConversations(convsData.data.conversations)
-        }
-
-        await loadMessagesForConversation(newConvId, token)
-      }
-    } catch (error) {
-      console.error("Error starting conversation:", error)
-    }
-  }
-
-  const handlePersonClick = async (index: number) => {
-    setSelectedPersonIndex(index)
-    const contact = filteredContacts[index]
-    if (!contact) return
-
-    await startConversationWithContact(contact)
+  const handleHistoryClick = (conversationId: number) => {
+    setActiveConversationId(conversationId)
   }
 
   const handleSendMessage = async () => {
@@ -329,6 +345,26 @@ function ChatContent() {
     }
   }
 
+  const handleEmojiClick = (emoji: string) => {
+    setNewMessage(newMessage + emoji)
+    setShowEmojiPicker(false)
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      setNewMessage(newMessage + ` [File: ${file.name}]`)
+    }
+  }
+
+  const handleEmailSend = () => {
+    if (!activeHistoryItem) return
+    if (!emailSubject.trim() && !emailBody.trim()) return
+    setEmailSubject("")
+    setEmailBody("")
+  }
+
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
@@ -347,25 +383,8 @@ function ChatContent() {
     }
   }
 
-  const handleEmojiClick = (emoji: string) => {
-    setNewMessage(newMessage + emoji)
-    setShowEmojiPicker(false)
-  }
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files && files.length > 0) {
-      const file = files[0]
-      const fileName = file.name
-      setNewMessage(newMessage + ` [File: ${fileName}]`)
-      console.log("File selected:", file)
-    }
-  }
-
-  const currentPerson = filteredContacts[selectedPersonIndex]
-
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen overflow-hidden flex">
       <DashboardSidebar
         navItems={navItems}
         isSidebarCollapsed={isSidebarCollapsed}
@@ -374,215 +393,286 @@ function ChatContent() {
         onNavigate={handleSidebarNavigation}
       />
 
-      <div className="flex-1 transition-all duration-300 ease-in-out flex flex-col">
+      <div className="flex-1 min-h-0 transition-all duration-300 ease-in-out flex flex-col">
         <DashboardHeader
           title="Messaging"
-          subtitle={messagingMode === "chat" ? "Direct chat messaging" : "Email messaging"}
+          subtitle={messagingMode === "chat" ? "Chat" : "Email"}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onToggleSidebar={toggleSidebar}
         />
 
-        <div className="flex-1 p-4 flex overflow-hidden bg-[#F3F6FA]">
-          <div className="w-[360px] border border-[#dbe4ee] rounded-lg overflow-hidden flex flex-col mr-4 bg-white">
-            <div className="p-3 border-b border-[#e2e8f0] space-y-3">
-              <div className="grid grid-cols-2 rounded-md bg-[#eef3f9] p-1">
-                <button
-                  type="button"
-                  onClick={() => setMessagingMode("email")}
-                  className={`h-9 rounded text-sm font-medium transition-colors ${
-                    messagingMode === "email" ? "bg-white text-[#0F4C81] shadow-sm" : "text-[#506176] hover:text-[#0F4C81]"
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMessagingMode("chat")}
-                  className={`h-9 rounded text-sm font-medium transition-colors ${
-                    messagingMode === "chat" ? "bg-white text-[#0F4C81] shadow-sm" : "text-[#506176] hover:text-[#0F4C81]"
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Chat
-                  </span>
-                </button>
-              </div>
-
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#7a8ea5]" />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={chatSearch}
-                  onChange={(e) => setChatSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-md border border-[#d2dce8] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
-                />
-              </div>
+        <div className="flex-1 min-h-0 p-4 bg-[#F4F5F8]">
+          <div className="h-full min-h-0 flex border border-[#D6DCE6] rounded-md overflow-hidden bg-white">
+            <div className="w-[76px] border-r border-[#E3E8F0] bg-[#F7F9FC] flex flex-col items-stretch py-2">
+              <button
+                type="button"
+                onClick={() => setMessagingMode("email")}
+                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded px-2 py-2 text-[11px] ${
+                  messagingMode === "email" ? "bg-[#E8EFF7] text-[#0F4C81]" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
+                }`}
+              >
+                <Mail className="h-4 w-4" />
+                <span>Email</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMessagingMode("chat")}
+                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded px-2 py-2 text-[11px] ${
+                  messagingMode === "chat" ? "bg-[#E8EFF7] text-[#0F4C81]" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
+                }`}
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Chat</span>
+              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-              {filteredContacts.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">No contacts found</div>
-              ) : (
-                filteredContacts.map((contact, idx) => (
-                  <button
-                    key={contact.user_id}
-                    onClick={() => handlePersonClick(idx)}
-                    className={`w-full px-4 py-3 border-b border-[#edf2f7] text-left transition-colors ${
-                      selectedPersonIndex === idx ? "bg-[#edf4fb]" : "hover:bg-[#f8fbff]"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Avatar className="w-10 h-10">
-                        {contact.profile_picture && <AvatarImage src={contact.profile_picture} />}
-                        <AvatarFallback>{contact.full_name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-foreground text-sm">{contact.full_name}</h3>
-                          <span className="text-xs text-muted-foreground capitalize">{contact.role}</span>
+            <div className="w-[320px] border-r border-[#E3E8F0] flex flex-col min-h-0 bg-white">
+              <div className="p-3 border-b border-[#E8EDF4]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A8EA5]" />
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={chatSearch}
+                    onChange={(e) => setChatSearch(e.target.value)}
+                    className="w-full h-9 rounded-md border border-[#D2DCE8] bg-white pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
+                  />
+                </div>
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                {filteredHistory.length === 0 ? (
+                  <div className="p-4 text-sm text-[#738599]">No message history found.</div>
+                ) : (
+                  filteredHistory.map((item) => {
+                    const isActive = item.conversationId === activeConversationId
+                    return (
+                      <button
+                        key={item.conversationId}
+                        type="button"
+                        onClick={() => handleHistoryClick(item.conversationId)}
+                        className={`w-full border-b border-[#EEF2F8] px-3 py-3 text-left ${
+                          isActive ? "bg-[#EEF4FB]" : "hover:bg-[#F8FBFF]"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-9 w-9">
+                            {item.profilePicture && <AvatarImage src={item.profilePicture} />}
+                            <AvatarFallback>{item.fullName[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="truncate text-sm font-medium text-[#203247]">{item.fullName}</p>
+                              {item.unreadCount > 0 ? (
+                                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2F80ED] px-1 text-[10px] text-white">
+                                  {item.unreadCount}
+                                </span>
+                              ) : null}
+                            </div>
+                            <p className="mt-0.5 truncate text-xs text-[#6C7D90]">
+                              {item.buildingName}
+                              {item.floor !== null ? ` - Floor ${item.floor}` : ""}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {contact.building_name}
-                          {contact.floor !== null ? ` - Floor ${contact.floor}` : ""}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
+                      </button>
+                    )
+                  })
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="flex-1 border border-[#dbe4ee] rounded-lg overflow-hidden flex flex-col bg-[#f8fbff]">
-            <div className="border-b border-[#e2e8f0] bg-white px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-10 h-10">
-                  {currentPerson?.profile_picture && <AvatarImage src={currentPerson.profile_picture} />}
-                  <AvatarFallback>{currentPerson?.full_name?.[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="font-semibold text-foreground">{currentPerson?.full_name || "Select a contact"}</h2>
-                  {currentPerson && (
-                    <p className="text-xs text-muted-foreground">
-                      {currentPerson.building_name}
-                      {currentPerson.floor !== null ? ` - Floor ${currentPerson.floor}` : ""}
+            <div className="flex-1 min-h-0 flex flex-col bg-[#FDFDFE]">
+              <div className="h-[62px] border-b border-[#E3E8F0] bg-white px-5 flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar className="h-9 w-9">
+                    {activeHistoryItem?.profilePicture && <AvatarImage src={activeHistoryItem.profilePicture} />}
+                    <AvatarFallback>{activeHistoryItem?.fullName?.[0] || "?"}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#203247]">
+                      {activeHistoryItem?.fullName || "Select a conversation"}
                     </p>
-                  )}
+                    {activeHistoryItem?.buildingName ? (
+                      <p className="truncate text-xs text-[#6C7D90]">{activeHistoryItem.buildingName}</p>
+                    ) : null}
+                  </div>
                 </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5F6F82] hover:text-[#0F4C81]">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-[#5f6e82] hover:text-[#0F4C81]">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
-              {messagingMode === "email" ? (
-                <div className="h-full flex items-center justify-center text-center text-[#5f6e82]">
-                  Email option is available in this screen. Switch to Chat to send real-time messages.
-                </div>
-              ) : !activeConversationId ? (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  Select a contact to start messaging
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}>
-                    <div className={`flex items-end gap-2 max-w-md ${msg.isOwn ? "flex-row-reverse" : ""}`}>
-                      {!msg.isOwn && currentPerson && (
-                        <Avatar className="w-8 h-8 flex-shrink-0">
-                          <AvatarFallback>{currentPerson.full_name[0]}</AvatarFallback>
-                        </Avatar>
-                      )}
-                      <div className={msg.isOwn ? "text-right" : "text-left"}>
-                        <div
-                          className={`px-4 py-2 rounded-lg ${
-                            msg.isOwn
-                              ? "bg-[#2F80ED] text-white rounded-br-none"
-                              : "bg-white text-foreground border border-[#e4ebf3] rounded-bl-none"
-                          }`}
-                        >
-                          <p className="text-sm">{msg.message}</p>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{msg.timestamp}</p>
+              {messagingMode === "chat" ? (
+                <>
+                  <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 space-y-3 bg-[#F5F7FA]">
+                    {!activeConversationId ? (
+                      <div className="h-full flex items-center justify-center text-sm text-[#738599]">
+                        Select a conversation from history.
                       </div>
+                    ) : messages.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-sm text-[#738599]">
+                        No messages yet.
+                      </div>
+                    ) : (
+                      messages.map((msg) => (
+                        <div key={msg.id} className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}>
+                          <div className="max-w-[72%]">
+                            <div
+                              className={`rounded-md px-3 py-2 text-sm ${
+                                msg.isOwn
+                                  ? "bg-[#2F80ED] text-white rounded-br-none"
+                                  : "bg-white text-[#1F2E40] border border-[#E4EBF3] rounded-bl-none"
+                              }`}
+                            >
+                              {msg.message}
+                            </div>
+                            <p className={`mt-1 text-[11px] text-[#7B8DA1] ${msg.isOwn ? "text-right" : "text-left"}`}>
+                              {msg.timestamp}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="border-t border-[#E3E8F0] bg-white px-5 py-3">
+                    <div className="flex items-center gap-2 relative">
+                      <div className="relative">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
+                          onClick={() => setShowEmojiPicker((prev) => !prev)}
+                          disabled={!activeConversationId}
+                        >
+                          <Smile className="h-4 w-4" />
+                        </Button>
+
+                        {showEmojiPicker ? (
+                          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-md border border-[#D2DCE8] bg-white p-2 shadow-lg">
+                            <div className="grid grid-cols-5 gap-1">
+                              {topEmojis.map((emoji, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => handleEmojiClick(emoji)}
+                                  className="rounded p-2 text-xl hover:bg-[#F2F6FB]"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={!activeConversationId}
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                      <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} accept="*/*" />
+
+                      <input
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault()
+                            void handleSendMessage()
+                          }
+                        }}
+                        disabled={!activeConversationId}
+                        placeholder={activeConversationId ? "Type a message" : "Select a conversation first"}
+                        className="h-9 flex-1 rounded-md border border-[#D2DCE8] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20 disabled:opacity-50"
+                      />
+
+                      <Button
+                        onClick={() => {
+                          void handleSendMessage()
+                        }}
+                        variant="ghost"
+                        size="icon"
+                        disabled={!activeConversationId}
+                        className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-
-            <div className="border-t border-[#e2e8f0] bg-white px-6 py-4">
-              <div className="flex items-center gap-3 relative">
-                <div className="relative">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-[#5f6e82] hover:bg-[#eef4fb] hover:text-[#0F4C81]"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    disabled={messagingMode !== "chat"}
-                  >
-                    <Smile className="w-4 h-4" />
-                  </Button>
-
-                  {showEmojiPicker && (
-                    <div className="absolute bottom-12 left-0 bg-white border border-[#d2dce8] rounded-lg p-3 shadow-lg z-50 w-64">
-                      <div className="grid grid-cols-5 gap-2">
-                        {topEmojis.map((emoji, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleEmojiClick(emoji)}
-                            className="text-2xl hover:bg-gray-100 rounded p-2 transition-colors"
-                          >
-                            {emoji}
-                          </button>
-                        ))}
+                </>
+              ) : (
+                <div className="flex-1 min-h-0 flex flex-col bg-[#F5F7FA]">
+                  <div className="flex-1 min-h-0 overflow-y-auto p-5">
+                    {!activeHistoryItem ? (
+                      <div className="h-full flex items-center justify-center text-sm text-[#738599]">
+                        Select a conversation from history.
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="mx-auto max-w-3xl rounded-md border border-[#D9E1EC] bg-white">
+                        <div className="border-b border-[#E7EDF5] px-4 py-3">
+                          <p className="text-sm font-semibold text-[#1F2E40]">Compose Email</p>
+                        </div>
+
+                        <div className="space-y-3 p-4">
+                          <div className="grid grid-cols-[70px_1fr] items-center gap-2">
+                            <label className="text-sm text-[#5F6F82]">To</label>
+                            <input
+                              type="text"
+                              readOnly
+                              value={activeHistoryItem.fullName}
+                              className="h-9 rounded-md border border-[#D2DCE8] bg-[#FAFCFF] px-3 text-sm text-[#1F2E40]"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-[70px_1fr] items-center gap-2">
+                            <label className="text-sm text-[#5F6F82]">Subject</label>
+                            <input
+                              type="text"
+                              value={emailSubject}
+                              onChange={(e) => setEmailSubject(e.target.value)}
+                              placeholder="Enter subject"
+                              className="h-9 rounded-md border border-[#D2DCE8] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-[70px_1fr] gap-2">
+                            <label className="pt-2 text-sm text-[#5F6F82]">Message</label>
+                            <textarea
+                              value={emailBody}
+                              onChange={(e) => setEmailBody(e.target.value)}
+                              placeholder="Write your email..."
+                              rows={10}
+                              className="w-full rounded-md border border-[#D2DCE8] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between border-t border-[#E7EDF5] px-4 py-3">
+                          <Button variant="ghost" className="text-[#4D6075] hover:bg-[#EEF4FB]">
+                            <Paperclip className="mr-2 h-4 w-4" />
+                            Attach
+                          </Button>
+                          <Button
+                            onClick={handleEmailSend}
+                            className="bg-[#2F80ED] text-white hover:bg-[#1F6FD8]"
+                            disabled={!activeHistoryItem}
+                          >
+                            Send Email
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-[#5f6e82] hover:bg-[#eef4fb] hover:text-[#0F4C81] disabled:opacity-50"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={messagingMode !== "chat"}
-                >
-                  <Paperclip className="w-4 h-4" />
-                </Button>
-                <input ref={fileInputRef} type="file" onChange={handleFileUpload} className="hidden" accept="*/*" />
-
-                <input
-                  type="text"
-                  placeholder={
-                    messagingMode === "email"
-                      ? "Email mode selected"
-                      : activeConversationId
-                        ? "Type a message..."
-                        : "Select a contact first"
-                  }
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                  disabled={!activeConversationId || messagingMode !== "chat"}
-                  className="flex-1 px-4 py-2 rounded-md border border-[#d2dce8] bg-white focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20 disabled:opacity-50"
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  variant="ghost"
-                  size="icon"
-                  disabled={!activeConversationId || messagingMode !== "chat"}
-                  className="h-9 w-9 text-[#5f6e82] hover:bg-[#eef4fb] hover:text-[#0F4C81] disabled:opacity-50"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
+              )}
             </div>
           </div>
         </div>
