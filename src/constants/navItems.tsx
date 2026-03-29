@@ -88,7 +88,7 @@ const landlordGroups: NavGroupBase[] = [
     ],
   },
   {
-    title: "Comms",
+    title: "Messaging",
     icon: <MessageSquare className="w-5 h-5" />,
     items: [
       { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/dashboard/chat" },
@@ -152,7 +152,7 @@ const tenantGroups: NavGroupBase[] = [
     ],
   },
   {
-    title: "Comms",
+    title: "Messaging",
     icon: <MessageSquare className="w-5 h-5" />,
     items: [
       { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/tenant-dashboard/chat" },

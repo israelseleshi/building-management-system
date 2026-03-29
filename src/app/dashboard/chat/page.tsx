@@ -65,6 +65,7 @@ type MessageItem = {
   message: string
   timestamp: string
   isOwn: boolean
+  attachments: Array<{ url: string; name: string }>
 }
 
 type HistoryItem = {
@@ -98,6 +99,7 @@ function ChatContent() {
 
   const [emailSubject, setEmailSubject] = useState("")
   const [emailBody, setEmailBody] = useState("")
+  const [pendingAttachment, setPendingAttachment] = useState<{ name: string; url: string } | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -118,6 +120,51 @@ function ChatContent() {
     "\u{1F680}",
     "\u{1F60E}",
   ]
+
+  const decodeAttachmentName = (rawUrl: string, fallback: string) => {
+    const marker = "#name="
+    const markerIndex = rawUrl.indexOf(marker)
+    if (markerIndex === -1) return fallback
+    const encoded = rawUrl.slice(markerIndex + marker.length)
+    try {
+      return decodeURIComponent(encoded) || fallback
+    } catch {
+      return fallback
+    }
+  }
+
+  const stripAttachmentFragment = (rawUrl: string) => {
+    const markerIndex = rawUrl.indexOf("#name=")
+    return markerIndex === -1 ? rawUrl : rawUrl.slice(0, markerIndex)
+  }
+
+  const normalizeAttachments = (attachments: unknown): Array<{ url: string; name: string }> => {
+    if (!attachments || !Array.isArray(attachments)) return []
+
+    return attachments
+      .map((item, index) => {
+        if (typeof item === "string") {
+          const fallbackName = `attachment-${index + 1}`
+          return {
+            url: stripAttachmentFragment(item),
+            name: decodeAttachmentName(item, fallbackName),
+          }
+        }
+
+        if (typeof item === "object" && item !== null && "url" in item) {
+          const rawUrl = String((item as any).url || "")
+          if (!rawUrl) return null
+          const fallbackName = `attachment-${index + 1}`
+          return {
+            url: stripAttachmentFragment(rawUrl),
+            name: String((item as any).name || decodeAttachmentName(rawUrl, fallbackName)),
+          }
+        }
+
+        return null
+      })
+      .filter((item): item is { url: string; name: string } => Boolean(item?.url))
+  }
 
   const navItems = [
     {
@@ -293,6 +340,7 @@ function ChatContent() {
             message: m.content,
             timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: String(m.sender_id) === currentUserId,
+            attachments: normalizeAttachments(m.attachments),
           }))
           setMessages(builtMessages)
         }
@@ -309,13 +357,15 @@ function ChatContent() {
   }
 
   const handleSendMessage = async () => {
-    if (messagingMode !== "chat" || !newMessage.trim() || !activeConversationId) return
+    if (messagingMode !== "chat" || (!newMessage.trim() && !pendingAttachment) || !activeConversationId) return
 
     const token = getAuthToken()
     if (!token) return
 
     const content = newMessage.trim()
+    const outgoingAttachments = pendingAttachment ? [{ ...pendingAttachment }] : []
     setNewMessage("")
+    setPendingAttachment(null)
 
     try {
       const response = await fetch(`${API_BASE_URL}/conversations/${activeConversationId}/messages`, {
@@ -324,7 +374,12 @@ function ChatContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({
+          content,
+          attachments: outgoingAttachments.length
+            ? outgoingAttachments.map((attachment) => `${attachment.url}#name=${encodeURIComponent(attachment.name)}`)
+            : undefined,
+        }),
       })
 
       const data = await response.json()
@@ -337,6 +392,7 @@ function ChatContent() {
             message: content,
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: true,
+            attachments: outgoingAttachments,
           },
         ])
       }
@@ -354,7 +410,16 @@ function ChatContent() {
     const files = e.target.files
     if (files && files.length > 0) {
       const file = files[0]
-      setNewMessage(newMessage + ` [File: ${file.name}]`)
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = typeof reader.result === "string" ? reader.result : ""
+        if (!result) return
+        setPendingAttachment({ name: file.name, url: result })
+      }
+      reader.readAsDataURL(file)
+    }
+    if (e.target) {
+      e.target.value = ""
     }
   }
 
@@ -429,6 +494,7 @@ function ChatContent() {
 
             <div className="w-[320px] border-r border-[#E3E8F0] flex flex-col min-h-0 bg-white">
               <div className="p-3 border-b border-[#E8EDF4]">
+                <div className="mb-2 text-sm font-semibold text-[#203247]">{messagingMode === "chat" ? "Chat" : "Email"}</div>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A8EA5]" />
                   <input
@@ -452,25 +518,25 @@ function ChatContent() {
                         key={item.conversationId}
                         type="button"
                         onClick={() => handleHistoryClick(item.conversationId)}
-                        className={`w-full border-b border-[#EEF2F8] px-3 py-3 text-left ${
+                        className={`w-full border-b border-[#EEF2F8] px-3 py-2 text-left ${
                           isActive ? "bg-[#EEF4FB]" : "hover:bg-[#F8FBFF]"
                         }`}
                       >
-                        <div className="flex items-start gap-3">
-                          <Avatar className="h-9 w-9">
+                        <div className="flex items-start gap-2.5">
+                          <Avatar className="h-8 w-8">
                             {item.profilePicture && <AvatarImage src={item.profilePicture} />}
                             <AvatarFallback>{item.fullName[0]}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="truncate text-sm font-medium text-[#203247]">{item.fullName}</p>
+                              <p className="truncate text-[13px] font-medium text-[#203247]">{item.fullName}</p>
                               {item.unreadCount > 0 ? (
                                 <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2F80ED] px-1 text-[10px] text-white">
                                   {item.unreadCount}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="mt-0.5 truncate text-xs text-[#6C7D90]">
+                            <p className="mt-0.5 truncate text-[12px] text-[#6C7D90]">
                               {item.buildingName}
                               {item.floor !== null ? ` - Floor ${item.floor}` : ""}
                             </p>
@@ -528,6 +594,26 @@ function ChatContent() {
                             >
                               {msg.message}
                             </div>
+                            {msg.attachments.length > 0 ? (
+                              <div className="mt-1 flex flex-wrap gap-1.5">
+                                {msg.attachments.map((attachment, index) => (
+                                  <a
+                                    key={`${msg.id}-att-${index}`}
+                                    href={attachment.url}
+                                    download={attachment.name}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] ${
+                                      msg.isOwn
+                                        ? "border-white/40 bg-white/10 text-white"
+                                        : "border-[#d3dce7] bg-[#f4f8fc] text-[#1f4c7e]"
+                                    }`}
+                                  >
+                                    {attachment.name}
+                                  </a>
+                                ))}
+                              </div>
+                            ) : null}
                             <p className={`mt-1 text-[11px] text-[#7B8DA1] ${msg.isOwn ? "text-right" : "text-left"}`}>
                               {msg.timestamp}
                             </p>
@@ -593,6 +679,11 @@ function ChatContent() {
                         placeholder={activeConversationId ? "Type a message" : "Select a conversation first"}
                         className="h-9 flex-1 rounded-md border border-[#D2DCE8] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20 disabled:opacity-50"
                       />
+                      {pendingAttachment ? (
+                        <div className="max-w-[200px] truncate rounded border border-[#d2dce8] bg-[#f6f9fd] px-2 py-1 text-[11px] text-[#39506a]">
+                          {pendingAttachment.name}
+                        </div>
+                      ) : null}
 
                       <Button
                         onClick={() => {
