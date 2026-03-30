@@ -310,8 +310,8 @@ function CalendarContent() {
       <DashboardSidebar isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)} onLogout={() => { localStorage.clear(); router.push("/auth/signin") }} appBrandName="BMS" />
       <div className="min-w-0 flex-1 flex flex-col">
         <DashboardHeader title="Calendar" subtitle="Calendar management" searchQuery={searchQuery} onSearchChange={setSearchQuery} onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-5">
-          <div className="mx-auto max-w-[1850px] space-y-4">
+        <main className="flex-1 overflow-y-auto p-3 md:p-4">
+          <div className="mx-auto w-full max-w-none space-y-4">
             <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(31,53,73,0.08)] flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Button variant="outline" onClick={() => setFocus(new Date(focus.getFullYear(), focus.getMonth() - 1, focus.getDate()))}><ChevronLeft className="h-4 w-4" /></Button>
@@ -326,8 +326,8 @@ function CalendarContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_240px] gap-4">
-              <aside className="rounded-2xl bg-white p-3.5 space-y-3 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
+            <div className="grid grid-cols-1 xl:grid-cols-[170px_minmax(0,1fr)_170px] gap-3">
+              <aside className="rounded-2xl bg-white p-3 space-y-2.5 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
                 <Filter label="Type" value={eventTypeFilter} onChange={(v) => setEventTypeFilter(v as "all" | Event["type"])} options={["all", "maintenance", "payment", "inspection", "meeting", "notice", "lease"]} />
                 <Filter label="Tenant" value={tenantFilter} onChange={setTenantFilter} options={["all", ...tenants.map((t) => t.id)]} />
                 <Filter label="Unit" value={unitFilter} onChange={setUnitFilter} options={["all", ...units.map((u) => u.id)]} />
@@ -383,7 +383,7 @@ function CalendarContent() {
                 )}
               </section>
 
-              <aside className="space-y-3">
+              <aside className="space-y-2.5">
                 <Widget title="Today's events" value={todayEvents} />
                 <Widget title="Upcoming events" value={upcomingEvents} />
                 <Widget title="Urgent events" value={urgentEvents} />
@@ -393,6 +393,20 @@ function CalendarContent() {
                   <div className="mt-2 space-y-2">
                     {selectedEvents.map((e) => <button key={e.id} onClick={() => setDetailId(e.id)} className="w-full rounded-lg border border-slate-200 p-2 text-left text-xs font-semibold text-slate-700">{e.title}</button>)}
                     {selectedEvents.length === 0 && <div className="text-xs text-slate-500">No events</div>}
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 p-2">
+                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">{draftCount} Drafts</span>
+                    <Button
+                      className="h-8 flex-1 bg-[#3096DA] text-white hover:bg-[#277FB8]"
+                      onClick={() => {
+                        const target = detailEvent || selectedEvents[0] || null
+                        if (!target) return
+                        setEmailTargetEvent(target)
+                        setEmailModalOpen(true)
+                      }}
+                    >
+                      + Compose email
+                    </Button>
                   </div>
                 </div>
               </aside>
@@ -463,21 +477,6 @@ function CalendarContent() {
           </div>
         </div>
       )}
-
-      <div className="fixed bottom-5 right-5 z-[65] flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
-        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">{draftCount} Drafts</span>
-        <Button
-          className="h-9 bg-[#3096DA] text-white hover:bg-[#277FB8]"
-          onClick={() => {
-            const target = detailEvent || selectedEvents[0] || null
-            if (!target) return
-            setEmailTargetEvent(target)
-            setEmailModalOpen(true)
-          }}
-        >
-          + Compose email
-        </Button>
-      </div>
 
       <EmailModal
         open={emailModalOpen}
