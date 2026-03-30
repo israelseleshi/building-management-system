@@ -57,6 +57,7 @@ const landlordGroups: NavGroupBase[] = [
     icon: <LayoutDashboard className="w-5 h-5" />,
     items: [
       { icon: <PieChart className="w-5 h-5" />, name: "Dashboard", path: "/dashboard" },
+      { icon: <Calendar className="w-5 h-5" />, name: "Calendar", path: "/dashboard/calendar" },
     ],
     defaultOpen: true,
   },
