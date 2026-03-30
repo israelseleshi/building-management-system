@@ -223,7 +223,7 @@ function AnalyticsContent() {
                   <Calendar className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                 </div>
               </div>
-              <Button onClick={exportToCSV} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+              <Button onClick={exportToCSV} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                 <Download className="w-4 h-4 mr-2" />
                 Export CSV
               </Button>
@@ -384,3 +384,4 @@ function AnalyticsContent() {
     </div>
   )
 }
+

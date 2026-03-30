@@ -94,8 +94,12 @@ function pickNumberField(obj: AnyRecord | null | undefined, keys: string[], fall
 }
 
 function LeasesContent() {
+  const SIDEBAR_COLLAPSED_KEY = "bms.dashboard.sidebarCollapsed"
   const router = useRouter()
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
+  })
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [leases, setLeases] = useState<Lease[]>([])
@@ -181,6 +185,10 @@ function LeasesContent() {
       active: false,
     },
   ]
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isSidebarCollapsed))
+  }, [isSidebarCollapsed])
 
   // Fetch data
   useEffect(() => {
@@ -463,8 +471,25 @@ function LeasesContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex">
+        <DashboardSidebar
+          navItems={navItems}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+          onLogout={handleLogout}
+          onNavigate={handleSidebarNavigation}
+        />
+
+        <div className="flex-1 flex flex-col">
+          <DashboardHeader
+            title="Rent Management"
+            subtitle="Manage and track all tenant rents"
+            onToggleSidebar={toggleSidebar}
+          />
+          <main className="p-6 md:p-8 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </main>
+        </div>
       </div>
     )
   }
@@ -528,7 +553,7 @@ function LeasesContent() {
               </div>
               <Button
                 onClick={() => setCreateModalOpen(true)}
-                className="bg-[#7D8B6F] hover:bg-[#6a7a5f] text-white rounded-lg flex items-center gap-2"
+                className="bg-[#3096DA] hover:bg-[#277FB8] text-white rounded-lg flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Create Lease
@@ -575,7 +600,7 @@ function LeasesContent() {
                   {!searchQuery && filterStatus === "all" && (
                     <Button
                       onClick={() => setCreateModalOpen(true)}
-                      className="bg-[#7D8B6F] hover:bg-[#6a7a5f] text-white rounded-lg"
+                      className="bg-[#3096DA] hover:bg-[#277FB8] text-white rounded-lg"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Create Lease
@@ -845,7 +870,7 @@ function LeasesContent() {
             </Button>
             <Button
               onClick={handleCreateLease}
-              className="bg-[#7D8B6F] hover:bg-[#6a7a5f] text-white rounded-lg"
+              className="bg-[#3096DA] hover:bg-[#277FB8] text-white rounded-lg"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Lease
@@ -1055,3 +1080,4 @@ export default function LeasesPage() {
     </ProtectedRoute>
   )
 }
+

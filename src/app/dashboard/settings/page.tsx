@@ -704,7 +704,7 @@ function SettingsContent() {
                         placeholder="Enter your building motto"
                         className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                       />
-                      <Button type="button" onClick={handleSaveBuildingMotto} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                      <Button type="button" onClick={handleSaveBuildingMotto} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                         <Save className="mr-2 h-4 w-4" />
                         Save Motto
                       </Button>
@@ -726,7 +726,7 @@ function SettingsContent() {
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                     <Save className="w-4 h-4 mr-2" />
                     Save Changes
                   </Button>
@@ -800,7 +800,7 @@ function SettingsContent() {
                   </div>
 
                   <div className="flex gap-3 pt-4 border-t border-border">
-                    <Button onClick={handleChangePassword} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                    <Button onClick={handleChangePassword} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                       <Save className="w-4 h-4 mr-2" />
                       Update Password
                     </Button>
@@ -854,7 +854,7 @@ function SettingsContent() {
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                     <Save className="w-4 h-4 mr-2" />
                     Save Preferences
                   </Button>
@@ -901,7 +901,7 @@ function SettingsContent() {
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                  <Button style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                     <Save className="w-4 h-4 mr-2" />
                     Update Billing
                   </Button>
@@ -961,3 +961,4 @@ function SettingsContent() {
     </div>
   )
 }
+

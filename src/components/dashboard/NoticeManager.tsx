@@ -76,7 +76,7 @@ export default function NoticeManager() {
             </pre>
           )}
           {success && <Text size="sm" className="text-green-600">{success}</Text>}
-          <Button type="submit" disabled={pending} style={{ backgroundColor: "#7D8B6F", color: "#FFF" }}>
+          <Button type="submit" disabled={pending} style={{ backgroundColor: "#3096DA", color: "#FFF" }}>
             {pending ? "Posting..." : "Post Notice"}
           </Button>
         </form>
@@ -84,3 +84,4 @@ export default function NoticeManager() {
     </Card>
   )
 }
+

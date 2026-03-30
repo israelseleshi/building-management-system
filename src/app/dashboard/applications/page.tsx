@@ -1,6 +1,6 @@
 "use client"
 
-import { type CSSProperties, useMemo, useState } from "react"
+import { type CSSProperties, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -77,9 +77,13 @@ export default function ApplicationsPage() {
 }
 
 function ApplicationsContent() {
+  const SIDEBAR_COLLAPSED_KEY = "bms.dashboard.sidebarCollapsed"
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
+  })
   const [activeTab, setActiveTab] = useState<ActiveTab>("Applications")
   const [activeStatus, setActiveStatus] = useState<ApplicationStatus | "All">("All")
   const [groupBy, setGroupBy] = useState<GroupBy>("Not Grouped")
@@ -130,11 +134,9 @@ function ApplicationsContent() {
     setIsSidebarCollapsed((prev) => !prev)
   }
 
-  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
-    if (!isCurrentlyCollapsed) {
-      setIsSidebarCollapsed(true)
-    }
-  }
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isSidebarCollapsed))
+  }, [isSidebarCollapsed])
 
   return (
     <div
@@ -151,7 +153,6 @@ function ApplicationsContent() {
       <DashboardSidebar
         isSidebarCollapsed={isSidebarCollapsed}
         onLogout={handleLogout}
-        onNavigate={handleSidebarNavigation}
         onToggleSidebar={toggleSidebar}
         appBrandName="BMS"
       />

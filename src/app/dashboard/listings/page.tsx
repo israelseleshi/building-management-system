@@ -232,10 +232,10 @@ function ListingsContent() {
   const totalRent = units.reduce((sum, u) => sum + (u.rentAmount || 0), 0)
 
   const stats = [
-    { title: "Total Units", value: totalUnits.toString(), icon: <Home className="w-6 h-6" style={{ color: "#7D8B6F" }} />, color: "#7D8B6F" },
-    { title: "Occupied", value: occupiedUnits.toString(), icon: <Building2 className="w-6 h-6" style={{ color: "#7D8B6F" }} />, color: "#7D8B6F" },
-    { title: "Vacant", value: vacantUnits.toString(), icon: <TrendingUp className="w-6 h-6" style={{ color: "#7D8B6F" }} />, color: "#7D8B6F" },
-    { title: "Total Rent", value: `ETB ${totalRent.toLocaleString()}`, icon: <DollarSign className="w-6 h-6" style={{ color: "#7D8B6F" }} />, color: "#7D8B6F" },
+    { title: "Total Units", value: totalUnits.toString(), icon: <Home className="w-6 h-6" style={{ color: "#3096DA" }} />, color: "#3096DA" },
+    { title: "Occupied", value: occupiedUnits.toString(), icon: <Building2 className="w-6 h-6" style={{ color: "#3096DA" }} />, color: "#3096DA" },
+    { title: "Vacant", value: vacantUnits.toString(), icon: <TrendingUp className="w-6 h-6" style={{ color: "#3096DA" }} />, color: "#3096DA" },
+    { title: "Total Rent", value: `ETB ${totalRent.toLocaleString()}`, icon: <DollarSign className="w-6 h-6" style={{ color: "#3096DA" }} />, color: "#3096DA" },
   ]
 
   const statusBadge = (status: UnitListing["status"]) => {
@@ -518,7 +518,7 @@ function ListingsContent() {
               style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}
             >
               <div className="flex items-center justify-center mb-4">
-                <div className="w-8 h-8 border-4 border-gray-300 border-t-[#7D8B6F] rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-gray-300 border-t-[#3096DA] rounded-full animate-spin" />
               </div>
               <Heading level={3} className="text-xl font-semibold text-foreground mb-2">Loading units...</Heading>
               <Text className="text-muted-foreground">Fetching your units from the database</Text>
@@ -536,7 +536,7 @@ function ListingsContent() {
               <Button
                 onClick={() => router.push("/dashboard/create")}
                 className="transition-all duration-200 hover:scale-105"
-                style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
               >
                 Create First Listing
               </Button>
@@ -568,7 +568,7 @@ function ListingsContent() {
                 setEditModalOpen(true)
               }}
               className="font-medium"
-              style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+              style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
             >
               Edit Unit
             </Button>
@@ -639,7 +639,7 @@ function ListingsContent() {
           )}
           <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => { setEditModalOpen(false); setEditFormData({}) }} disabled={isSaving} className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400">Cancel</Button>
-            <Button onClick={handleSaveEdit} disabled={isSaving} className="font-medium" style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+            <Button onClick={handleSaveEdit} disabled={isSaving} className="font-medium" style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
@@ -669,3 +669,4 @@ function ListingsContent() {
     </div>
   )
 }
+

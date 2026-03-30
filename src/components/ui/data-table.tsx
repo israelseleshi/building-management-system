@@ -175,7 +175,7 @@ export function DataTable<TData, TValue>({
                   size="sm"
                   onClick={() => table.setPageIndex((page as number) - 1)}
                   className="h-9 w-9 p-0"
-                  style={currentPage === page ? { backgroundColor: "#7D8B6F", color: "#FFFFFF" } : {}}
+                  style={currentPage === page ? { backgroundColor: "#3096DA", color: "#FFFFFF" } : {}}
                 >
                   {page}
                 </Button>
@@ -198,3 +198,4 @@ export function DataTable<TData, TValue>({
     </div>
   )
 }
+

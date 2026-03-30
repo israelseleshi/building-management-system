@@ -22,7 +22,7 @@ export function DashboardSidebar({
   isSidebarCollapsed,
   onToggleSidebar: _ignoredOnToggleSidebar,
   onLogout,
-  onNavigate,
+  onNavigate: _ignoredOnNavigate,
   appBrandName = "BMS",
 }: DashboardSidebarProps) {
   const PANEL_STORAGE_KEY = "bms.dashboard.activePanelGroup"
@@ -122,7 +122,6 @@ export function DashboardSidebar({
   }
 
   const handleNavigation = (path: string) => {
-    onNavigate?.(isSidebarCollapsed)
     router.push(path)
   }
 
@@ -199,7 +198,7 @@ export function DashboardSidebar({
 
         {/* Brand header */}
         <div
-          className={`px-4 py-4 flex items-center gap-2 border-b ${sidebarBorderColor} ${
+          className={`px-4 py-5 flex items-center gap-2 border-b ${sidebarBorderColor} ${
             isSidebarCollapsed ? "justify-center px-1" : "justify-start"
           }`}
         >
@@ -231,7 +230,7 @@ export function DashboardSidebar({
             NAVIGATION — collapsed mode: icon strip only
         ══════════════════════════════════════════════════ */}
         {isSidebarCollapsed ? (
-          <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4">
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6">
             <div className="flex flex-col items-center gap-2 px-1.5">
               {groups.map((group, index) => {
                 const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
@@ -279,7 +278,7 @@ export function DashboardSidebar({
           ══════════════════════════════════════════════════ */
           <div className="flex flex-1 min-h-0 overflow-hidden">
             {/* ── Fixed icon rail (40px) ── */}
-            <div className="flex flex-col py-4 gap-0.5 shrink-0 w-[40px] items-center overflow-y-auto no-scrollbar">
+            <div className="flex flex-col py-6 gap-0.5 shrink-0 w-[40px] items-center overflow-y-auto no-scrollbar">
               {groups.map((group, groupIndex) => {
                 const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
                 if (isSettingsGroup) return null
@@ -330,7 +329,7 @@ export function DashboardSidebar({
                   isPanelOpen ? "-translate-x-full" : "translate-x-0"
                 }`}
               >
-                <div className="flex flex-col py-4 gap-0.5 overflow-y-auto flex-1 pr-2 no-scrollbar">
+                <div className="flex flex-col py-6 gap-0.5 overflow-y-auto flex-1 pr-2 no-scrollbar">
                   {groups.map((group, groupIndex) => {
                     const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
                     if (isSettingsGroup) return null
