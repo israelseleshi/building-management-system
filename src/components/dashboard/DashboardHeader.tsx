@@ -54,11 +54,11 @@ export function DashboardHeader({
   }
 
   return (
-    <header className="border-b border-border bg-card shadow-sm">
+    <header className="bg-white">
       <div
         className={[
-          "flex items-center justify-between border-border bg-card",
-          isOverviewStyleHeader ? "min-h-[60px] gap-5 px-6 py-2.5" : "min-h-[46px] gap-3 px-4 py-1.5",
+          "flex items-center justify-between rounded-none bg-white",
+          isOverviewStyleHeader ? "min-h-[60px] gap-5 px-6 py-2.5" : "min-h-[52px] gap-4 px-5 py-2",
         ].join(" ")}
       >
         <div className={`flex min-w-0 items-center ${isOverviewStyleHeader ? "gap-3" : "gap-3"}`}>
@@ -119,7 +119,7 @@ export function DashboardHeader({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              className="h-10 w-64 rounded-lg border border-border bg-background py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder-black"
+              className="h-10 w-64 rounded-lg border border-border bg-card py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
             />
           </div>
 

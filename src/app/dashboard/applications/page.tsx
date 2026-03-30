@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { type CSSProperties, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -145,7 +145,7 @@ function ApplicationsContent() {
           ["--card" as string]: theme.card,
           ["--background" as string]: theme.background,
           ["--border" as string]: theme.line,
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
       <DashboardSidebar
