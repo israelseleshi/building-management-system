@@ -326,8 +326,8 @@ function CalendarContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-[170px_minmax(0,1fr)_170px] gap-3">
-              <aside className="rounded-2xl bg-white p-3 space-y-2.5 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
+            <div className="grid grid-cols-1 xl:grid-cols-[130px_minmax(0,1fr)_140px] gap-2.5">
+              <aside className="rounded-2xl bg-white p-2.5 space-y-2 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
                 <Filter label="Type" value={eventTypeFilter} onChange={(v) => setEventTypeFilter(v as "all" | Event["type"])} options={["all", "maintenance", "payment", "inspection", "meeting", "notice", "lease"]} />
                 <Filter label="Tenant" value={tenantFilter} onChange={setTenantFilter} options={["all", ...tenants.map((t) => t.id)]} />
                 <Filter label="Unit" value={unitFilter} onChange={setUnitFilter} options={["all", ...units.map((u) => u.id)]} />
@@ -345,7 +345,7 @@ function CalendarContent() {
                         <div key={dateKey(d)} onClick={() => setSelectedDate(d)} onDragOver={(e) => e.preventDefault()} onDrop={(e) => {
                           const movedId = e.dataTransfer.getData("event-id")
                           if (movedId) setEvents((prev) => prev.map((x) => x.id === movedId ? { ...x, startDate: new Date(d.getFullYear(), d.getMonth(), d.getDate(), x.startDate.getHours(), x.startDate.getMinutes()) } : x))
-                        }} className={`min-h-[124px] rounded-xl border p-2 ${d.getMonth() === focus.getMonth() ? "border-slate-200" : "border-slate-100 bg-slate-50"}`}>
+                        }} className={`min-h-[106px] rounded-xl border p-1.5 ${d.getMonth() === focus.getMonth() ? "border-slate-200" : "border-slate-100 bg-slate-50"}`}>
                           <div className="flex items-center justify-between">
                             <span className={`text-xs font-semibold ${sameDay(d, new Date()) ? "text-[#3096DA]" : "text-slate-600"}`}>{d.getDate()}</span>
                             <div className="flex items-center gap-1">
@@ -394,10 +394,10 @@ function CalendarContent() {
                     {selectedEvents.map((e) => <button key={e.id} onClick={() => setDetailId(e.id)} className="w-full rounded-lg border border-slate-200 p-2 text-left text-xs font-semibold text-slate-700">{e.title}</button>)}
                     {selectedEvents.length === 0 && <div className="text-xs text-slate-500">No events</div>}
                   </div>
-                  <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 p-2">
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">{draftCount} Drafts</span>
-                    <Button
-                      className="h-8 flex-1 bg-[#3096DA] text-white hover:bg-[#277FB8]"
+                  <div className="mt-3 border-t border-slate-200 pt-2">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Communication</div>
+                    <button
+                      className="mt-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-left text-[11px] font-semibold text-slate-700"
                       onClick={() => {
                         const target = detailEvent || selectedEvents[0] || null
                         if (!target) return
@@ -405,14 +405,33 @@ function CalendarContent() {
                         setEmailModalOpen(true)
                       }}
                     >
-                      + Compose email
-                    </Button>
+                      Open Composer
+                    </button>
                   </div>
                 </div>
               </aside>
             </div>
           </div>
         </main>
+      </div>
+
+      <div
+        className={`fixed bottom-4 right-6 flex items-center gap-0.5 rounded-xl border border-slate-300 bg-white p-1 shadow-[0_10px_30px_rgba(31,53,73,0.18)] md:right-8 ${
+          openEditor ? "z-40 pointer-events-none opacity-40" : "z-[65]"
+        }`}
+      >
+        <span className="rounded-lg bg-[#EEF2F7] px-3 py-2 text-[0.9rem] font-semibold text-[#2E4460]">{draftCount} Drafts</span>
+        <Button
+          className="h-10 rounded-lg bg-[#3096DA] px-5 text-[0.9rem] font-semibold text-white hover:bg-[#277FB8]"
+          onClick={() => {
+            const target = detailEvent || selectedEvents[0] || null
+            if (!target) return
+            setEmailTargetEvent(target)
+            setEmailModalOpen(true)
+          }}
+        >
+          + Compose email
+        </Button>
       </div>
 
       {openEditor && (

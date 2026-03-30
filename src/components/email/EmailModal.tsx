@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 
 export type EmailTemplate = {
@@ -95,6 +95,10 @@ export function EmailModal({
   const [subject, setSubject] = useState("")
   const [body, setBody] = useState("")
   const [scheduleAt, setScheduleAt] = useState("")
+  const [fontFamily, setFontFamily] = useState("Arial")
+  const [fontSize, setFontSize] = useState("3")
+  const [fontColor, setFontColor] = useState("#1f2937")
+  const editorRef = useRef<HTMLDivElement | null>(null)
 
   const templateById = useMemo(() => new Map(templates.map((t) => [t.id, t])), [])
 
@@ -108,6 +112,9 @@ export function EmailModal({
     setScheduleAt("")
     setManualEmail("")
     setSelectedTemplateId("")
+    setFontFamily("Arial")
+    setFontSize("3")
+    setFontColor("#1f2937")
   }, [open, event, defaultRecipients])
 
   if (!open || !event) return null
@@ -136,6 +143,16 @@ export function EmailModal({
     })
     setSubject(result.subject)
     setBody(result.body)
+    if (editorRef.current) {
+      editorRef.current.innerHTML = result.body.replaceAll("\n", "<br>")
+    }
+  }
+
+  const runCommand = (command: string, value?: string) => {
+    if (!editorRef.current) return
+    editorRef.current.focus()
+    document.execCommand(command, false, value)
+    setBody(editorRef.current.innerHTML)
   }
 
   const payload: EmailComposePayload = {
@@ -194,7 +211,52 @@ export function EmailModal({
           </div>
           <div>
             <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-500">Message Body</label>
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} className="min-h-[160px] w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+            <div className="overflow-hidden rounded-lg border border-slate-300">
+              <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-2 py-2">
+                <select
+                  value={fontFamily}
+                  onChange={(e) => { setFontFamily(e.target.value); runCommand("fontName", e.target.value) }}
+                  className="h-8 rounded border border-slate-300 bg-white px-2 text-xs"
+                >
+                  <option value="Arial">sans-serif</option>
+                  <option value="Times New Roman">serif</option>
+                  <option value="Courier New">monospace</option>
+                </select>
+                <select
+                  value={fontSize}
+                  onChange={(e) => { setFontSize(e.target.value); runCommand("fontSize", e.target.value) }}
+                  className="h-8 rounded border border-slate-300 bg-white px-2 text-xs"
+                >
+                  <option value="2">10pt</option>
+                  <option value="3">12pt</option>
+                  <option value="4">14pt</option>
+                  <option value="5">18pt</option>
+                </select>
+                <input
+                  type="color"
+                  value={fontColor}
+                  onChange={(e) => { setFontColor(e.target.value); runCommand("foreColor", e.target.value) }}
+                  className="h-8 w-10 rounded border border-slate-300 bg-white p-1"
+                  title="Text color"
+                />
+                <button type="button" onClick={() => runCommand("bold")} className="h-8 rounded border border-slate-300 bg-white px-2 text-sm font-bold">B</button>
+                <button type="button" onClick={() => runCommand("italic")} className="h-8 rounded border border-slate-300 bg-white px-2 text-sm italic">I</button>
+                <button type="button" onClick={() => runCommand("underline")} className="h-8 rounded border border-slate-300 bg-white px-2 text-sm underline">U</button>
+                <button type="button" onClick={() => runCommand("justifyLeft")} className="h-8 rounded border border-slate-300 bg-white px-2 text-xs">L</button>
+                <button type="button" onClick={() => runCommand("justifyCenter")} className="h-8 rounded border border-slate-300 bg-white px-2 text-xs">C</button>
+                <button type="button" onClick={() => runCommand("justifyRight")} className="h-8 rounded border border-slate-300 bg-white px-2 text-xs">R</button>
+                <button type="button" onClick={() => runCommand("insertUnorderedList")} className="h-8 rounded border border-slate-300 bg-white px-2 text-xs">• List</button>
+              </div>
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={(e) => setBody((e.target as HTMLDivElement).innerHTML)}
+                className="min-h-[180px] max-h-[320px] overflow-y-auto px-3 py-2 text-sm focus:outline-none"
+                style={{ fontFamily }}
+                dangerouslySetInnerHTML={{ __html: body.replaceAll("\n", "<br>") }}
+              />
+            </div>
           </div>
           <div>
             <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-500">Schedule Send</label>
