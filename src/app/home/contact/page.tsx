@@ -52,22 +52,35 @@ const socialLinks = [
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8' }}>
       <Header currentPage="contact" />
       
       <main>
         {/* Hero Section */}
-        <section className="py-12 lg:py-16 bg-background">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-left">
+        <section style={{ 
+          padding: 'clamp(4rem, 10vw, 5rem) 1rem 3rem',
+          backgroundColor: '#fafaf8'
+        }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Heading level={1} className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-                Get in <span className="text-emerald-600">Touch</span>
+              <Heading level={1} style={{ 
+                fontSize: 'clamp(2rem, 6vw, 3.5rem)', 
+                fontWeight: 800, 
+                marginBottom: '1rem',
+                color: '#152A3D'
+              }}>
+                Get in <span style={{ color: '#1F3549' }}>Touch</span>
               </Heading>
-              <Text size="lg" className="text-muted-foreground max-w-2xl text-base md:text-lg">
+              <Text size="lg" style={{ 
+                color: '#6b7280', 
+                maxWidth: '700px', 
+                fontSize: 'clamp(1rem, 2vw, 1.125rem)',
+                lineHeight: 1.75
+              }}>
                 Have questions about our platform? Our team is here to help you 
                 optimize your property management experience.
               </Text>
@@ -75,36 +88,76 @@ export default function ContactPage() {
           </div>
         </section>
 
-        <section className="py-24 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <section style={{ padding: 'clamp(3rem, 8vw, 6rem) 1rem' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: 'clamp(2rem, 5vw, 4rem)',
+              alignItems: 'start'
+            }}>
               {/* Left Column: Info */}
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="space-y-12"
+                style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}
               >
                 <div>
-                  <Heading level={2} className="text-3xl font-bold mb-6">Contact Information</Heading>
-                  <Text className="text-muted-foreground mb-10 text-lg">
+                  <Heading level={2} style={{ 
+                    fontSize: 'clamp(1.5rem, 4vw, 2rem)', 
+                    fontWeight: 700, 
+                    color: '#1F3549',
+                    marginBottom: '1.5rem'
+                  }}>Contact Information</Heading>
+                  <Text style={{ 
+                    color: '#6b7280', 
+                    marginBottom: '2.5rem',
+                    fontSize: 'clamp(1rem, 2vw, 1.125rem)',
+                    lineHeight: 1.75
+                  }}>
                     Fill out the form and our team will get back to you within 24 hours. 
                     Alternatively, you can reach us through any of these channels.
                   </Text>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '1.5rem'
+                  }}>
                     {contactInfo.map((info) => (
                       <a 
                         key={info.label}
                         href={info.href}
-                        className="group flex items-start gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-border"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '1rem',
+                          padding: '1rem',
+                          borderRadius: '1rem',
+                          transition: 'all 0.2s',
+                          border: '1px solid transparent'
+                        }}
+                        className="contact-info-item"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                        <div style={{
+                          width: '2.5rem',
+                          height: '2.5rem',
+                          borderRadius: '0.75rem',
+                          backgroundColor: '#f0f4f8',
+                          color: '#1F3549',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.2s'
+                        }}
+                        className="contact-icon"
+                        >
                           {info.icon}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-foreground mb-1">{info.label}</p>
-                          <p className="text-sm text-muted-foreground">{info.value}</p>
+                          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1F3549', marginBottom: '0.25rem' }}>{info.label}</p>
+                          <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>{info.value}</p>
                         </div>
                       </a>
                     ))}
@@ -112,14 +165,30 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <Heading level={3} className="text-xl font-bold mb-6">Follow Our Journey</Heading>
-                  <div className="flex gap-4">
+                  <Heading level={3} style={{ 
+                    fontSize: 'clamp(1.25rem, 3vw, 1.5rem)', 
+                    fontWeight: 700, 
+                    color: '#1F3549',
+                    marginBottom: '1.5rem'
+                  }}>Follow Our Journey</Heading>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
                     {socialLinks.map((social, index) => (
                       <motion.a
                         key={index}
                         href={social.href}
                         whileHover={{ y: -4 }}
-                        className={`w-12 h-12 rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground transition-colors ${social.color}`}
+                        style={{
+                          width: '3rem',
+                          height: '3rem',
+                          borderRadius: '0.75rem',
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e5e3',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#6b7280',
+                          transition: 'all 0.2s'
+                        }}
                       >
                         {social.icon}
                       </motion.a>
@@ -127,19 +196,47 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                {/* Styled Map Placeholder */}
-                <div className="relative rounded-3xl overflow-hidden bg-slate-100 aspect-video border border-border group">
-                  <div className="absolute inset-0 flex items-center justify-center bg-emerald-950/5 group-hover:bg-emerald-950/0 transition-all">
-                    <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
-                      <MapPin className="text-emerald-600 w-5 h-5" />
-                      <span className="font-semibold text-sm">Find us in Addis Ababa</span>
-                    </div>
-                  </div>
+                {/* Map Placeholder */}
+                <div style={{
+                  position: 'relative',
+                  borderRadius: '1.5rem',
+                  overflow: 'hidden',
+                  aspectRatio: '16/9',
+                  border: '1px solid #e5e5e3'
+                }}>
                   <img 
                     src="/ethiopian-building.jpg" 
                     alt="Office Location" 
-                    className="w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-700"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      filter: 'grayscale(100%)',
+                      transition: 'filter 0.7s'
+                    }}
+                    className="map-image"
                   />
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(31, 53, 73, 0.05)'
+                  }}>
+                    <div style={{
+                      backgroundColor: 'white',
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '9999px',
+                      boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem'
+                    }}>
+                      <MapPin style={{ color: '#1F3549', width: '20px', height: '20px' }} />
+                      <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Find us in Addis Ababa</span>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
 
@@ -160,4 +257,5 @@ export default function ContactPage() {
     </div>
   )
 }
+
 

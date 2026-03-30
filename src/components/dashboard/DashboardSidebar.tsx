@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Settings, Building2, ChevronRight, ArrowLeft } from "lucide-react"
+import { LogOut, Settings, Building2, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
 import { getLandlordNavGroups, getTenantNavGroups, NavItem } from "@/constants/navItems"
@@ -122,6 +122,7 @@ export function DashboardSidebar({
   }
 
   const handleNavigation = (path: string) => {
+    onNavigate?.(isSidebarCollapsed)
     router.push(path)
   }
 

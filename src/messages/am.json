@@ -8,7 +8,7 @@
       "overview": "አጠቃላይ",
       "dashboard": "ዳሽቦርድ",
       "properties": "ንብረቶች",
-      "listings": "ዝርዝሮች",
+      "listings": "የሚከራዩ ቤቶች",
       "management": "አስተዳደር",
       "myRents": "የኪራዮቼ",
       "documents": "ሰነዶች",
@@ -20,8 +20,8 @@
       "logout": "ውጣ"
     },
     "auth": {
-      "signIn": "ግባ",
-      "registerOwner": "እንደ ባለቤት ተመዝገብ"
+      "signIn": "ይግቡ",
+      "registerOwner": "እንደ አከራይ ይመዝገቡ"
     },
     "header": {
       "searchPlaceholder": "ፈልግ..."

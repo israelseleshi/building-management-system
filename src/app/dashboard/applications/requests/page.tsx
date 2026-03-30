@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { type CSSProperties, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -101,7 +101,6 @@ export default function RequestsPage() {
 function RequestsContent() {
   const router = useRouter()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated")
@@ -168,7 +167,7 @@ function RequestsContent() {
         ["--card" as string]: theme.card,
         ["--background" as string]: theme.background,
         ["--border" as string]: theme.line,
-      } as React.CSSProperties}
+      } as CSSProperties}
     >
       <DashboardSidebar
         isSidebarCollapsed={isSidebarCollapsed}
@@ -310,7 +309,7 @@ function RequestsContent() {
   )
 }
 
-function Eye({ className, style }: { className?: string; style?: React.CSSProperties }) {
+function Eye({ className, style }: { className?: string; style?: CSSProperties }) {
   return (
     <svg className={className} style={style} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>

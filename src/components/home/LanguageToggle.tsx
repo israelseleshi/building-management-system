@@ -18,7 +18,8 @@ export function LanguageToggle() {
       variant="ghost"
       size="sm"
       onClick={toggleLanguage}
-      className="flex items-center gap-2 text-white hover:bg-white/20 px-3 h-9 rounded-full border border-white/30 backdrop-blur-sm transition-all"
+      className="flex items-center gap-2 text-[#1F3549] hover:bg-[#1F3549]/10 px-3 h-9 rounded-full border border-[#1F3549]/30 transition-all"
+      style={{ backgroundColor: 'white' }}
     >
       <Globe className="w-4 h-4" />
       <span className="font-semibold text-xs tracking-wider">
@@ -27,3 +28,4 @@ export function LanguageToggle() {
     </Button>
   )
 }
+

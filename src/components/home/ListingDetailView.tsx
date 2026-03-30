@@ -155,7 +155,7 @@ export function ListingDetailView({
               {listing.capacity > 0 && (
                 <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
                   <div className="flex justify-center mb-3">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#7D8B6F20' }}>
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1F354920' }}>
                       <Users className="w-6 h-6 text-primary" />
                     </div>
                   </div>
@@ -170,7 +170,7 @@ export function ListingDetailView({
               {listing.parking > 0 && (
                 <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
                   <div className="flex justify-center mb-3">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#7D8B6F20' }}>
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1F354920' }}>
                       <Car className="w-6 h-6 text-primary" />
                     </div>
                   </div>
@@ -184,7 +184,7 @@ export function ListingDetailView({
 
               <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
                 <div className="flex justify-center mb-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#7D8B6F20' }}>
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1F354920' }}>
                     <Square className="w-6 h-6 text-primary" />
                   </div>
                 </div>
@@ -197,7 +197,7 @@ export function ListingDetailView({
 
               <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
                 <div className="flex justify-center mb-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#7D8B6F20' }}>
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1F354920' }}>
                     <Home className="w-6 h-6 text-primary" />
                   </div>
                 </div>
@@ -224,7 +224,7 @@ export function ListingDetailView({
                 className="border-0 p-6 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-300"
                 style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}
               >
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: '#7D8B6F20' }}>
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: '#1F354920' }}>
                   <CheckCircle className="w-6 h-6 text-primary" />
                 </div>
                 <Text className="font-semibold text-sm text-foreground">{amenity}</Text>
@@ -267,7 +267,7 @@ export function ListingDetailView({
             className="border-0 p-6 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-300"
             style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}
           >
-            <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#7D8B6F20' }}>
+            <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#1F354920' }}>
               <Phone className="w-7 h-7 text-primary" />
             </div>
             <MutedText className="text-sm mb-2">Phone</MutedText>
@@ -277,7 +277,7 @@ export function ListingDetailView({
             className="border-0 p-6 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-300"
             style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}
           >
-            <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#7D8B6F20' }}>
+            <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#1F354920' }}>
               <Mail className="w-7 h-7 text-primary" />
             </div>
             <MutedText className="text-sm mb-2">Email</MutedText>
@@ -297,7 +297,7 @@ export function ListingDetailView({
         </Button>
         <Button
           className="flex-1 gap-2"
-          style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+          style={{ backgroundColor: '#1F3549', color: '#FFFFFF' }}
         >
           <Mail className="w-4 h-4" />
           Contact Owner
@@ -306,3 +306,4 @@ export function ListingDetailView({
     </div>
   )
 }
+

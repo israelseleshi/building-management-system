@@ -3,11 +3,9 @@
 import { Suspense, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Heading, Text, Large } from "@/components/ui/typography"
+import { Heading, Text } from "@/components/ui/typography"
 import { Header } from "@/components/home/Header"
+import { Footer } from "@/components/Footer"
 import { ListingDetailView } from "@/components/home/ListingDetailView"
 import { API_BASE_URL } from "@/lib/apiClient"
 import { 
@@ -186,13 +184,10 @@ function ListingsPageContent() {
   // If a listing is selected, show detail view
   if (selectedListing) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Header */}
+      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', flexDirection: 'column' }}>
         <Header currentPage="listings" />
-
-        {/* Detail Content */}
-        <section className="py-8 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
+        <main style={{ flex: 1, padding: '2rem 1rem' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
             <ListingDetailView
               listing={selectedListing}
               onBack={handleBackToListings}
@@ -200,7 +195,7 @@ function ListingsPageContent() {
               onToggleSave={() => toggleSaveListing(selectedListing.id)}
             />
           </div>
-        </section>
+        </main>
       </div>
     )
   }
@@ -208,14 +203,14 @@ function ListingsPageContent() {
   // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', flexDirection: 'column' }}>
         <Header currentPage="listings" />
-        <section className="py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto flex flex-col items-center justify-center min-h-96">
-            <Loader className="w-12 h-12 text-primary animate-spin mb-4" />
-            <Text className="text-muted-foreground">Loading properties...</Text>
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <Loader style={{ width: '48px', height: '48px', color: '#1F3549', animation: 'spin 1s linear infinite' }} />
+            <Text style={{ color: '#6b7280' }}>Loading properties...</Text>
           </div>
-        </section>
+        </main>
       </div>
     )
   }
@@ -223,69 +218,79 @@ function ListingsPageContent() {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', flexDirection: 'column' }}>
         <Header currentPage="listings" />
-        <section className="py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
-            <Card className="text-center py-12 border-0">
-              <CardContent>
-                <Building className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                <Heading level={3} className="text-xl font-semibold text-foreground mb-2">
-                  Error Loading Properties
-                </Heading>
-                <Text className="text-muted-foreground mb-4">
-                  {error}
-                </Text>
-                <Button 
-                  onClick={() => window.location.reload()}
-                  className="transition-all duration-200 hover:scale-105"
-                  style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
-                >
-                  Try Again
-                </Button>
-              </CardContent>
-            </Card>
+        <main style={{ flex: 1, padding: '3rem 1rem' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center', padding: '3rem', backgroundColor: 'white', borderRadius: '1rem' }}>
+            <Building style={{ width: '64px', height: '64px', color: '#ef4444', margin: '0 auto 1rem' }} />
+            <Heading level={3} style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1F3549', marginBottom: '0.5rem' }}>
+              Error Loading Properties
+            </Heading>
+            <Text style={{ color: '#6b7280', marginBottom: '1rem' }}>
+              {error}
+            </Text>
+            <Button 
+              onClick={() => window.location.reload()}
+              style={{ backgroundColor: '#1F3549', color: '#FFFFFF', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+            >
+              Try Again
+            </Button>
           </div>
-        </section>
+        </main>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
+    <div style={{ minHeight: '100vh', backgroundColor: '#fafaf8', display: 'flex', flexDirection: 'column' }}>
       <Header currentPage="listings" />
-
+      <main style={{ flex: 1 }}>
       {/* Search and Filters Section */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-muted/50 animate-fade-in">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8 animate-slide-up">
-            <Heading level={1} className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+      <section style={{ padding: 'clamp(2rem, 5vw, 3rem) 1rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e5e3' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <Heading level={1} style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 700, color: '#152A3D', marginBottom: '0.75rem' }}>
               Commercial Properties
             </Heading>
-            <Text size="lg" className="text-muted-foreground max-w-2xl mx-auto">
+            <Text size="lg" style={{ color: '#6b7280', maxWidth: '700px', margin: '0 auto' }}>
               Discover shops, offices, warehouses and commercial spaces across Addis Ababa
             </Text>
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-              <Input
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, maxWidth: '400px', width: '100%' }}>
+              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '20px', height: '20px', color: '#9ca3af' }} />
+              <input
                 type="text"
                 placeholder="Search properties, locations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 h-12 border-border/50 focus:border-primary/50 transition-all duration-200 hover:border-primary/30"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 0.75rem 0.75rem 44px',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #e5e5e3',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
               />
             </div>
             
-            <div className="flex gap-3 items-center">
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <select
                 value={filteredType}
                 onChange={(e) => setFilteredType(e.target.value)}
-                className="px-4 py-3 rounded-lg border border-border/50 bg-background text-sm focus:border-primary/50 transition-all duration-200 hover:border-primary/30 hover:shadow-sm"
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #e5e5e3',
+                  backgroundColor: 'white',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
               >
                 <option value="all">All Types</option>
                 <option value="shop">Shop</option>
@@ -296,7 +301,15 @@ function ListingsPageContent() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-3 rounded-lg border border-border/50 bg-background text-sm focus:border-primary/50 transition-all duration-200 hover:border-primary/30 hover:shadow-sm"
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #e5e5e3',
+                  backgroundColor: 'white',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
               >
                 <option value="featured">Featured</option>
                 <option value="price-low">Price: Low to High</option>
@@ -304,37 +317,51 @@ function ListingsPageContent() {
                 <option value="rating">Highest Rated</option>
               </select>
               
-              <div className="flex gap-1 bg-muted/50 rounded-lg p-1 hover:shadow-sm transition-all duration-200">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
+              <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f5f5f4', borderRadius: '0.5rem', padding: '4px' }}>
+                <button
                   onClick={() => setViewMode('grid')}
-                  className="transition-all duration-200 hover:scale-105"
+                  style={{
+                    padding: '8px 12px',
+                    border: 'none',
+                    backgroundColor: viewMode === 'grid' ? '#1F3549' : 'transparent',
+                    color: viewMode === 'grid' ? 'white' : '#6b7280',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    transition: 'all 0.2s'
+                  }}
                 >
-                  <Grid className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
+                  <Grid style={{ width: '16px', height: '16px' }} />
+                </button>
+                <button
                   onClick={() => setViewMode('list')}
-                  className="transition-all duration-200 hover:scale-105"
+                  style={{
+                    padding: '8px 12px',
+                    border: 'none',
+                    backgroundColor: viewMode === 'list' ? '#1F3549' : 'transparent',
+                    color: viewMode === 'list' ? 'white' : '#6b7280',
+                    borderRadius: '0.375rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    transition: 'all 0.2s'
+                  }}
                 >
-                  <List className="w-4 h-4" />
-                </Button>
+                  <List style={{ width: '16px', height: '16px' }} />
+                </button>
               </div>
             </div>
           </div>
 
           {/* Results Count */}
-          <div className="mt-6 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-muted-foreground" />
-              <Text className="text-muted-foreground">
-                Showing {startIndex + 1}-{Math.min(endIndex, allFilteredListings.length)} of {allFilteredListings.length} commercial properties
-              </Text>
+          <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
+              <TrendingUp style={{ width: '16px', height: '16px' }} />
+              <span>Showing {startIndex + 1}-{Math.min(endIndex, allFilteredListings.length)} of {allFilteredListings.length} commercial properties</span>
             </div>
-            <Button variant="outline" size="sm" className="gap-2 transition-all duration-200 hover:scale-105">
-              <Filter className="w-4 h-4" />
+            <Button variant="outline" size="sm" style={{ gap: '0.5rem', border: '1px solid #e5e5e3' }}>
+              <Filter style={{ width: '16px', height: '16px' }} />
               More Filters
             </Button>
           </div>
@@ -342,270 +369,335 @@ function ListingsPageContent() {
       </section>
 
       {/* Listings Grid/List */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      <section style={{ padding: '2rem 1rem' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
               {filteredListings.map((listing, index) => (
-                <Card 
+                <div 
                   key={listing.id} 
-                  className="overflow-hidden border-0 hover:shadow-xl transition-all duration-300 cursor-pointer group animate-fade-in-up hover:scale-105"
                   style={{ 
-                    backgroundColor: 'var(--card)', 
-                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)',
+                    backgroundColor: 'white',
+                    borderRadius: '1rem',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
                     animationDelay: `${index * 0.05}s`
                   }}
                   onClick={() => handleViewDetails(listing)}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-4px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
                   {/* Image */}
-                  <div className="relative h-48 overflow-hidden">
+                  <div style={{ position: 'relative', height: '200px', overflow: 'hidden' }}>
                     {listing.featured && (
-                      <div className="absolute top-3 left-3 z-10">
-                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 gap-1 animate-pulse">
-                          <Sparkles className="w-3 h-3" />
+                      <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 10 }}>
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '4px 12px',
+                          backgroundColor: '#fef3c7',
+                          color: '#92400e',
+                          borderRadius: '9999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600
+                        }}>
+                          <Sparkles style={{ width: '12px', height: '12px' }} />
                           Featured
-                        </Badge>
+                        </div>
                       </div>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white hover:scale-110 transition-all duration-200"
-                      onClick={() => toggleSaveListing(listing.id)}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleSaveListing(listing.id); }}
+                      style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        zIndex: 10,
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s'
+                      }}
                     >
                       <Heart 
-                        className={`w-4 h-4 transition-all duration-200 ${savedListings.includes(listing.id) ? 'fill-red-500 text-red-500 scale-110' : ''}`} 
+                        style={{ 
+                          width: '16px', 
+                          height: '16px', 
+                          color: savedListings.includes(listing.id) ? '#ef4444' : '#6b7280',
+                          fill: savedListings.includes(listing.id) ? '#ef4444' : 'none'
+                        }} 
                       />
-                    </Button>
+                    </button>
                     <img 
                       src={listing.image} 
                       alt={listing.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.5s'
+                      }}
                     />
                   </div>
 
                   {/* Content */}
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <Heading level={3} className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors duration-200">
+                  <div style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1F3549', marginBottom: '0.25rem' }}>
                           {listing.title}
-                        </Heading>
-                        <div className="flex items-center text-muted-foreground text-sm">
-                          <MapPin className="w-4 h-4 mr-1" />
+                        </h3>
+                        <div style={{ display: 'flex', alignItems: 'center', color: '#6b7280', fontSize: '0.875rem' }}>
+                          <MapPin style={{ width: '14px', height: '14px', marginRight: '4px' }} />
                           {listing.location}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem' }}>
                       {listing.capacity > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Users style={{ width: '14px', height: '14px' }} />
                           <span>{listing.capacity} capacity</span>
                         </div>
                       )}
                       {listing.parking > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Car className="w-4 h-4" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Car style={{ width: '14px', height: '14px' }} />
                           <span>{listing.parking} parking</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-1">
-                        <Square className="w-4 h-4" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Square style={{ width: '14px', height: '14px' }} />
                         <span>{listing.area} m²</span>
                       </div>
                     </div>
 
-                    <div className="border-t border-border my-4"></div>
+                    <div style={{ borderTop: '1px solid #e5e5e3', margin: '1rem 0' }}></div>
 
-                    <div className="flex items-center justify-between">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <div className="flex items-baseline">
-                          <Large className="text-primary">{listing.price.toLocaleString()}</Large>
-                          <Text size="sm" className="text-muted-foreground ml-1">
-                            {listing.currency}/{listing.period}
-                          </Text>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                          <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1F3549' }}>{listing.price.toLocaleString()}</span>
+                          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>{listing.currency}/{listing.period}</span>
                         </div>
-                        <div className="flex items-center text-xs text-muted-foreground mt-1">
-                          <Star className="w-3 h-3 mr-1 text-yellow-500" />
-                          {listing.rating} ({listing.reviews} reviews) • {listing.listed}
+                        <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: '#6b7280', marginTop: '4px' }}>
+                          <Star style={{ width: '12px', height: '12px', color: '#f59e0b', marginRight: '4px' }} />
+                          {listing.rating} ({listing.reviews} reviews)
                         </div>
                       </div>
                       <Button 
                         size="sm" 
-                        className="gap-2 transition-all duration-200 hover:scale-105" 
-                        style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                        style={{ 
+                          backgroundColor: '#1F3549', 
+                          color: '#FFFFFF',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '0.5rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          fontWeight: 500,
+                          fontSize: '0.875rem'
+                        }}
                         onClick={() => handleViewDetails(listing)}
                       >
                         View Details
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight style={{ width: '14px', height: '14px' }} />
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredListings.map((listing, index) => (
-                <Card 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {filteredListings.map((listing) => (
+                <div 
                   key={listing.id} 
-                  className="overflow-hidden border-0 hover:shadow-xl transition-all duration-300 cursor-pointer group animate-fade-in-up hover:translate-x-1"
                   style={{ 
-                    backgroundColor: 'var(--card)', 
-                    boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)',
-                    animationDelay: `${index * 0.05}s`
+                    backgroundColor: 'white',
+                    borderRadius: '1rem',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s'
                   }}
                   onClick={() => handleViewDetails(listing)}
                 >
-                  <div className="flex flex-col md:flex-row">
+                  <div style={{ display: 'flex', flexDirection: 'row' }}>
                     {/* Image */}
-                    <div className="md:w-1/3 h-48 md:h-auto relative overflow-hidden">
+                    <div style={{ width: '300px', height: '200px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
                       {listing.featured && (
-                        <div className="absolute top-3 left-3 z-10">
-                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 gap-1 animate-pulse">
-                            <Sparkles className="w-3 h-3" />
+                        <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 10 }}>
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 12px',
+                            backgroundColor: '#fef3c7',
+                            color: '#92400e',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600
+                          }}>
+                            <Sparkles style={{ width: '12px', height: '12px' }} />
                             Featured
-                          </Badge>
+                          </div>
                         </div>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute top-3 right-3 z-10 bg-white/80 hover:bg-white hover:scale-110 transition-all duration-200"
-                        onClick={() => toggleSaveListing(listing.id)}
-                      >
-                        <Heart 
-                          className={`w-4 h-4 transition-all duration-200 ${savedListings.includes(listing.id) ? 'fill-red-500 text-red-500 scale-110' : ''}`} 
-                        />
-                      </Button>
                       <img 
                         src={listing.image} 
                         alt={listing.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
                       />
                     </div>
 
                     {/* Content */}
-                    <CardContent className="flex-1 p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <Heading level={3} className="text-xl font-semibold text-foreground mb-1 hover:text-primary transition-colors duration-200">
+                    <div style={{ flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1F3549', marginBottom: '0.25rem' }}>
                             {listing.title}
-                          </Heading>
-                          <div className="flex items-center text-muted-foreground text-sm mb-2">
-                            <MapPin className="w-4 h-4 mr-1" />
+                          </h3>
+                          <div style={{ display: 'flex', alignItems: 'center', color: '#6b7280', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                            <MapPin style={{ width: '14px', height: '14px', marginRight: '4px' }} />
                             {listing.location}
                           </div>
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {listing.amenities.slice(0, 3).map((amenity, amenityIndex) => (
-                              <Badge key={amenityIndex} variant="secondary" className="text-xs">
+                          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            {listing.amenities.slice(0, 3).map((amenity, i) => (
+                              <span key={i} style={{
+                                padding: '4px 8px',
+                                backgroundColor: '#f5f5f4',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                color: '#6b7280'
+                              }}>
                                 {amenity}
-                              </Badge>
+                              </span>
                             ))}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-baseline">
-                            <Large className="text-primary">{listing.price.toLocaleString()}</Large>
-                            <Text size="sm" className="text-muted-foreground ml-1">
-                              {listing.currency}/{listing.period}
-                            </Text>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1F3549' }}>{listing.price.toLocaleString()}</span>
+                            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>{listing.currency}/{listing.period}</span>
                           </div>
-                          <div className="flex items-center text-xs text-muted-foreground mt-1">
-                            <Star className="w-3 h-3 mr-1 text-yellow-500" />
+                          <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.75rem', color: '#6b7280', marginTop: '4px' }}>
+                            <Star style={{ width: '12px', height: '12px', color: '#f59e0b', marginRight: '4px' }} />
                             {listing.rating} ({listing.reviews} reviews)
                           </div>
                         </div>
                       </div>
 
-                      <div className="border-t border-border my-4"></div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e5e3' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
                           {listing.capacity > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Users style={{ width: '14px', height: '14px' }} />
                               <span>{listing.capacity} capacity</span>
                             </div>
                           )}
                           {listing.parking > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Car className="w-4 h-4" />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Car style={{ width: '14px', height: '14px' }} />
                               <span>{listing.parking} parking</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-1">
-                            <Square className="w-4 h-4" />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Square style={{ width: '14px', height: '14px' }} />
                             <span>{listing.area} m²</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock style={{ width: '14px', height: '14px' }} />
                             <span>Listed {listing.listed}</span>
                           </div>
                         </div>
                         <Button 
                           size="sm" 
-                          className="gap-2 transition-all duration-200 hover:scale-105" 
-                          style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
+                          style={{ 
+                            backgroundColor: '#1F3549', 
+                            color: '#FFFFFF',
+                            padding: '0.5rem 1rem',
+                            borderRadius: '0.5rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            fontWeight: 500,
+                            fontSize: '0.875rem'
+                          }}
                           onClick={() => handleViewDetails(listing)}
                         >
                           View Details
-                          <ArrowRight className="w-4 h-4" />
+                          <ArrowRight style={{ width: '14px', height: '14px' }} />
                         </Button>
                       </div>
-                    </CardContent>
+                    </div>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           )}
 
           {/* No Results */}
           {filteredListings.length === 0 && (
-            <Card className="text-center py-12 border-0">
-              <CardContent>
-                <Building className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <Heading level={3} className="text-xl font-semibold text-foreground mb-2">
-                  No commercial properties found
-                </Heading>
-                <Text className="text-muted-foreground mb-4">
-                  Try adjusting your search or filters to find commercial spaces.
-                </Text>
-                <Button 
-                  onClick={() => { setSearchQuery(''); setFilteredType('all'); setSortBy('featured') }}
-                  className="transition-all duration-200 hover:scale-105"
-                  style={{ backgroundColor: '#7D8B6F', color: '#FFFFFF' }}
-                >
-                  Clear Filters
-                </Button>
-              </CardContent>
-            </Card>
+            <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: 'white', borderRadius: '1rem' }}>
+              <Building style={{ width: '64px', height: '64px', color: '#6b7280', margin: '0 auto 1rem' }} />
+              <Heading level={3} style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1F3549', marginBottom: '0.5rem' }}>
+                No commercial properties found
+              </Heading>
+              <Text style={{ color: '#6b7280', marginBottom: '1rem' }}>
+                Try adjusting your search or filters to find commercial spaces.
+              </Text>
+              <Button 
+                onClick={() => { setSearchQuery(''); setFilteredType('all'); setSortBy('featured') }}
+                style={{ backgroundColor: '#1F3549', color: '#FFFFFF', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 500 }}
+              >
+                Clear Filters
+              </Button>
+            </div>
           )}
 
           {/* Pagination Controls */}
           {allFilteredListings.length > 0 && totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-center gap-2">
+            <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="transition-all duration-200"
+                style={{ border: '1px solid #e5e5e3' }}
               >
                 Previous
               </Button>
               
-              <div className="flex gap-1">
+              <div style={{ display: 'flex', gap: '4px' }}>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <Button
                     key={page}
                     variant={currentPage === page ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setCurrentPage(page)}
-                    className="transition-all duration-200 min-w-10"
-                    style={currentPage === page ? { backgroundColor: '#7D8B6F', color: '#FFFFFF' } : {}}
+                    style={currentPage === page ? 
+                      { backgroundColor: '#1F3549', color: '#FFFFFF', minWidth: '40px', border: 'none' } : 
+                      { border: '1px solid #e5e5e3', minWidth: '40px' }
+                    }
                   >
                     {page}
                   </Button>
@@ -617,7 +709,7 @@ function ListingsPageContent() {
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="transition-all duration-200"
+                style={{ border: '1px solid #e5e5e3' }}
               >
                 Next
               </Button>
@@ -625,58 +717,9 @@ function ListingsPageContent() {
           )}
         </div>
       </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="bg-card border-t border-border py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-lg">BMS</span>
-                </div>
-                <span className="text-xl font-bold text-foreground">BMS</span>
-              </div>
-              <Text className="text-muted-foreground">
-                The modern way to find, manage, and rent properties.
-              </Text>
-            </div>
-            
-            <div>
-              <Heading level={4} className="font-semibold text-foreground mb-4">Product</Heading>
-              <ul className="space-y-2">
-                <li><a href="/home" className="text-muted-foreground hover:text-foreground">Home</a></li>
-                <li><a href="/home/listings" className="text-primary font-medium">Listings</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Security</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <Heading level={4} className="font-semibold text-foreground mb-4">Company</Heading>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">About</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Blog</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <Heading level={4} className="font-semibold text-foreground mb-4">Legal</Heading>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Privacy</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Terms</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground">Cookie Policy</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-border mt-8 pt-8 text-center">
-            <Text className="text-muted-foreground">
-              © 2025 Building Management System. All rights reserved.
-            </Text>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
@@ -685,7 +728,7 @@ export default function ListingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen home-theme flex items-center justify-center">
           <Loader className="w-10 h-10 text-primary animate-spin" />
         </div>
       }
@@ -694,3 +737,4 @@ export default function ListingsPage() {
     </Suspense>
   )
 }
+
