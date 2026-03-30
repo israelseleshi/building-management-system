@@ -125,21 +125,32 @@ export function DashboardSidebar({
     router.push(path)
   }
 
-  const isApplicationsPage = true
+  const isApplicationsPage = !isTenantDashboard
 
-  const sidebarBg = "bg-[#0A2A43]"
-  const sidebarBorderColor = "border-white/10"
+  const sidebarBg = isTenantDashboard ? "bg-[#EEF1F8]" : "bg-[#0A2A43]"
+  const sidebarBorderColor = isTenantDashboard ? "border-[#D8DEE9]" : "border-white/10"
 
   // Active item highlight — warm neutral to match the sandy background
-  const activeHighlightClass = "bg-[#113B5E] text-white"
+  const activeHighlightClass = isTenantDashboard
+    ? "bg-white text-[#223042] border border-[#CFD7E5]"
+    : "bg-[#113B5E] text-white"
   
   // Highlight class to connect separated icon & label with a pseudo-element behind them
-  const connectedHighlightClass = "bg-[#113B5E] text-white before:bg-[#113B5E]"
+  const connectedHighlightClass = isTenantDashboard
+    ? "bg-white text-[#223042] before:bg-white"
+    : "bg-[#113B5E] text-white before:bg-[#113B5E]"
     
   // Hover style for non-active items
-  const sidebarHoverBg = "hover:bg-[#113B5E]"
-  const sidebarHoverText = "hover:text-white"
-  const hoverClass = "hover:bg-[#113B5E] hover:text-white"
+  const sidebarHoverBg = isTenantDashboard ? "hover:bg-white" : "hover:bg-[#113B5E]"
+  const sidebarHoverText = isTenantDashboard ? "hover:text-[#223042]" : "hover:text-white"
+  const hoverClass = isTenantDashboard ? "hover:bg-white hover:text-[#223042]" : "hover:bg-[#113B5E] hover:text-white"
+  const sidebarBaseTextClass = isTenantDashboard ? "text-[#4E5D70]" : "text-white/70"
+  const groupTitleTextClass = isTenantDashboard
+    ? "text-[0.90rem] font-semibold tracking-[0.015em]"
+    : "text-[0.74rem] font-medium uppercase tracking-[0.03em]"
+  const subItemTextClass = isTenantDashboard
+    ? "text-[0.88rem] font-medium tracking-[0.01em]"
+    : "text-[0.74rem] font-medium"
 
   const isPanelOpen = activePanelGroup !== null
 
@@ -179,7 +190,7 @@ export function DashboardSidebar({
   return (
     <aside
       className={`border-r ${sidebarBorderColor} ${sidebarBg} transition-all duration-300 ease-in-out sticky top-0 h-screen flex flex-col select-none relative z-30 ${
-        isSidebarCollapsed ? "w-[68px]" : "w-[180px]"
+        isSidebarCollapsed ? "w-[68px]" : isTenantDashboard ? "w-[240px]" : "w-[180px]"
       }`}
       style={{ boxShadow: "0 0 12px rgba(0, 0, 0, 0.05)" }}
     >
@@ -205,7 +216,7 @@ export function DashboardSidebar({
           <div className="flex min-w-0 items-center gap-2">
             <div
               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${sidebarBorderColor} ${
-                isApplicationsPage ? "bg-white/10" : "bg-card"
+                isApplicationsPage ? "bg-white/10" : "bg-white"
               }`}
             >
               <Building2
@@ -215,8 +226,8 @@ export function DashboardSidebar({
             {!isSidebarCollapsed && (
               <div className="min-w-0">
                 <div
-                  className={`brand-logo truncate text-[1.6rem] leading-none ${
-                    isApplicationsPage ? "text-white" : "text-foreground"
+                  className={`brand-logo truncate ${isTenantDashboard ? "text-[1.9rem]" : "text-[1.6rem]"} leading-none ${
+                    isApplicationsPage ? "text-white" : "text-[#2A3A4E]"
                   }`}
                 >
                   {appBrandName}
@@ -255,17 +266,17 @@ export function DashboardSidebar({
                     className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 ${
                       isGroupActive || isPanelActive
                         ? activeHighlightClass
-                        : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${hoverClass}`
+                        : `${isApplicationsPage ? "text-white/70" : sidebarBaseTextClass} ${hoverClass}`
                     }`}
                   >
                     <span
                       className={`transition-colors ${
                         isGroupActive || isPanelActive
                           ? isApplicationsPage ? "text-white" : "text-[#5C4A1E]"
-                          : `${isApplicationsPage ? "text-white" : "text-foreground"}`
+                          : `${isApplicationsPage ? "text-white" : "text-[#4E5D70]"}`
                       }`}
                     >
-                      {React.cloneElement(group.icon as React.ReactElement<any>, { className: "w-5 h-5 text-white" })}
+                      {React.cloneElement(group.icon as React.ReactElement<any>, { className: `w-5 h-5 ${isTenantDashboard ? "text-[#3E5876]" : "text-white"}` })}
                     </span>
                   </button>
                 )
@@ -308,11 +319,11 @@ export function DashboardSidebar({
                       className={`flex h-9 w-9 items-center justify-center rounded-l-md transition-all duration-150 ${
                         isLit
                           ? activeHighlightClass
-                          : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${hoverClass}`
+                          : `${isApplicationsPage ? "text-white/70" : sidebarBaseTextClass} ${hoverClass}`
                       }`}
                     >
-                      <span className="text-white transition-colors">
-                        {React.cloneElement(group.icon as React.ReactElement<any>, { className: "w-4 h-4 text-white" })}
+                      <span className={`${isTenantDashboard ? "text-[#3E5876]" : "text-white"} transition-colors`}>
+                        {React.cloneElement(group.icon as React.ReactElement<any>, { className: `w-4 h-4 ${isTenantDashboard ? "text-[#3E5876]" : "text-white"}` })}
                       </span>
                     </button>
                   </div>
@@ -353,10 +364,10 @@ export function DashboardSidebar({
                               handleGroupClick(groupIndex)
                             }
                           }}
-                          className={`relative flex items-center justify-between w-full h-9 rounded-r-md pl-1 pr-2 py-1.5 text-[0.74rem] font-medium uppercase tracking-[0.03em] transition-all duration-150 before:absolute before:-left-[40px] before:top-0 before:h-full before:w-[40px] before:content-[''] ${
+                          className={`relative flex items-center justify-between w-full h-9 rounded-r-md pl-1 pr-2 py-1.5 ${groupTitleTextClass} transition-all duration-150 before:absolute before:-left-[40px] before:top-0 before:h-full before:w-[40px] before:content-[''] ${
                             isLit
                               ? connectedHighlightClass
-                              : `${isApplicationsPage ? "text-white" : "text-foreground"} ${sidebarHoverBg} ${sidebarHoverText}`
+                              : `${isApplicationsPage ? "text-white" : "text-[#4E5D70]"} ${sidebarHoverBg} ${sidebarHoverText}`
                           }`}
                         >
                           <span className="relative z-10 truncate">{group.title}</span>
@@ -406,12 +417,12 @@ export function DashboardSidebar({
                         <button
                           key={itemIndex}
                           onClick={() => { handleNavigation(item.path) }}
-                          className={`flex w-full items-center px-2 py-2 rounded-md text-[0.74rem] font-medium transition-all duration-200 ${
+                          className={`flex w-full items-center px-2 py-2 rounded-md ${subItemTextClass} transition-all duration-200 ${
                             item.active
                               ? isApplicationsPage
                                 ? "bg-[#113B5E] text-white shadow-sm"
                                 : `${activeHighlightClass} font-bold`
-                              : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${hoverClass}`
+                              : `${isApplicationsPage ? "text-white/70" : "text-[#4E5D70]"} ${hoverClass}`
                           }`}
                         >
                           <span className="truncate whitespace-nowrap">
@@ -478,7 +489,7 @@ export function DashboardSidebar({
       {/* ── Collapsed mode flyout panel ── */}
       {isSidebarCollapsed && (
         <div
-          className={`absolute top-0 left-[68px] h-screen w-[200px] ${sidebarBg} border-r ${sidebarBorderColor} flex flex-col z-30 transition-all duration-300 ease-out ${
+          className={`absolute top-0 left-[68px] h-screen ${isTenantDashboard ? "w-[240px]" : "w-[200px]"} ${sidebarBg} border-r ${sidebarBorderColor} flex flex-col z-30 transition-all duration-300 ease-out ${
             isPanelOpen
               ? "translate-x-0 opacity-100 shadow-[8px_0_20px_-4px_rgba(0,0,0,0.12)]"
               : "-translate-x-3 opacity-0 pointer-events-none"
@@ -517,7 +528,7 @@ export function DashboardSidebar({
                         ? isApplicationsPage
                           ? "bg-[#113B5E] text-white shadow-sm"
                           : activeHighlightClass
-                        : `${isApplicationsPage ? "text-white/70" : "text-muted-foreground"} ${hoverClass}`
+                        : `${isApplicationsPage ? "text-white/70" : "text-[#4E5D70]"} ${hoverClass}`
                     }`}
                   >
                     <span className="truncate whitespace-nowrap">{item.name}</span>
