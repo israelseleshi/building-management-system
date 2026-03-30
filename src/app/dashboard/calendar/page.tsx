@@ -340,10 +340,11 @@ function CalendarContent() {
       </div>
 
       {openEditor && (
-        <div className="fixed inset-0 z-50 bg-slate-900/30 p-4">
-          <div className="mx-auto mt-10 max-w-2xl rounded-2xl bg-white shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/30 p-3 md:p-4">
+          <div className="mx-auto mt-4 mb-4 w-full max-w-[860px] rounded-2xl bg-white shadow-2xl border border-slate-200">
             <div className="px-5 py-4 border-b border-slate-200 text-sm font-bold uppercase tracking-[0.06em] text-slate-700">Create / Edit Event</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
+            <div className="max-h-[calc(100vh-190px)] overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
               <EditorField label="Title"><input className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} /></EditorField>
               <EditorField label="Type"><select className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={type} onChange={(e) => setType(e.target.value as Event["type"])}>{["maintenance", "payment", "inspection", "meeting", "notice", "lease"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
               <EditorField label="Date & Time"><input type="datetime-local" className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={start} onChange={(e) => setStart(e.target.value)} /></EditorField>
@@ -353,9 +354,10 @@ function CalendarContent() {
               <EditorField label="Priority"><select className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={priority} onChange={(e) => setPriority(e.target.value as Event["priority"])}>{["low", "medium", "high"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
               <EditorField label="Recurring"><select className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>{["none", "daily", "weekly", "monthly"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
               <div className="flex items-end pb-2"><label className="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={isBuildingWide} onChange={(e) => setIsBuildingWide(e.target.checked)} />Applies to whole building</label></div>
-              <EditorField label="Notes"><textarea className="min-h-[88px] w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} /></EditorField>
+              <EditorField label="Notes"><textarea className="min-h-[110px] w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} /></EditorField>
+              </div>
             </div>
-            <div className="px-5 py-4 border-t border-slate-200 flex justify-end gap-2">
+            <div className="sticky bottom-0 px-5 py-4 border-t border-slate-200 flex justify-end gap-2 bg-white rounded-b-2xl">
               <Button variant="outline" onClick={() => setOpenEditor(false)}>Cancel</Button>
               <Button className="bg-[#3096DA] text-white hover:bg-[#277FB8]" onClick={addEvent}>Save</Button>
             </div>
