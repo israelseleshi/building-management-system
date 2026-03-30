@@ -61,7 +61,7 @@ const applicationData: ApplicationRecord[] = [
     id: "app_001",
     status: "For Review",
     applicantName: "Lily Smith",
-    property: "Park Place Apartments, Park View Residences",
+    property: "Rayuma Building",
     residentialScore: "-",
     annualIncome: "-",
     backgroundCheck: "-",
@@ -206,7 +206,7 @@ function ApplicantsContent() {
     }
   }, [])
 
-  const ownerSlug = "oak-tree-homes"
+  const ownerSlug = "rayuma-building"
   const formSlugByTemplate: Record<string, string> = {
     "Standard Addis Rental Form": "standard-addis-rental-form",
     "Commercial Tenant Form": "commercial-tenant-form",

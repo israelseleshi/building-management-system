@@ -187,14 +187,6 @@ function SettingsContent() {
     billingAddress: "Bole Road, Bole Sub-City, Addis Ababa, Ethiopia",
   })
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Text className="text-muted-foreground text-sm">Loading settings...</Text>
-      </div>
-    )
-  }
-
   const navItems = [
     {
       icon: <LayoutDashboard className="w-5 h-5" />,
@@ -538,6 +530,34 @@ function SettingsContent() {
               </button>
             </div>
           )}
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex bg-background">
+        <DashboardSidebar
+          navItems={navItems}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+          onLogout={handleLogout}
+          onNavigate={handleSidebarNavigation}
+        />
+        <div className="flex-1 transition-all duration-300 ease-in-out">
+          <DashboardHeader
+            title="Settings"
+            subtitle="Manage your account and preferences"
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onToggleSidebar={toggleSidebar}
+          />
+          <main className="p-6">
+            <div className="max-w-5xl mx-auto">
+              <Text className="text-muted-foreground text-sm">Loading settings...</Text>
+            </div>
+          </main>
         </div>
       </div>
     )

@@ -17,9 +17,11 @@ import {
   Send,
   Search,
   MoreVertical,
-  Mail,
+  MailOpen,
   Smile,
   Paperclip,
+  MessageCircle,
+  RotateCcw,
   Users,
 } from "lucide-react"
 import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
@@ -78,6 +80,8 @@ type HistoryItem = {
   buildingName: string
   floor: number | null
   unreadCount: number
+  lastPreview: string
+  lastSentAt: string | null
 }
 
 function ChatContent() {
@@ -99,9 +103,11 @@ function ChatContent() {
 
   const [emailSubject, setEmailSubject] = useState("")
   const [emailBody, setEmailBody] = useState("")
-  const [pendingAttachment, setPendingAttachment] = useState<{ name: string; url: string } | null>(null)
+  const [pendingAttachment, setPendingAttachment] = useState<{ file: File; name: string; url: string } | null>(null)
+  const [emailAttachment, setEmailAttachment] = useState<{ file: File; name: string; url: string } | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const emailFileInputRef = useRef<HTMLInputElement>(null)
 
   const topEmojis = [
     "\u{1F600}",
@@ -277,6 +283,9 @@ function ChatContent() {
         if (!participant) return null
 
         const contact = contactsByUserId.get(participant.user_id)
+        const latestMessage = Array.isArray((conv as any).messages) && (conv as any).messages.length > 0
+          ? (conv as any).messages[0]
+          : null
 
         return {
           conversationId: conv.conversation_id,
@@ -288,10 +297,19 @@ function ChatContent() {
           buildingName: contact?.building_name || "",
           floor: contact?.floor ?? null,
           unreadCount: conv.unreadCount || 0,
+          lastPreview: String(latestMessage?.content || ""),
+          lastSentAt: latestMessage?.sent_at ? String(latestMessage.sent_at) : null,
         }
       })
       .filter((item): item is HistoryItem => Boolean(item))
   }, [conversations, contactsByUserId, currentUserId])
+
+  const formatHistoryTime = (iso: string | null) => {
+    if (!iso) return ""
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return ""
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
 
   const filteredHistory = useMemo(() => {
     if (!chatSearch.trim()) return historyItems
@@ -356,6 +374,44 @@ function ChatContent() {
     setActiveConversationId(conversationId)
   }
 
+  const postConversationMessage = async (
+    conversationId: number,
+    token: string,
+    content: string,
+    attachment: { file: File; name: string; url: string } | null
+  ) => {
+    if (attachment) {
+      const formData = new FormData()
+      formData.append("content", content)
+      formData.append("attachments", attachment.file)
+
+      const multipartRes = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      if (multipartRes.ok) {
+        return await multipartRes.json()
+      }
+    }
+
+    const jsonRes = await fetch(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        content,
+        attachments: attachment ? [`${attachment.url}#name=${encodeURIComponent(attachment.name)}`] : undefined,
+      }),
+    })
+    return await jsonRes.json()
+  }
+
   const handleSendMessage = async () => {
     if (messagingMode !== "chat" || (!newMessage.trim() && !pendingAttachment) || !activeConversationId) return
 
@@ -368,21 +424,7 @@ function ChatContent() {
     setPendingAttachment(null)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/conversations/${activeConversationId}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content,
-          attachments: outgoingAttachments.length
-            ? outgoingAttachments.map((attachment) => `${attachment.url}#name=${encodeURIComponent(attachment.name)}`)
-            : undefined,
-        }),
-      })
-
-      const data = await response.json()
+      const data = await postConversationMessage(activeConversationId, token, content, pendingAttachment)
       if (data.success) {
         setMessages((prev) => [
           ...prev,
@@ -392,7 +434,7 @@ function ChatContent() {
             message: content,
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: true,
-            attachments: outgoingAttachments,
+            attachments: outgoingAttachments.map((item) => ({ url: item.url, name: item.name })),
           },
         ])
       }
@@ -414,7 +456,24 @@ function ChatContent() {
       reader.onload = () => {
         const result = typeof reader.result === "string" ? reader.result : ""
         if (!result) return
-        setPendingAttachment({ name: file.name, url: result })
+        setPendingAttachment({ file, name: file.name, url: result })
+      }
+      reader.readAsDataURL(file)
+    }
+    if (e.target) {
+      e.target.value = ""
+    }
+  }
+
+  const handleEmailAttachmentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = typeof reader.result === "string" ? reader.result : ""
+        if (!result) return
+        setEmailAttachment({ file, name: file.name, url: result })
       }
       reader.readAsDataURL(file)
     }
@@ -424,10 +483,26 @@ function ChatContent() {
   }
 
   const handleEmailSend = () => {
-    if (!activeHistoryItem) return
-    if (!emailSubject.trim() && !emailBody.trim()) return
-    setEmailSubject("")
-    setEmailBody("")
+    if (!activeHistoryItem || !activeConversationId) return
+    if (!emailSubject.trim() && !emailBody.trim() && !emailAttachment) return
+
+    const token = getAuthToken()
+    if (!token) return
+
+    const content = `[Email]\nSubject: ${emailSubject.trim() || "(No Subject)"}\n\n${emailBody.trim()}`
+
+    void (async () => {
+      try {
+        const data = await postConversationMessage(activeConversationId, token, content, emailAttachment)
+        if (data.success) {
+          setEmailSubject("")
+          setEmailBody("")
+          setEmailAttachment(null)
+        }
+      } catch (error) {
+        console.error("Error sending email mode message:", error)
+      }
+    })()
   }
 
   const handleLogout = () => {
@@ -477,7 +552,7 @@ function ChatContent() {
                   messagingMode === "email" ? "bg-[#E8EFF7] text-[#0F4C81]" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
                 }`}
               >
-                <Mail className="h-4 w-4" />
+                <MailOpen className="h-4 w-4" />
                 <span>Email</span>
               </button>
               <button
@@ -487,14 +562,20 @@ function ChatContent() {
                   messagingMode === "chat" ? "bg-[#E8EFF7] text-[#0F4C81]" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
                 }`}
               >
-                <MessageSquare className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4" />
                 <span>Chat</span>
               </button>
             </div>
 
-            <div className="w-[320px] border-r border-[#E3E8F0] flex flex-col min-h-0 bg-white">
-              <div className="p-3 border-b border-[#E8EDF4]">
-                <div className="mb-2 text-sm font-semibold text-[#203247]">{messagingMode === "chat" ? "Chat" : "Email"}</div>
+            <div className="w-[300px] border-r border-[#E3E8F0] flex flex-col min-h-0 bg-white">
+              <div className="border-b border-[#E8EDF4]">
+                <div className="h-10 px-3 flex items-center justify-between">
+                  <div className="text-sm font-semibold text-[#203247]">{messagingMode === "chat" ? "Chat" : "Email"}</div>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-[#5F6F82] hover:text-[#0F4C81]">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <div className="px-3 pb-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A8EA5]" />
                   <input
@@ -504,6 +585,7 @@ function ChatContent() {
                     onChange={(e) => setChatSearch(e.target.value)}
                     className="w-full h-9 rounded-md border border-[#D2DCE8] bg-white pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
                   />
+                </div>
                 </div>
               </div>
 
@@ -518,27 +600,27 @@ function ChatContent() {
                         key={item.conversationId}
                         type="button"
                         onClick={() => handleHistoryClick(item.conversationId)}
-                        className={`w-full border-b border-[#EEF2F8] px-3 py-2 text-left ${
+                        className={`w-full border-b border-[#EEF2F8] px-2.5 py-1.5 text-left ${
                           isActive ? "bg-[#EEF4FB]" : "hover:bg-[#F8FBFF]"
                         }`}
                       >
-                        <div className="flex items-start gap-2.5">
-                          <Avatar className="h-8 w-8">
+                        <div className="flex items-start gap-2">
+                          <Avatar className="h-7 w-7">
                             {item.profilePicture && <AvatarImage src={item.profilePicture} />}
                             <AvatarFallback>{item.fullName[0]}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="truncate text-[13px] font-medium text-[#203247]">{item.fullName}</p>
+                              <p className="truncate text-[12px] font-medium text-[#203247]">{item.fullName}</p>
+                              <span className="text-[10px] text-[#8392a4]">{formatHistoryTime(item.lastSentAt)}</span>
                               {item.unreadCount > 0 ? (
-                                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2F80ED] px-1 text-[10px] text-white">
+                                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2F80ED] px-1 text-[9px] text-white">
                                   {item.unreadCount}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="mt-0.5 truncate text-[12px] text-[#6C7D90]">
-                              {item.buildingName}
-                              {item.floor !== null ? ` - Floor ${item.floor}` : ""}
+                            <p className="mt-0.5 truncate text-[11px] text-[#6C7D90]">
+                              {item.lastPreview || `${item.buildingName}${item.floor !== null ? ` - Floor ${item.floor}` : ""}`}
                             </p>
                           </div>
                         </div>
@@ -747,10 +829,26 @@ function ChatContent() {
                         </div>
 
                         <div className="flex items-center justify-between border-t border-[#E7EDF5] px-4 py-3">
-                          <Button variant="ghost" className="text-[#4D6075] hover:bg-[#EEF4FB]">
+                          <Button
+                            variant="ghost"
+                            className="text-[#4D6075] hover:bg-[#EEF4FB]"
+                            onClick={() => emailFileInputRef.current?.click()}
+                          >
                             <Paperclip className="mr-2 h-4 w-4" />
                             Attach
                           </Button>
+                          <input
+                            ref={emailFileInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={handleEmailAttachmentUpload}
+                            accept="*/*"
+                          />
+                          {emailAttachment ? (
+                            <div className="max-w-[240px] truncate rounded border border-[#d2dce8] bg-[#f6f9fd] px-2 py-1 text-[11px] text-[#39506a]">
+                              {emailAttachment.name}
+                            </div>
+                          ) : null}
                           <Button
                             onClick={handleEmailSend}
                             className="bg-[#2F80ED] text-white hover:bg-[#1F6FD8]"
