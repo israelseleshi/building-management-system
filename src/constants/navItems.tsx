@@ -61,6 +61,13 @@ const landlordGroups: NavGroupBase[] = [
     defaultOpen: true,
   },
   {
+    title: "Calendar",
+    icon: <Calendar className="w-5 h-5" />,
+    items: [
+      { icon: <Calendar className="w-5 h-5" />, name: "Calendar", path: "/dashboard/calendar" },
+    ],
+  },
+  {
     title: "Rentals",
     icon: <Building className="w-5 h-5" />,
     items: [
@@ -156,6 +163,7 @@ const tenantGroups: NavGroupBase[] = [
     icon: <MessageSquare className="w-5 h-5" />,
     items: [
       { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/tenant-dashboard/chat" },
+      { icon: <Bell className="w-5 h-5" />, name: "Announcements", path: "/tenant-dashboard/announcements" },
     ],
   },
   {

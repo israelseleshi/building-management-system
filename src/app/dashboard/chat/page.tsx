@@ -17,10 +17,10 @@ import {
   Send,
   Search,
   MoreVertical,
-  MailOpen,
+  Mail,
   Smile,
   Paperclip,
-  MessageCircle,
+  MessagesSquare,
   RotateCcw,
   Users,
 } from "lucide-react"
@@ -78,6 +78,7 @@ type HistoryItem = {
   profilePicture: string | null
   role: string
   buildingName: string
+  unitNumber: string | null
   floor: number | null
   unreadCount: number
   lastPreview: string
@@ -98,8 +99,11 @@ function ChatContent() {
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false)
   const [messagingMode, setMessagingMode] = useState<"chat" | "email">("chat")
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
+  const [unitFilter, setUnitFilter] = useState("all")
+  const [conversationScope, setConversationScope] = useState("following")
 
   const [emailSubject, setEmailSubject] = useState("")
   const [emailBody, setEmailBody] = useState("")
@@ -295,6 +299,7 @@ function ChatContent() {
           profilePicture: participant.profile_picture || contact?.profile_picture || null,
           role: participant.role || contact?.role || "tenant",
           buildingName: contact?.building_name || "",
+          unitNumber: contact?.unit_number || null,
           floor: contact?.floor ?? null,
           unreadCount: conv.unreadCount || 0,
           lastPreview: String(latestMessage?.content || ""),
@@ -311,17 +316,30 @@ function ChatContent() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
+  const unitOptions = useMemo(() => {
+    const units = Array.from(new Set(historyItems.map((h) => h.unitNumber).filter(Boolean)))
+    return ["all", ...units] as string[]
+  }, [historyItems])
+
   const filteredHistory = useMemo(() => {
-    if (!chatSearch.trim()) return historyItems
-    const query = chatSearch.toLowerCase()
+    const query = chatSearch.trim().toLowerCase()
     return historyItems.filter((item) => {
-      return (
-        item.fullName.toLowerCase().includes(query) ||
-        item.username.toLowerCase().includes(query) ||
-        item.buildingName.toLowerCase().includes(query)
-      )
+      const matchesUnit = unitFilter === "all" || item.unitNumber === unitFilter
+      const matchesSearch = !query || item.fullName.toLowerCase().includes(query) || item.username.toLowerCase().includes(query) || item.buildingName.toLowerCase().includes(query)
+      return matchesUnit && matchesSearch
     })
-  }, [chatSearch, historyItems])
+  }, [chatSearch, historyItems, unitFilter])
+
+  const CHAT_REQUEST_PREFIX = "__CHAT_REQUEST__:"
+  const requestMessages = useMemo(() => messages.filter((m) => m.message.startsWith(CHAT_REQUEST_PREFIX)), [messages])
+  const latestRequest = requestMessages.length > 0 ? requestMessages[requestMessages.length - 1] : null
+  const requestAction = latestRequest?.message.replace(CHAT_REQUEST_PREFIX, "") || "NONE"
+  const requestPendingFromOther = requestAction === "REQUEST" && latestRequest?.senderId !== currentUserId
+  const requestPendingFromMe = requestAction === "REQUEST" && latestRequest?.senderId === currentUserId
+  const requestAccepted = requestAction === "ACCEPT"
+  const requestRejected = requestAction === "REJECT"
+  const isLegacyConversation = messages.length > 0 && requestMessages.length === 0
+  const canSendChat = isLegacyConversation || requestAccepted
 
   const activeHistoryItem = useMemo(() => {
     return historyItems.find((item) => item.conversationId === activeConversationId) || null
@@ -372,6 +390,7 @@ function ChatContent() {
 
   const handleHistoryClick = (conversationId: number) => {
     setActiveConversationId(conversationId)
+    setShowHeaderMenu(false)
   }
 
   const postConversationMessage = async (
@@ -412,11 +431,44 @@ function ChatContent() {
     return await jsonRes.json()
   }
 
+  const sendChatRequestAction = async (action: "REQUEST" | "ACCEPT" | "REJECT") => {
+    if (!activeConversationId) return
+    const token = getAuthToken()
+    if (!token) return
+    try {
+      const data = await postConversationMessage(activeConversationId, token, `${CHAT_REQUEST_PREFIX}${action}`, null)
+      if (data.success) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: String(data.data.message.message_id),
+            senderId: currentUserId || "",
+            message: `${CHAT_REQUEST_PREFIX}${action}`,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isOwn: true,
+            attachments: [],
+          },
+        ])
+      }
+    } catch (error) {
+      console.error("Error sending chat request action:", error)
+    }
+  }
+
   const handleSendMessage = async () => {
     if (messagingMode !== "chat" || (!newMessage.trim() && !pendingAttachment) || !activeConversationId) return
 
     const token = getAuthToken()
     if (!token) return
+    if (!canSendChat) {
+      if (messages.length === 0 && !requestPendingFromMe && !requestPendingFromOther) {
+        const confirmed = window.confirm("This is your first chat. Send a chat request first?")
+        if (confirmed) {
+          await sendChatRequestAction("REQUEST")
+        }
+      }
+      return
+    }
 
     const content = newMessage.trim()
     const outgoingAttachments = pendingAttachment ? [{ ...pendingAttachment }] : []
@@ -544,48 +596,57 @@ function ChatContent() {
 
         <div className="flex-1 min-h-0 p-4 bg-[#F4F5F8]">
           <div className="h-full min-h-0 flex border border-[#D6DCE6] rounded-md overflow-hidden bg-white">
-            <div className="w-[76px] border-r border-[#E3E8F0] bg-[#F7F9FC] flex flex-col items-stretch py-2">
+            <div className="w-[86px] border-r border-[#E3E8F0] bg-[#F7F9FC] flex flex-col items-stretch py-2">
               <button
                 type="button"
                 onClick={() => setMessagingMode("email")}
-                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded px-2 py-2 text-[11px] ${
-                  messagingMode === "email" ? "bg-[#E8EFF7] text-[#0F4C81]" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
+                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded-lg px-2 py-3 text-[11px] ${
+                  messagingMode === "email" ? "bg-[#DCEBFF] text-[#0F4C81] shadow-sm" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
                 }`}
               >
-                <MailOpen className="h-4 w-4" />
+                <Mail className="h-6 w-6" />
                 <span>Email</span>
               </button>
               <button
                 type="button"
                 onClick={() => setMessagingMode("chat")}
-                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded px-2 py-2 text-[11px] ${
-                  messagingMode === "chat" ? "bg-[#E8EFF7] text-[#0F4C81]" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
+                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded-lg px-2 py-3 text-[11px] ${
+                  messagingMode === "chat" ? "bg-[#DCEBFF] text-[#0F4C81] shadow-sm" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
                 }`}
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessagesSquare className="h-6 w-6" />
                 <span>Chat</span>
               </button>
             </div>
 
-            <div className="w-[300px] border-r border-[#E3E8F0] flex flex-col min-h-0 bg-white">
+            <div className="w-[340px] border-r border-[#E3E8F0] flex flex-col min-h-0 bg-white">
               <div className="border-b border-[#E8EDF4]">
                 <div className="h-10 px-3 flex items-center justify-between">
-                  <div className="text-sm font-semibold text-[#203247]">{messagingMode === "chat" ? "Chat" : "Email"}</div>
+                  <div className="text-sm font-semibold text-[#203247]">Recent conversations</div>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-[#5F6F82] hover:text-[#0F4C81]">
                     <RotateCcw className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-                <div className="px-3 pb-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A8EA5]" />
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    value={chatSearch}
-                    onChange={(e) => setChatSearch(e.target.value)}
-                    className="w-full h-9 rounded-md border border-[#D2DCE8] bg-white pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
-                  />
-                </div>
+                <div className="px-3 pb-3 flex items-center gap-2">
+                  <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="h-9 min-w-[110px] rounded-md border border-[#D2DCE8] bg-white px-2 text-sm">
+                    {unitOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt === "all" ? "All units" : opt}</option>
+                    ))}
+                  </select>
+                  <select value={conversationScope} onChange={(e) => setConversationScope(e.target.value)} className="h-9 min-w-[105px] rounded-md border border-[#D2DCE8] bg-white px-2 text-sm">
+                    <option value="following">Following</option>
+                    <option value="all">All</option>
+                  </select>
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A8EA5]" />
+                    <input
+                      type="text"
+                      placeholder="Search by name"
+                      value={chatSearch}
+                      onChange={(e) => setChatSearch(e.target.value)}
+                      className="w-full h-9 rounded-md border border-[#D2DCE8] bg-white pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -647,9 +708,18 @@ function ChatContent() {
                     ) : null}
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5F6F82] hover:text-[#0F4C81]">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+                <div className="relative">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5F6F82] hover:text-[#0F4C81]" onClick={() => setShowHeaderMenu((x) => !x)}>
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                  {showHeaderMenu && (
+                    <div className="absolute right-0 top-10 z-30 w-44 rounded-md border border-[#D2DCE8] bg-white p-1 shadow-lg">
+                      <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => alert("Profile preview coming soon")}>View Profile</button>
+                      <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => setMessages([])}>Clear Messages</button>
+                      <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => setActiveConversationId(null)}>Close Conversation</button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {messagingMode === "chat" ? (
@@ -660,8 +730,9 @@ function ChatContent() {
                         Select a conversation from history.
                       </div>
                     ) : messages.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-sm text-[#738599]">
-                        No messages yet.
+                      <div className="h-full flex flex-col items-center justify-center gap-3 text-sm text-[#738599]">
+                        <div>No messages yet.</div>
+                        <Button size="sm" onClick={() => void sendChatRequestAction("REQUEST")} className="bg-[#2F80ED] text-white hover:bg-[#1F6FD8]">Send chat request</Button>
                       </div>
                     ) : (
                       messages.map((msg) => (
@@ -674,7 +745,13 @@ function ChatContent() {
                                   : "bg-white text-[#1F2E40] border border-[#E4EBF3] rounded-bl-none"
                               }`}
                             >
-                              {msg.message}
+                              {msg.message.startsWith(CHAT_REQUEST_PREFIX)
+                                ? msg.message.endsWith("REQUEST")
+                                  ? "Chat request sent"
+                                  : msg.message.endsWith("ACCEPT")
+                                    ? "Chat request accepted"
+                                    : "Chat request rejected"
+                                : msg.message}
                             </div>
                             {msg.attachments.length > 0 ? (
                               <div className="mt-1 flex flex-wrap gap-1.5">
@@ -704,6 +781,21 @@ function ChatContent() {
                       ))
                     )}
                   </div>
+                  {requestPendingFromOther && (
+                    <div className="border-t border-[#E3E8F0] bg-[#FFF8E8] px-5 py-2 text-sm text-[#6A4B00] flex items-center justify-between">
+                      <span>New chat request. Accept to start chatting.</span>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" className="h-8 bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => void sendChatRequestAction("ACCEPT")}>Accept</Button>
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => void sendChatRequestAction("REJECT")}>Reject</Button>
+                      </div>
+                    </div>
+                  )}
+                  {requestPendingFromMe && (
+                    <div className="border-t border-[#E3E8F0] bg-[#EEF4FB] px-5 py-2 text-sm text-[#31506f]">Request sent. Waiting for acceptance.</div>
+                  )}
+                  {requestRejected && (
+                    <div className="border-t border-[#E3E8F0] bg-[#FFF1F2] px-5 py-2 text-sm text-[#8A2F40]">Your chat request was rejected.</div>
+                  )}
 
                   <div className="border-t border-[#E3E8F0] bg-white px-5 py-3">
                     <div className="flex items-center gap-2 relative">
@@ -713,7 +805,7 @@ function ChatContent() {
                           size="icon"
                           className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
                           onClick={() => setShowEmojiPicker((prev) => !prev)}
-                          disabled={!activeConversationId}
+                          disabled={!activeConversationId || !canSendChat}
                         >
                           <Smile className="h-4 w-4" />
                         </Button>
@@ -757,8 +849,8 @@ function ChatContent() {
                             void handleSendMessage()
                           }
                         }}
-                        disabled={!activeConversationId}
-                        placeholder={activeConversationId ? "Type a message" : "Select a conversation first"}
+                        disabled={!activeConversationId || !canSendChat}
+                        placeholder={!activeConversationId ? "Select a conversation first" : canSendChat ? "Type a message" : "Send/request acceptance required"}
                         className="h-9 flex-1 rounded-md border border-[#D2DCE8] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20 disabled:opacity-50"
                       />
                       {pendingAttachment ? (
@@ -773,7 +865,7 @@ function ChatContent() {
                         }}
                         variant="ghost"
                         size="icon"
-                        disabled={!activeConversationId}
+                        disabled={!activeConversationId || !canSendChat}
                         className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
                       >
                         <Send className="h-4 w-4" />

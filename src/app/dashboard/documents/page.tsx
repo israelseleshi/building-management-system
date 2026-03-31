@@ -327,7 +327,7 @@ function LandlordDocumentsContent() {
                   onClick={() => setFilterStatus(status)}
                   className={`px-4 py-2 rounded-lg font-semibold transition-all ${
                     filterStatus === status
-                      ? "bg-[#7D8B6F] text-white"
+                      ? "bg-[#3096DA] text-white"
                       : "bg-card text-foreground hover:bg-muted border border-border"
                   }`}
                 >
@@ -363,3 +363,4 @@ export default function LandlordDocumentsPage() {
     </ProtectedRoute>
   )
 }
+

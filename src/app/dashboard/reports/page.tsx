@@ -59,8 +59,12 @@ interface IncidentReport {
 }
 
 function ReportsContent() {
+  const SIDEBAR_COLLAPSED_KEY = "bms.dashboard.sidebarCollapsed"
   const router = useRouter()
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
+  })
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [reportTenants, setReportTenants] = useState<ReportTenant[]>([])
@@ -80,6 +84,10 @@ function ReportsContent() {
     { icon: <Users className="w-5 h-5" />, name: "Reports", path: "/dashboard/reports", active: true },
     { icon: <Settings className="w-5 h-5" />, name: "Settings", path: "/dashboard/settings", active: false },
   ]
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isSidebarCollapsed))
+  }, [isSidebarCollapsed])
 
   useEffect(() => {
     const loadData = async () => {
@@ -179,8 +187,27 @@ function ReportsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex">
+        <DashboardSidebar
+          navItems={navItems}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+          onLogout={handleLogout}
+          onNavigate={handleSidebarNavigation}
+        />
+
+        <div className="flex-1 flex flex-col">
+          <DashboardHeader
+            title="Reports & Warnings"
+            subtitle="Monitor rent risk, incidents, and top-performing tenants"
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onToggleSidebar={toggleSidebar}
+          />
+          <main className="p-6 md:p-8 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </main>
+        </div>
       </div>
     )
   }
@@ -299,7 +326,7 @@ function ReportsContent() {
                   <div className="flex gap-2 justify-end">
                     <Button
                       onClick={() => openChatWithWarning(selectedTenant.tenantId, "Please settle your overdue rent.")}
-                      className="bg-[#7D8B6F] text-white"
+                      className="bg-[#3096DA] text-white"
                     >
                       <MessageCircleWarning className="mr-2 w-4 h-4" />
                       Warn in Chat
@@ -322,3 +349,4 @@ export default function ReportsPage() {
     </ProtectedRoute>
   )
 }
+

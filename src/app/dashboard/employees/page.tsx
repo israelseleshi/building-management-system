@@ -695,7 +695,7 @@ function EmployeesContent() {
 
               <Button
                 onClick={() => setAddModalOpen(true)}
-                style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                 className="flex items-center gap-2 whitespace-nowrap"
                 data-tour="landlord-employees-add"
               >
@@ -1058,7 +1058,7 @@ function EmployeesContent() {
               Cancel
             </Button>
             <Button
-              style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+              style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
               onClick={selectedEmployee ? handleUpdateEmployee : handleAddEmployee}
             >
               {selectedEmployee ? "Update Employee" : "Add Employee"}
@@ -1098,3 +1098,4 @@ function EmployeesContent() {
     </div>
   )
 }
+

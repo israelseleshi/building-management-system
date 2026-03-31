@@ -271,3 +271,19 @@
   font-weight: 800;
   letter-spacing: -0.03em;
 }
+
+body.tenant-portal-theme {
+  background-color: #eef1f8;
+}
+
+body.tenant-portal-theme .bg-background {
+  background-color: #eef1f8 !important;
+}
+
+body.tenant-portal-theme .bg-card {
+  background-color: #ffffff !important;
+}
+
+body.tenant-portal-theme .border-border {
+  border-color: #d8e0ec !important;
+}

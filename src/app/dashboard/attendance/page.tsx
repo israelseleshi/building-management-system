@@ -597,7 +597,7 @@ function AttendanceContent() {
                     <TabsTrigger
                       key={`${tab.value}-${index}`}
                       value={tab.value}
-                      className="gap-2 rounded-xl border border-transparent px-4 py-2.5 text-muted-foreground data-[state=active]:border-[#7D8B6F] data-[state=active]:bg-[#7D8B6F] data-[state=active]:text-white data-[state=active]:shadow-sm"
+                      className="gap-2 rounded-xl border border-transparent px-4 py-2.5 text-muted-foreground data-[state=active]:border-[#3096DA] data-[state=active]:bg-[#3096DA] data-[state=active]:text-white data-[state=active]:shadow-sm"
                     >
                       <tab.icon className="h-4 w-4" />
                       <span>{tab.label}</span>
@@ -623,7 +623,7 @@ function AttendanceContent() {
                       </Button>
                       <Button
                         className="gap-2"
-                        style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                        style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                         onClick={handleProcessAttendance}
                         disabled={isProcessing}
                       >
@@ -948,7 +948,7 @@ function AttendanceContent() {
                             </Button>
                             <Button
                               size="sm"
-                              style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                              style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                               onClick={() => openManualAdjustment(exception)}
                             >
                               Adjust Record
@@ -979,7 +979,7 @@ function AttendanceContent() {
                       </Button>
                       <Button
                         className="gap-2"
-                        style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                        style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                         onClick={() => void simulateLog()}
                         disabled={!simulationShopId}
                       >
@@ -1145,7 +1145,7 @@ function AttendanceContent() {
                           placeholder="Technical issue, approved closure, or verified opening outside the scanner window."
                         />
                       </FilterField>
-                      <Button className="w-full" style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }} onClick={saveManualAdjustment}>
+                      <Button className="w-full" style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }} onClick={saveManualAdjustment}>
                         Save Adjustment
                       </Button>
                     </div>
@@ -1338,7 +1338,7 @@ function AttendanceContent() {
                         <div className="md:col-span-2">
                           <Button
                             className="w-full md:w-auto"
-                            style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                            style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                             onClick={saveConfig}
                             disabled={isSavingConfig}
                           >
@@ -1561,7 +1561,7 @@ function AttendanceContent() {
             >
               <Button
                 className="w-full"
-                style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                 onClick={sendWarning}
               >
                 Send Warning
@@ -1612,3 +1612,4 @@ function SortableHead({
     </TableHead>
   )
 }
+
