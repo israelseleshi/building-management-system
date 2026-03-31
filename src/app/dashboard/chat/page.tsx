@@ -21,7 +21,7 @@ import {
   Smile,
   Paperclip,
   MessagesSquare,
-  RotateCcw,
+  RefreshCw,
   Users,
 } from "lucide-react"
 import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
@@ -65,6 +65,7 @@ type MessageItem = {
   id: string
   senderId: string
   message: string
+  sentAt: string
   timestamp: string
   isOwn: boolean
   attachments: Array<{ url: string; name: string }>
@@ -103,12 +104,12 @@ function ChatContent() {
   const [messagingMode, setMessagingMode] = useState<"chat" | "email">("chat")
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
   const [unitFilter, setUnitFilter] = useState("all")
-  const [conversationScope, setConversationScope] = useState("following")
 
   const [emailSubject, setEmailSubject] = useState("")
   const [emailBody, setEmailBody] = useState("")
   const [pendingAttachment, setPendingAttachment] = useState<{ file: File; name: string; url: string } | null>(null)
   const [emailAttachment, setEmailAttachment] = useState<{ file: File; name: string; url: string } | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const emailFileInputRef = useRef<HTMLInputElement>(null)
@@ -316,6 +317,18 @@ function ChatContent() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
+  const formatConversationDay = (iso: string) => {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return ""
+    const now = new Date()
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const that = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    const diffDays = Math.round((start.getTime() - that.getTime()) / 86400000)
+    if (diffDays === 0) return "TODAY"
+    if (diffDays === 1) return "YESTERDAY"
+    return d.toLocaleDateString()
+  }
+
   const unitOptions = useMemo(() => {
     const units = Array.from(new Set(historyItems.map((h) => h.unitNumber).filter(Boolean)))
     return ["all", ...units] as string[]
@@ -374,6 +387,7 @@ function ChatContent() {
             id: String(m.message_id),
             senderId: String(m.sender_id),
             message: m.content,
+            sentAt: String(m.sent_at),
             timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: String(m.sender_id) === currentUserId,
             attachments: normalizeAttachments(m.attachments),
@@ -391,6 +405,52 @@ function ChatContent() {
   const handleHistoryClick = (conversationId: number) => {
     setActiveConversationId(conversationId)
     setShowHeaderMenu(false)
+  }
+
+  const refreshChatData = async () => {
+    const token = getAuthToken()
+    if (!token) return
+
+    setIsRefreshing(true)
+    try {
+      const [convsResponse, contactsResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/conversations`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/conversations/contacts`, { headers: { Authorization: `Bearer ${token}` } }),
+      ])
+
+      const convsData = await convsResponse.json()
+      if (convsData.success) {
+        setConversations(convsData.data.conversations || [])
+      }
+
+      const contactsData = await contactsResponse.json()
+      if (contactsData.success) {
+        setContacts(contactsData.data.contacts || [])
+      }
+
+      if (activeConversationId) {
+        const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${activeConversationId}/messages`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const msgsData = await msgsResponse.json()
+        if (msgsData.success) {
+          const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
+            id: String(m.message_id),
+            senderId: String(m.sender_id),
+            message: m.content,
+            sentAt: String(m.sent_at),
+            timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isOwn: String(m.sender_id) === currentUserId,
+            attachments: normalizeAttachments(m.attachments),
+          }))
+          setMessages(builtMessages)
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing chat data:", error)
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   const postConversationMessage = async (
@@ -444,6 +504,7 @@ function ChatContent() {
             id: String(data.data.message.message_id),
             senderId: currentUserId || "",
             message: `${CHAT_REQUEST_PREFIX}${action}`,
+            sentAt: new Date().toISOString(),
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: true,
             attachments: [],
@@ -484,6 +545,7 @@ function ChatContent() {
             id: String(data.data.message.message_id),
             senderId: currentUserId || "",
             message: content,
+            sentAt: new Date().toISOString(),
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: true,
             attachments: outgoingAttachments.map((item) => ({ url: item.url, name: item.name })),
@@ -623,8 +685,15 @@ function ChatContent() {
               <div className="border-b border-[#E8EDF4]">
                 <div className="h-10 px-3 flex items-center justify-between">
                   <div className="text-sm font-semibold text-[#203247]">Recent conversations</div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-[#5F6F82] hover:text-[#0F4C81]">
-                    <RotateCcw className="h-3.5 w-3.5" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void refreshChatData()}
+                    disabled={isRefreshing}
+                    className="h-8 w-8 rounded-md border border-[#D2DCE8] bg-white text-[#2F6FA9] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
                   </Button>
                 </div>
                 <div className="px-3 pb-3 flex items-center gap-2">
@@ -632,10 +701,6 @@ function ChatContent() {
                     {unitOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt === "all" ? "All units" : opt}</option>
                     ))}
-                  </select>
-                  <select value={conversationScope} onChange={(e) => setConversationScope(e.target.value)} className="h-9 min-w-[105px] rounded-md border border-[#D2DCE8] bg-white px-2 text-sm">
-                    <option value="following">Following</option>
-                    <option value="all">All</option>
                   </select>
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A8EA5]" />
@@ -661,12 +726,12 @@ function ChatContent() {
                         key={item.conversationId}
                         type="button"
                         onClick={() => handleHistoryClick(item.conversationId)}
-                        className={`w-full border-b border-[#EEF2F8] px-2.5 py-1.5 text-left ${
+                        className={`w-full border-b border-[#EEF2F8] px-2 py-1 text-left ${
                           isActive ? "bg-[#EEF4FB]" : "hover:bg-[#F8FBFF]"
                         }`}
                       >
-                        <div className="flex items-start gap-2">
-                          <Avatar className="h-7 w-7">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
                             {item.profilePicture && <AvatarImage src={item.profilePicture} />}
                             <AvatarFallback>{item.fullName[0]}</AvatarFallback>
                           </Avatar>
@@ -680,8 +745,8 @@ function ChatContent() {
                                 </span>
                               ) : null}
                             </div>
-                            <p className="mt-0.5 truncate text-[11px] text-[#6C7D90]">
-                              {item.lastPreview || `${item.buildingName}${item.floor !== null ? ` - Floor ${item.floor}` : ""}`}
+                            <p className="truncate text-[11px] text-[#6C7D90]">
+                              {item.lastPreview || `${item.unitNumber || item.buildingName}`}
                             </p>
                           </div>
                         </div>
@@ -695,12 +760,15 @@ function ChatContent() {
             <div className="flex-1 min-h-0 flex flex-col bg-[#FDFDFE]">
               <div className="h-[62px] border-b border-[#E3E8F0] bg-white px-5 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="h-9 w-9">
-                    {activeHistoryItem?.profilePicture && <AvatarImage src={activeHistoryItem.profilePicture} />}
-                    <AvatarFallback>{activeHistoryItem?.fullName?.[0] || "?"}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-[#203247]">
+                  <div className="flex flex-col items-center">
+                    <Avatar className="h-10 w-10">
+                      {activeHistoryItem?.profilePicture && <AvatarImage src={activeHistoryItem.profilePicture} />}
+                      <AvatarFallback>{activeHistoryItem?.fullName?.[0] || "?"}</AvatarFallback>
+                    </Avatar>
+                    <span className="mt-0.5 text-[10px] font-semibold text-[#6C7D90]">{activeHistoryItem?.unitNumber || "Unit -"}</span>
+                  </div>
+                  <div className="min-w-0 self-center">
+                    <p className="truncate text-base font-semibold text-[#203247]">
                       {activeHistoryItem?.fullName || "Select a conversation"}
                     </p>
                     {activeHistoryItem?.buildingName ? (
@@ -735,9 +803,21 @@ function ChatContent() {
                         <Button size="sm" onClick={() => void sendChatRequestAction("REQUEST")} className="bg-[#2F80ED] text-white hover:bg-[#1F6FD8]">Send chat request</Button>
                       </div>
                     ) : (
-                      messages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}>
-                          <div className="max-w-[72%]">
+                      messages.map((msg, index) => {
+                        const dayLabel = formatConversationDay(msg.sentAt)
+                        const prevLabel = index > 0 ? formatConversationDay(messages[index - 1].sentAt) : ""
+                        const showDay = dayLabel !== prevLabel
+                        return (
+                        <div key={msg.id}>
+                          {showDay && (
+                            <div className="my-3 flex items-center gap-3 text-[11px] font-semibold uppercase text-[#9AA9BA]">
+                              <div className="h-px flex-1 bg-[#D9E2EC]" />
+                              <span>{dayLabel}</span>
+                              <div className="h-px flex-1 bg-[#D9E2EC]" />
+                            </div>
+                          )}
+                        <div className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}>
+                          <div className="max-w-[74%]">
                             <div
                               className={`rounded-md px-3 py-2 text-sm ${
                                 msg.isOwn
@@ -778,7 +858,8 @@ function ChatContent() {
                             </p>
                           </div>
                         </div>
-                      ))
+                        </div>
+                      )})
                     )}
                   </div>
                   {requestPendingFromOther && (
@@ -833,7 +914,7 @@ function ChatContent() {
                         size="icon"
                         className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={!activeConversationId}
+                        disabled={!activeConversationId || !canSendChat}
                       >
                         <Paperclip className="h-4 w-4" />
                       </Button>

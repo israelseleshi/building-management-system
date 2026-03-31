@@ -74,7 +74,7 @@ type EmailMessage = {
 }
 
 const tenants: Tenant[] = [
-  { id: "t1", name: "Lily Smith", email: "lily.smith@tenant.com", unitId: "u1" },
+  { id: "t1", name: "Mehret Getachew", email: "mehret.getachew@tenant.com", unitId: "u1" },
   { id: "t2", name: "John Anderson", email: "john.anderson@tenant.com", unitId: "u2" },
   { id: "t3", name: "Sarah Mitchell", email: "sarah.mitchell@tenant.com", unitId: "u3" },
 ]
