@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -13,7 +13,7 @@ import {
   Bell,
   Bold,
   CalendarDays,
-  CheckCheck,
+  Check,
   ChevronLeft,
   ChevronRight,
   Italic,
@@ -24,7 +24,15 @@ import {
   MapPin,
   Paperclip,
   Plus,
+  Redo2,
+  Strikethrough,
+  Subscript,
+  Superscript,
+  Underline,
   UploadCloud,
+  X,
+  Eraser,
+  Undo2,
 } from "lucide-react"
 import { EmailModal, type EmailComposePayload } from "@/components/email/EmailModal"
 
@@ -43,6 +51,7 @@ type Event = {
   isBuildingWide?: boolean
   status: "upcoming" | "completed" | "cancelled"
   priority: "low" | "medium" | "high"
+  notifyByEmail?: boolean
   createdAt: Date
 }
 
@@ -98,7 +107,7 @@ const weekDays = (d: Date) => Array.from({ length: 7 }, (_, i) => {
   x.setDate(x.getDate() + i)
   return x
 })
-const monthGrid = (d: Date) => Array.from({ length: 42 }, (_, i) => {
+const monthGrid = (d: Date) => Array.from({ length: 35 }, (_, i) => {
   const x = new Date(d.getFullYear(), d.getMonth(), 1)
   x.setDate(1 + i)
   return x
@@ -241,9 +250,15 @@ function CalendarContent() {
   const [unitId, setUnitId] = useState("")
   const [status, setStatus] = useState<Event["status"]>("upcoming")
   const [priority, setPriority] = useState<Event["priority"]>("medium")
-  const [notes, setNotes] = useState("")
+  const [notesHtml, setNotesHtml] = useState("")
+  const [fontFamily, setFontFamily] = useState("sans-serif")
+  const [fontSize, setFontSize] = useState("3")
+  const [notifyByEmail, setNotifyByEmail] = useState(true)
+  const [eventAttachments, setEventAttachments] = useState<File[]>([])
   const [isBuildingWide, setIsBuildingWide] = useState(false)
   const [recurrence, setRecurrence] = useState<Recurrence>("none")
+  const detailsRef = useRef<HTMLDivElement | null>(null)
+  const eventFileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => { localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isSidebarCollapsed)) }, [isSidebarCollapsed])
 
@@ -319,12 +334,25 @@ function CalendarContent() {
     return () => clearTimeout(timer)
   }, [toastMessage])
 
+  const exec = (command: string, value?: string) => {
+    detailsRef.current?.focus()
+    document.execCommand(command, false, value)
+    setNotesHtml(detailsRef.current?.innerHTML || "")
+  }
+
+  const handleDropFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    const next = Array.from(files).slice(0, 10)
+    setEventAttachments((prev) => [...prev, ...next].slice(0, 10))
+  }
+
   const addEvent = () => {
     if (!title.trim()) return
+    const descriptionText = (detailsRef.current?.innerText || notesHtml.replace(/<[^>]*>/g, " ")).trim()
     setEvents((prev) => [...prev, {
       id: `evt-${crypto.randomUUID()}`,
       title,
-      description: notes || undefined,
+      description: descriptionText || undefined,
       location: location || undefined,
       reminder,
       type,
@@ -333,10 +361,24 @@ function CalendarContent() {
       unitId: unitId || undefined,
       status,
       priority,
+      notifyByEmail,
       isBuildingWide,
       createdAt: new Date(),
       recurrence: recurrence === "none" ? undefined : recurrence,
     }])
+    setTitle("")
+    setLocation("")
+    setReminder("none")
+    setTenantId("")
+    setUnitId("")
+    setStatus("upcoming")
+    setPriority("medium")
+    setRecurrence("none")
+    setIsBuildingWide(false)
+    setNotifyByEmail(true)
+    setEventAttachments([])
+    setNotesHtml("")
+    if (detailsRef.current) detailsRef.current.innerHTML = ""
     setOpenEditor(false)
   }
 
@@ -361,12 +403,34 @@ function CalendarContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-[130px_minmax(0,1fr)_140px] gap-2.5">
-              <aside className="rounded-2xl bg-white p-2.5 space-y-2 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
+            <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_160px] gap-2.5">
+              <aside className="space-y-2.5">
+                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
+                  <div className="text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Selected Date</div>
+                  <div className="mt-2 text-sm font-semibold text-slate-700">{selectedDate.toLocaleDateString()}</div>
+                  <div className="mt-2 space-y-2">
+                    {selectedEvents.map((e) => <button key={e.id} onClick={() => setDetailId(e.id)} className="w-full rounded-lg border border-slate-200 p-2 text-left text-xs font-semibold text-slate-700">{e.title}</button>)}
+                    {selectedEvents.length === 0 && <div className="text-xs text-slate-500">No events</div>}
+                  </div>
+                  <div className="mt-3 border-t border-slate-200 pt-2">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Communication</div>
+                    <button
+                      className="mt-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-left text-[11px] font-semibold text-slate-700"
+                      onClick={() => {
+                        setEmailTargetEvent(composeTargetEvent)
+                        setEmailModalOpen(true)
+                      }}
+                    >
+                      Open Composer
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-white p-2.5 space-y-2 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
                 <Filter label="Tenant" value={tenantFilter} onChange={setTenantFilter} options={["all", ...tenants.map((t) => t.id)]} />
                 <Filter label="Unit" value={unitFilter} onChange={setUnitFilter} options={["all", ...units.map((u) => u.id)]} />
                 <Filter label="Status" value={statusFilter} onChange={(v) => setStatusFilter(v as "all" | Event["status"])} options={["all", "upcoming", "completed", "cancelled"]} />
                 <Filter label="Priority" value={priorityFilter} onChange={(v) => setPriorityFilter(v as "all" | Event["priority"])} options={["all", "low", "medium", "high"]} />
+                </div>
               </aside>
 
               <section className="rounded-2xl bg-white p-3 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
@@ -445,26 +509,6 @@ function CalendarContent() {
                 <Widget title="Today's events" value={todayEvents} tone="blue" />
                 <Widget title="Upcoming events" value={upcomingEvents} tone="emerald" />
                 <Widget title="Urgent events" value={urgentEvents} tone="rose" />
-                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
-                  <div className="text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Selected Date</div>
-                  <div className="mt-2 text-sm font-semibold text-slate-700">{selectedDate.toLocaleDateString()}</div>
-                  <div className="mt-2 space-y-2">
-                    {selectedEvents.map((e) => <button key={e.id} onClick={() => setDetailId(e.id)} className="w-full rounded-lg border border-slate-200 p-2 text-left text-xs font-semibold text-slate-700">{e.title}</button>)}
-                    {selectedEvents.length === 0 && <div className="text-xs text-slate-500">No events</div>}
-                  </div>
-                  <div className="mt-3 border-t border-slate-200 pt-2">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Communication</div>
-                    <button
-                      className="mt-2 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-left text-[11px] font-semibold text-slate-700"
-                      onClick={() => {
-                        setEmailTargetEvent(composeTargetEvent)
-                        setEmailModalOpen(true)
-                      }}
-                    >
-                      Open Composer
-                    </button>
-                  </div>
-                </div>
               </aside>
             </div>
           </div>
@@ -490,71 +534,124 @@ function CalendarContent() {
 
       {openEditor && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/30 p-3 md:p-4">
-          <div className="mx-auto mt-4 mb-4 w-full max-w-[760px] rounded-2xl bg-white shadow-2xl border border-slate-200">
-            <div className="px-5 py-4 border-b border-slate-200 text-sm font-bold uppercase tracking-[0.06em] text-slate-700">Create / Edit Event</div>
+          <div className="mx-auto mt-2 mb-4 w-full max-w-[760px] rounded-2xl bg-white shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between bg-[#ECEDEF] px-5 py-4 border-b border-slate-200 rounded-t-2xl">
+              <div className="text-[2rem] font-semibold text-slate-800 leading-none">Create event</div>
+              <button type="button" onClick={() => setOpenEditor(false)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-200 hover:text-slate-700">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             <div className="max-h-[calc(100vh-190px)] overflow-y-auto">
-              <div className="space-y-4 p-5">
-                <EditorField label="Title"><input className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} /></EditorField>
-                <EditorField label="Date & Time"><input type="datetime-local" className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={start} onChange={(e) => setStart(e.target.value)} /></EditorField>
+              <div className="space-y-3 p-5">
+                <EditorField label="Title"><input className="h-9 w-full max-w-[380px] rounded-xl border border-slate-300 px-3 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} /></EditorField>
+                <EditorField label="Date & Time"><input type="datetime-local" className="h-9 w-full max-w-[380px] rounded-xl border border-slate-300 px-3 text-sm" value={start} onChange={(e) => setStart(e.target.value)} /></EditorField>
                 <EditorField label="Location">
-                  <div className="relative">
+                  <div className="relative max-w-[380px]">
                     <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input className="h-10 w-full rounded-lg border border-slate-300 pl-9 pr-3 text-sm" placeholder="Add location" value={location} onChange={(e) => setLocation(e.target.value)} />
+                    <input className="h-9 w-full rounded-xl border border-slate-300 pl-9 pr-3 text-sm" placeholder="Add location" value={location} onChange={(e) => setLocation(e.target.value)} />
                   </div>
                 </EditorField>
-                <EditorField label="Reminder">
-                  <div className="relative">
-                    <Bell className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <select className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm" value={reminder} onChange={(e) => setReminder(e.target.value as Reminder)}>
-                      <option value="none">None</option>
-                      <option value="10m">10 minutes before</option>
-                      <option value="30m">30 minutes before</option>
-                      <option value="1h">1 hour before</option>
-                      <option value="1d">1 day before</option>
-                    </select>
-                  </div>
-                </EditorField>
-                <EditorField label="Tenant"><select className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={tenantId} onChange={(e) => setTenantId(e.target.value)}><option value="">None</option>{tenants.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></EditorField>
-                <EditorField label="Unit"><select className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={unitId} onChange={(e) => setUnitId(e.target.value)}><option value="">None</option>{units.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></EditorField>
-                <EditorField label="Status"><select className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value as Event["status"])}>{["upcoming", "completed", "cancelled"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
-                <EditorField label="Priority"><select className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={priority} onChange={(e) => setPriority(e.target.value as Event["priority"])}>{["low", "medium", "high"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
-                <EditorField label="Recurring"><select className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm" value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>{["none", "daily", "weekly", "monthly"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <EditorField label="Reminder">
+                    <div className="relative max-w-[320px]">
+                      <Bell className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <select className="h-9 w-full rounded-xl border border-slate-300 bg-white pl-9 pr-3 text-sm" value={reminder} onChange={(e) => setReminder(e.target.value as Reminder)}>
+                        <option value="none">None</option>
+                        <option value="10m">10 minutes before</option>
+                        <option value="30m">30 minutes before</option>
+                        <option value="1h">1 hour before</option>
+                        <option value="1d">1 day before</option>
+                      </select>
+                    </div>
+                  </EditorField>
+                  <EditorField label="Tenant"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={tenantId} onChange={(e) => setTenantId(e.target.value)}><option value="">None</option>{tenants.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></EditorField>
+                  <EditorField label="Unit"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={unitId} onChange={(e) => setUnitId(e.target.value)}><option value="">None</option>{units.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></EditorField>
+                  <EditorField label="Status"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value as Event["status"])}>{["upcoming", "completed", "cancelled"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
+                  <EditorField label="Priority"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={priority} onChange={(e) => setPriority(e.target.value as Event["priority"])}>{["low", "medium", "high"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
+                  <EditorField label="Recurring"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>{["none", "daily", "weekly", "monthly"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
+                </div>
                 <div className="flex items-end pb-1"><label className="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={isBuildingWide} onChange={(e) => setIsBuildingWide(e.target.checked)} />Applies to whole building</label></div>
-                <EditorField label="Details">
+                <EditorField label="Details" fullWidth>
                   <div className="rounded-xl border border-slate-300">
                     <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 p-2">
-                      {[Bold, Italic, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Link2].map((Icon, i) => (
-                        <button key={i} type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100">
-                          <Icon className="h-4 w-4" />
-                        </button>
-                      ))}
+                      <select value={fontFamily} onChange={(e) => { setFontFamily(e.target.value); exec("fontName", e.target.value) }} className="h-8 w-[140px] rounded-md border border-slate-300 bg-white px-2 text-sm">
+                        <option value="sans-serif">sans-serif</option>
+                        <option value="serif">serif</option>
+                        <option value="monospace">monospace</option>
+                        <option value="Arial">Arial</option>
+                      </select>
+                      <select value={fontSize} onChange={(e) => { setFontSize(e.target.value); exec("fontSize", e.target.value) }} className="h-8 w-[88px] rounded-md border border-slate-300 bg-white px-2 text-sm">
+                        <option value="1">8pt</option>
+                        <option value="2">10pt</option>
+                        <option value="3">12pt</option>
+                        <option value="4">14pt</option>
+                        <option value="5">18pt</option>
+                      </select>
+                      <button type="button" onClick={() => exec("bold")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Bold className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("italic")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Italic className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("underline")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Underline className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("strikeThrough")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Strikethrough className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("justifyLeft")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><AlignLeft className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("justifyCenter")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><AlignCenter className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("justifyRight")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><AlignRight className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("insertUnorderedList")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><List className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("insertOrderedList")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><ListOrdered className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("subscript")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Subscript className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("superscript")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Superscript className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => { const url = window.prompt("Enter URL"); if (url) exec("createLink", url) }} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Link2 className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("removeFormat")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Eraser className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("undo")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Undo2 className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => exec("redo")} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"><Redo2 className="h-4 w-4" /></button>
                     </div>
-                    <textarea className="min-h-[140px] w-full resize-y rounded-b-xl px-3 py-2 text-sm outline-none" placeholder="Add center paragraph and event details..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    <div
+                      ref={detailsRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      onInput={(e) => setNotesHtml(e.currentTarget.innerHTML)}
+                      className="min-h-[190px] w-full rounded-b-xl px-3 py-2 text-sm outline-none"
+                      style={{ fontFamily }}
+                      data-placeholder="Add center paragraph and event details..."
+                    />
                   </div>
                 </EditorField>
                 <div className="border-t border-slate-200 pt-4">
                   <div className="mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-500">Attachments</div>
-                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                  <div
+                    className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      handleDropFiles(e.dataTransfer.files)
+                    }}
+                  >
                     <UploadCloud className="mx-auto h-8 w-8 text-slate-400" />
                     <p className="mt-2 text-sm font-medium text-slate-700">Drag and drop files here or browse files</p>
                     <p className="mt-1 text-xs text-slate-500">Limited to 10 files. Max file size is 20MB.</p>
-                    <button type="button" className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
+                    <button type="button" onClick={() => eventFileInputRef.current?.click()} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">
                       <Paperclip className="h-4 w-4" />
                       Browse Files
                     </button>
+                    <input ref={eventFileInputRef} type="file" multiple className="hidden" onChange={(e) => handleDropFiles(e.target.files)} />
+                    {eventAttachments.length > 0 && (
+                      <div className="mt-3 space-y-1 text-left">
+                        {eventAttachments.map((file, i) => (
+                          <div key={`${file.name}-${i}`} className="truncate rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700">{file.name}</div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="border-t border-slate-200 pt-4">
                   <div className="mb-1 text-lg font-semibold text-slate-800">Notifications</div>
                   <p className="mb-3 text-sm text-slate-500">Keep residents informed by telling them what changed.</p>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={notifyByEmail} onChange={(e) => setNotifyByEmail(e.target.checked)} />
+                      An email update for this event
+                    </label>
                     <div className="flex items-center gap-2">
-                      <CheckCheck className="h-4 w-4 text-emerald-600" />
-                      An email will be sent using the calendar update template.
-                    </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <CheckCheck className="h-4 w-4 text-emerald-600" />
-                      Push notifications will be sent through the mobile app.
+                      <Check className="h-4 w-4 text-emerald-600" />
+                      Push notifications through the mobile app
                     </div>
                   </div>
                 </div>
@@ -562,7 +659,7 @@ function CalendarContent() {
             </div>
             <div className="sticky bottom-0 px-5 py-4 border-t border-slate-200 flex justify-end gap-2 bg-white rounded-b-2xl">
               <Button variant="outline" onClick={() => setOpenEditor(false)}>Cancel</Button>
-              <Button className="bg-[#3096DA] text-white hover:bg-[#277FB8]" onClick={addEvent}>Save</Button>
+              <Button className="bg-[#3096DA] text-white hover:bg-[#277FB8]" onClick={addEvent}>Create</Button>
             </div>
           </div>
         </div>
@@ -636,9 +733,9 @@ function Filter({ label, value, onChange, options }: { label: string; value: str
   )
 }
 
-function EditorField({ label, children }: { label: string; children: React.ReactNode }) {
+function EditorField({ label, children, fullWidth = false }: { label: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
-    <label className="block">
+    <label className={`block ${fullWidth ? "" : "max-w-[380px]"}`}>
       <span className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</span>
       {children}
     </label>
