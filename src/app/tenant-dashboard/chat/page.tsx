@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { Combobox } from "@/components/ui/combobox"
 import {
   LayoutDashboard,
   MessageSquare,
@@ -70,7 +69,6 @@ type MessageItem = {
 function ChatContent() {
   const router = useRouter()
   const t = useTranslations("Tenant")
-  const locale = useLocale()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
@@ -81,6 +79,7 @@ function ChatContent() {
   const [newMessage, setNewMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false)
   const [messagingMode, setMessagingMode] = useState<"chat" | "email">("chat")
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
   const [selectedPersonIndex, setSelectedPersonIndex] = useState(0)
@@ -89,10 +88,8 @@ function ChatContent() {
   const [emailSubject, setEmailSubject] = useState("")
   const [emailBody, setEmailBody] = useState("")
 
-  const [buildings, setBuildings] = useState<Array<{ value: string; label: string }>>([])
-  const [floors, setFloors] = useState<Array<{ value: string; label: string }>>([])
-  const [selectedBuilding, setSelectedBuilding] = useState<string>("all")
-  const [selectedFloor, setSelectedFloor] = useState<string>("all")
+  const [unitFilter, setUnitFilter] = useState("all")
+  const [conversationScope, setConversationScope] = useState("following")
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const emailFileInputRef = useRef<HTMLInputElement>(null)
@@ -170,38 +167,35 @@ function ChatContent() {
   const filteredContacts = useMemo(() => {
     return (contacts || []).filter((contact) => {
       if (!contact) return false
-      const matchesBuilding = selectedBuilding === "all" || String(contact.building_id) === selectedBuilding
-      const matchesFloor = selectedFloor === "all" || String(contact.floor) === selectedFloor
+      const matchesUnit = unitFilter === "all" || contact.unit_number === unitFilter
       const query = chatSearch.trim().toLowerCase()
       const matchesSearch = !query || contact.full_name.toLowerCase().includes(query) || contact.username.toLowerCase().includes(query)
-      return matchesBuilding && matchesFloor && matchesSearch
+      return matchesUnit && matchesSearch
     })
-  }, [contacts, selectedBuilding, selectedFloor, chatSearch])
+  }, [contacts, unitFilter, chatSearch])
+
+  const unitOptions = useMemo(() => {
+    const units = Array.from(new Set((contacts || []).map((c) => c.unit_number).filter(Boolean)))
+    return ["all", ...units] as string[]
+  }, [contacts])
 
   const currentPerson = filteredContacts[selectedPersonIndex] || null
+  const CHAT_REQUEST_PREFIX = "__CHAT_REQUEST__:"
+  const requestMessages = useMemo(() => messages.filter((m) => m.message.startsWith(CHAT_REQUEST_PREFIX)), [messages])
+  const latestRequest = requestMessages.length > 0 ? requestMessages[requestMessages.length - 1] : null
+  const requestAction = latestRequest?.message.replace(CHAT_REQUEST_PREFIX, "") || "NONE"
+  const requestPendingFromOther = requestAction === "REQUEST" && latestRequest?.senderId !== currentUserId
+  const requestPendingFromMe = requestAction === "REQUEST" && latestRequest?.senderId === currentUserId
+  const requestAccepted = requestAction === "ACCEPT"
+  const requestRejected = requestAction === "REJECT"
+  const isLegacyConversation = messages.length > 0 && requestMessages.length === 0
+  const canSendChat = isLegacyConversation || requestAccepted
 
   useEffect(() => {
     if (selectedPersonIndex > Math.max(0, filteredContacts.length - 1)) {
       setSelectedPersonIndex(0)
     }
   }, [filteredContacts, selectedPersonIndex])
-
-  useEffect(() => {
-    const uniqueBuildings = [...new Set(contacts.map((c) => c.building_id))]
-      .map((id) => {
-        const contact = contacts.find((c) => c.building_id === id)
-        return {
-          value: String(id),
-          label: contact?.building_name || t("chatPage.filters.buildingLabel", { id }),
-        }
-      })
-    setBuildings([{ value: "all", label: t("chatPage.filters.allBuildings") }, ...uniqueBuildings])
-
-    const uniqueFloors = [...new Set(contacts.map((c) => c.floor).filter((f) => f !== null && f !== undefined))]
-      .sort((a, b) => (a || 0) - (b || 0))
-      .map((floor) => ({ value: String(floor), label: t("chatPage.filters.floorLabel", { floor }) }))
-    setFloors([{ value: "all", label: t("chatPage.filters.allFloors") }, ...uniqueFloors])
-  }, [contacts, locale, t])
 
   useEffect(() => {
     const loadData = async () => {
@@ -212,11 +206,10 @@ function ChatContent() {
           return
         }
 
-        const [userResponse, contactsRes, convsResponse, buildingsRes] = await Promise.all([
+        const [userResponse, contactsRes, convsResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/user/me`, { headers: { Authorization: `Bearer ${token}` } }),
           fetch(`${API_BASE_URL}/conversations/contacts`, { headers: { Authorization: `Bearer ${token}` } }),
           fetch(`${API_BASE_URL}/conversations`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_BASE_URL}/buildings`, { headers: { Authorization: `Bearer ${token}` } }),
         ])
 
         const userData = await userResponse.json()
@@ -227,16 +220,6 @@ function ChatContent() {
 
         const convsData = await convsResponse.json()
         if (convsData.success) setConversations(convsData.data.conversations || [])
-
-        const buildingsData = await buildingsRes.json()
-        if (buildingsData.success) {
-          const formattedBuildings = (buildingsData.data.buildings || []).map((b: any) => ({ value: String(b.building_id), label: b.name }))
-          setBuildings((prev) => {
-            const existingIds = new Set(prev.map((p) => p.value))
-            const newOnes = formattedBuildings.filter((fb: any) => !existingIds.has(fb.value))
-            return [...prev, ...newOnes]
-          })
-        }
       } catch (error) {
         console.error("Error loading chat data:", error)
       }
@@ -351,12 +334,46 @@ function ChatContent() {
     const contact = filteredContacts[index]
     if (!contact) return
     await startConversationWithContact(contact)
+    setShowHeaderMenu(false)
+  }
+
+  const sendChatRequestAction = async (action: "REQUEST" | "ACCEPT" | "REJECT") => {
+    if (!activeConversationId) return
+    const token = getAuthToken()
+    if (!token) return
+    try {
+      const data = await postConversationMessage(activeConversationId, token, `${CHAT_REQUEST_PREFIX}${action}`, null)
+      if (data.success) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: String(data.data.message.message_id),
+            senderId: currentUserId || "",
+            message: `${CHAT_REQUEST_PREFIX}${action}`,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isOwn: true,
+            attachments: [],
+          },
+        ])
+      }
+    } catch (error) {
+      console.error("Error sending chat request action:", error)
+    }
   }
 
   const handleSendMessage = async () => {
     if ((!newMessage.trim() && !pendingAttachment) || !activeConversationId) return
     const token = getAuthToken()
     if (!token) return
+    if (!canSendChat) {
+      if (messages.length === 0 && !requestPendingFromMe && !requestPendingFromOther) {
+        const confirmed = window.confirm("This is your first chat. Send a chat request first?")
+        if (confirmed) {
+          await sendChatRequestAction("REQUEST")
+        }
+      }
+      return
+    }
 
     const content = newMessage.trim()
     const outgoingAttachments = pendingAttachment ? [{ ...pendingAttachment }] : []
@@ -495,27 +512,34 @@ function ChatContent() {
               </button>
             </div>
 
-            <div className="w-[300px] border-r border-[#E3E8F0] flex flex-col min-h-0 bg-white">
+            <div className="w-[340px] border-r border-[#E3E8F0] flex flex-col min-h-0 bg-white">
               <div className="border-b border-[#E8EDF4]">
                 <div className="h-10 px-3 flex items-center justify-between">
-                  <div className="text-sm font-semibold text-[#203247]">{messagingMode === "chat" ? "Chat" : "Email"}</div>
+                  <div className="text-sm font-semibold text-[#203247]">Recent conversations</div>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-[#5F6F82] hover:text-[#0F4C81]">
                     <RotateCcw className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-                <div className="px-3 pb-3 space-y-2">
-                  <div className="relative">
+                <div className="px-3 pb-3 flex items-center gap-2">
+                  <select value={unitFilter} onChange={(e) => setUnitFilter(e.target.value)} className="h-9 min-w-[110px] rounded-md border border-[#D2DCE8] bg-white px-2 text-sm">
+                    {unitOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt === "all" ? "All units" : opt}</option>
+                    ))}
+                  </select>
+                  <select value={conversationScope} onChange={(e) => setConversationScope(e.target.value)} className="h-9 min-w-[105px] rounded-md border border-[#D2DCE8] bg-white px-2 text-sm">
+                    <option value="following">Following</option>
+                    <option value="all">All</option>
+                  </select>
+                  <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A8EA5]" />
                     <input
                       type="text"
-                      placeholder={t("chatPage.searchPlaceholder")}
+                      placeholder="Search by name"
                       value={chatSearch}
                       onChange={(e) => setChatSearch(e.target.value)}
                       className="w-full h-9 rounded-md border border-[#D2DCE8] bg-white pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
                     />
                   </div>
-                  <Combobox options={buildings} value={selectedBuilding} onValueChange={setSelectedBuilding} placeholder={t("chatPage.filters.allBuildings")} className="w-full" />
-                  <Combobox options={floors} value={selectedFloor} onValueChange={setSelectedFloor} placeholder={t("chatPage.filters.allFloors")} className="w-full" />
                 </div>
               </div>
 
@@ -562,9 +586,18 @@ function ChatContent() {
                     {currentPerson?.building_name ? <p className="truncate text-xs text-[#6C7D90]">{currentPerson.building_name}</p> : null}
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5F6F82] hover:text-[#0F4C81]">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+                <div className="relative">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5F6F82] hover:text-[#0F4C81]" onClick={() => setShowHeaderMenu((x) => !x)}>
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                  {showHeaderMenu && (
+                    <div className="absolute right-0 top-10 z-30 w-44 rounded-md border border-[#D2DCE8] bg-white p-1 shadow-lg">
+                      <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => alert("Profile preview coming soon")}>View Profile</button>
+                      <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => setMessages([])}>Clear Messages</button>
+                      <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => setActiveConversationId(null)}>Close Conversation</button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {messagingMode === "chat" ? (
@@ -573,13 +606,22 @@ function ChatContent() {
                     {!activeConversationId ? (
                       <div className="h-full flex items-center justify-center text-sm text-[#738599]">{t("chatPage.selectToStart")}</div>
                     ) : messages.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-sm text-[#738599]">No messages yet.</div>
+                      <div className="h-full flex flex-col items-center justify-center gap-3 text-sm text-[#738599]">
+                        <div>No messages yet.</div>
+                        <Button size="sm" onClick={() => void sendChatRequestAction("REQUEST")} className="bg-[#2F80ED] text-white hover:bg-[#1F6FD8]">Send chat request</Button>
+                      </div>
                     ) : (
                       messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}>
                           <div className="max-w-[72%]">
                             <div className={`rounded-md px-3 py-2 text-sm ${msg.isOwn ? "bg-[#2F80ED] text-white rounded-br-none" : "bg-white text-[#1F2E40] border border-[#E4EBF3] rounded-bl-none"}`}>
-                              {msg.message}
+                              {msg.message.startsWith(CHAT_REQUEST_PREFIX)
+                                ? msg.message.endsWith("REQUEST")
+                                  ? "Chat request sent"
+                                  : msg.message.endsWith("ACCEPT")
+                                    ? "Chat request accepted"
+                                    : "Chat request rejected"
+                                : msg.message}
                             </div>
                             {msg.attachments.length > 0 ? (
                               <div className="mt-1 flex flex-wrap gap-1.5">
@@ -596,11 +638,26 @@ function ChatContent() {
                       ))
                     )}
                   </div>
+                  {requestPendingFromOther && (
+                    <div className="border-t border-[#E3E8F0] bg-[#FFF8E8] px-5 py-2 text-sm text-[#6A4B00] flex items-center justify-between">
+                      <span>New chat request. Accept to start chatting.</span>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" className="h-8 bg-emerald-600 text-white hover:bg-emerald-700" onClick={() => void sendChatRequestAction("ACCEPT")}>Accept</Button>
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => void sendChatRequestAction("REJECT")}>Reject</Button>
+                      </div>
+                    </div>
+                  )}
+                  {requestPendingFromMe && (
+                    <div className="border-t border-[#E3E8F0] bg-[#EEF4FB] px-5 py-2 text-sm text-[#31506f]">Request sent. Waiting for acceptance.</div>
+                  )}
+                  {requestRejected && (
+                    <div className="border-t border-[#E3E8F0] bg-[#FFF1F2] px-5 py-2 text-sm text-[#8A2F40]">Your chat request was rejected.</div>
+                  )}
 
                   <div className="border-t border-[#E3E8F0] bg-white px-5 py-3">
                     <div className="flex items-center gap-2 relative">
                       <div className="relative">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]" onClick={() => setShowEmojiPicker((prev) => !prev)} disabled={!activeConversationId}>
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]" onClick={() => setShowEmojiPicker((prev) => !prev)} disabled={!activeConversationId || !canSendChat}>
                           <Smile className="h-4 w-4" />
                         </Button>
                         {showEmojiPicker ? (
@@ -616,7 +673,7 @@ function ChatContent() {
                         ) : null}
                       </div>
 
-                      <Button variant="ghost" size="icon" className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]" onClick={() => fileInputRef.current?.click()} disabled={!activeConversationId}>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]" onClick={() => fileInputRef.current?.click()} disabled={!activeConversationId || !canSendChat}>
                         <Paperclip className="h-4 w-4" />
                       </Button>
                       <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} accept="*/*" />
@@ -631,14 +688,14 @@ function ChatContent() {
                             void handleSendMessage()
                           }
                         }}
-                        disabled={!activeConversationId}
-                        placeholder={activeConversationId ? t("chatPage.inputPlaceholder") : t("chatPage.selectContactFirst")}
+                        disabled={!activeConversationId || !canSendChat}
+                        placeholder={!activeConversationId ? t("chatPage.selectContactFirst") : canSendChat ? t("chatPage.inputPlaceholder") : "Send/request acceptance required"}
                         className="h-9 flex-1 rounded-md border border-[#D2DCE8] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20 disabled:opacity-50"
                       />
 
                       {pendingAttachment ? <div className="max-w-[200px] truncate rounded border border-[#d2dce8] bg-[#f6f9fd] px-2 py-1 text-[11px] text-[#39506a]">{pendingAttachment.name}</div> : null}
 
-                      <Button onClick={() => { void handleSendMessage() }} variant="ghost" size="icon" disabled={!activeConversationId} className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]">
+                      <Button onClick={() => { void handleSendMessage() }} variant="ghost" size="icon" disabled={!activeConversationId || !canSendChat} className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]">
                         <Send className="h-4 w-4" />
                       </Button>
                     </div>

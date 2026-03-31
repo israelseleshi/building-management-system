@@ -237,7 +237,7 @@ export function DashboardSidebar({
                     isApplicationsPage ? "text-white" : "text-[#2A3A4E]"
                   }`}
                 >
-                  {isTenantDashboard ? "innago" : appBrandName}
+                  {isTenantDashboard ? "BMS" : appBrandName}
                 </div>
                 {isTenantDashboard && (
                   <div className="mt-1 text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-[#617086]">

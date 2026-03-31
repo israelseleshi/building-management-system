@@ -14,6 +14,7 @@ import {
   Bold,
   CalendarDays,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Italic,
@@ -536,7 +537,7 @@ function CalendarContent() {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/30 p-3 md:p-4">
           <div className="mx-auto mt-2 mb-4 w-full max-w-[760px] rounded-2xl bg-white shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between bg-[#ECEDEF] px-5 py-4 border-b border-slate-200 rounded-t-2xl">
-              <div className="text-[2rem] font-semibold text-slate-800 leading-none">Create event</div>
+              <div className="text-[1.6rem] font-medium text-slate-800 leading-none">Create event</div>
               <button type="button" onClick={() => setOpenEditor(false)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-200 hover:text-slate-700">
                 <X className="h-5 w-5" />
               </button>
@@ -555,20 +556,23 @@ function CalendarContent() {
                   <EditorField label="Reminder">
                     <div className="relative max-w-[320px]">
                       <Bell className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <select className="h-9 w-full rounded-xl border border-slate-300 bg-white pl-9 pr-3 text-sm" value={reminder} onChange={(e) => setReminder(e.target.value as Reminder)}>
-                        <option value="none">None</option>
-                        <option value="10m">10 minutes before</option>
-                        <option value="30m">30 minutes before</option>
-                        <option value="1h">1 hour before</option>
-                        <option value="1d">1 day before</option>
-                      </select>
+                      <div className="relative">
+                        <select className="h-9 w-full appearance-none rounded-xl border border-slate-300 bg-white pl-9 pr-12 text-sm" value={reminder} onChange={(e) => setReminder(e.target.value as Reminder)}>
+                          <option value="none">None</option>
+                          <option value="10m">10 minutes before</option>
+                          <option value="30m">30 minutes before</option>
+                          <option value="1h">1 hour before</option>
+                          <option value="1d">1 day before</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                      </div>
                     </div>
                   </EditorField>
-                  <EditorField label="Tenant"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={tenantId} onChange={(e) => setTenantId(e.target.value)}><option value="">None</option>{tenants.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></EditorField>
-                  <EditorField label="Unit"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={unitId} onChange={(e) => setUnitId(e.target.value)}><option value="">None</option>{units.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></EditorField>
-                  <EditorField label="Status"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={status} onChange={(e) => setStatus(e.target.value as Event["status"])}>{["upcoming", "completed", "cancelled"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
-                  <EditorField label="Priority"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={priority} onChange={(e) => setPriority(e.target.value as Event["priority"])}>{["low", "medium", "high"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
-                  <EditorField label="Recurring"><select className="h-9 w-full max-w-[320px] rounded-xl border border-slate-300 px-3 text-sm" value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>{["none", "daily", "weekly", "monthly"].map((x) => <option key={x} value={x}>{x}</option>)}</select></EditorField>
+                  <EditorField label="Tenant"><div className="relative max-w-[320px]"><select className="h-9 w-full appearance-none rounded-xl border border-slate-300 px-3 pr-12 text-sm" value={tenantId} onChange={(e) => setTenantId(e.target.value)}><option value="">None</option>{tenants.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /></div></EditorField>
+                  <EditorField label="Unit"><div className="relative max-w-[320px]"><select className="h-9 w-full appearance-none rounded-xl border border-slate-300 px-3 pr-12 text-sm" value={unitId} onChange={(e) => setUnitId(e.target.value)}><option value="">None</option>{units.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /></div></EditorField>
+                  <EditorField label="Status"><div className="relative max-w-[320px]"><select className="h-9 w-full appearance-none rounded-xl border border-slate-300 px-3 pr-12 text-sm" value={status} onChange={(e) => setStatus(e.target.value as Event["status"])}>{["upcoming", "completed", "cancelled"].map((x) => <option key={x} value={x}>{x}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /></div></EditorField>
+                  <EditorField label="Priority"><div className="relative max-w-[320px]"><select className="h-9 w-full appearance-none rounded-xl border border-slate-300 px-3 pr-12 text-sm" value={priority} onChange={(e) => setPriority(e.target.value as Event["priority"])}>{["low", "medium", "high"].map((x) => <option key={x} value={x}>{x}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /></div></EditorField>
+                  <EditorField label="Recurring"><div className="relative max-w-[320px]"><select className="h-9 w-full appearance-none rounded-xl border border-slate-300 px-3 pr-12 text-sm" value={recurrence} onChange={(e) => setRecurrence(e.target.value as Recurrence)}>{["none", "daily", "weekly", "monthly"].map((x) => <option key={x} value={x}>{x}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" /></div></EditorField>
                 </div>
                 <div className="flex items-end pb-1"><label className="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={isBuildingWide} onChange={(e) => setIsBuildingWide(e.target.checked)} />Applies to whole building</label></div>
                 <EditorField label="Details" fullWidth>
@@ -726,9 +730,12 @@ function Filter({ label, value, onChange, options }: { label: string; value: str
   return (
     <div>
       <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700">
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
-      </select>
+      <div className="relative">
+        <select value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 pr-12 text-sm text-slate-700">
+          {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+      </div>
     </div>
   )
 }

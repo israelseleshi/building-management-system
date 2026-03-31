@@ -163,6 +163,7 @@ const tenantGroups: NavGroupBase[] = [
     icon: <MessageSquare className="w-5 h-5" />,
     items: [
       { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/tenant-dashboard/chat" },
+      { icon: <Bell className="w-5 h-5" />, name: "Announcements", path: "/tenant-dashboard/announcements" },
     ],
   },
   {
