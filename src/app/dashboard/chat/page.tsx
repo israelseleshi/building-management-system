@@ -17,10 +17,10 @@ import {
   Send,
   Search,
   MoreVertical,
-  MailOpen,
+  Mail,
   Smile,
   Paperclip,
-  MessageCircle,
+  MessagesSquare,
   RotateCcw,
   Users,
 } from "lucide-react"
@@ -544,25 +544,25 @@ function ChatContent() {
 
         <div className="flex-1 min-h-0 p-4 bg-[#F4F5F8]">
           <div className="h-full min-h-0 flex border border-[#D6DCE6] rounded-md overflow-hidden bg-white">
-            <div className="w-[76px] border-r border-[#E3E8F0] bg-[#F7F9FC] flex flex-col items-stretch py-2">
+            <div className="w-[86px] border-r border-[#E3E8F0] bg-[#F7F9FC] flex flex-col items-stretch py-2">
               <button
                 type="button"
                 onClick={() => setMessagingMode("email")}
-                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded px-2 py-2 text-[11px] ${
-                  messagingMode === "email" ? "bg-[#E8EFF7] text-[#0F4C81]" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
+                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded-lg px-2 py-3 text-[11px] ${
+                  messagingMode === "email" ? "bg-[#DCEBFF] text-[#0F4C81] shadow-sm" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
                 }`}
               >
-                <MailOpen className="h-4 w-4" />
+                <Mail className="h-6 w-6" />
                 <span>Email</span>
               </button>
               <button
                 type="button"
                 onClick={() => setMessagingMode("chat")}
-                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded px-2 py-2 text-[11px] ${
-                  messagingMode === "chat" ? "bg-[#E8EFF7] text-[#0F4C81]" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
+                className={`mx-2 my-1 flex flex-col items-center gap-1 rounded-lg px-2 py-3 text-[11px] ${
+                  messagingMode === "chat" ? "bg-[#DCEBFF] text-[#0F4C81] shadow-sm" : "text-[#5B6A7D] hover:bg-[#EEF3F9]"
                 }`}
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessagesSquare className="h-6 w-6" />
                 <span>Chat</span>
               </button>
             </div>

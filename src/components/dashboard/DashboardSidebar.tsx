@@ -146,10 +146,10 @@ export function DashboardSidebar({
   const hoverClass = isTenantDashboard ? "hover:bg-white hover:text-[#223042]" : "hover:bg-[#113B5E] hover:text-white"
   const sidebarBaseTextClass = isTenantDashboard ? "text-[#4E5D70]" : "text-white/70"
   const groupTitleTextClass = isTenantDashboard
-    ? "text-[0.90rem] font-semibold tracking-[0.015em]"
+    ? "text-[1.02rem] font-semibold tracking-[0.01em]"
     : "text-[0.74rem] font-medium uppercase tracking-[0.03em]"
   const subItemTextClass = isTenantDashboard
-    ? "text-[0.88rem] font-medium tracking-[0.01em]"
+    ? "text-[0.96rem] font-medium tracking-[0.01em]"
     : "text-[0.74rem] font-medium"
 
   const isPanelOpen = activePanelGroup !== null
@@ -187,10 +187,17 @@ export function DashboardSidebar({
     }
   }, [pathname, groups])
 
+  useEffect(() => {
+    document.body.classList.toggle("tenant-portal-theme", isTenantDashboard)
+    return () => {
+      document.body.classList.remove("tenant-portal-theme")
+    }
+  }, [isTenantDashboard])
+
   return (
     <aside
       className={`border-r ${sidebarBorderColor} ${sidebarBg} transition-all duration-300 ease-in-out sticky top-0 h-screen flex flex-col select-none relative z-30 ${
-        isSidebarCollapsed ? "w-[68px]" : isTenantDashboard ? "w-[240px]" : "w-[180px]"
+        isSidebarCollapsed ? "w-[68px]" : isTenantDashboard ? "w-[272px]" : "w-[180px]"
       }`}
       style={{ boxShadow: "0 0 12px rgba(0, 0, 0, 0.05)" }}
     >
@@ -209,7 +216,7 @@ export function DashboardSidebar({
 
         {/* Brand header */}
         <div
-          className={`px-4 py-5 flex items-center gap-2 border-b ${sidebarBorderColor} ${
+          className={`px-4 py-6 flex items-center gap-2 border-b ${sidebarBorderColor} ${
             isSidebarCollapsed ? "justify-center px-1" : "justify-start"
           }`}
         >
@@ -230,8 +237,13 @@ export function DashboardSidebar({
                     isApplicationsPage ? "text-white" : "text-[#2A3A4E]"
                   }`}
                 >
-                  {appBrandName}
+                  {isTenantDashboard ? "innago" : appBrandName}
                 </div>
+                {isTenantDashboard && (
+                  <div className="mt-1 text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-[#617086]">
+                    Tenant Portal
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -241,7 +253,7 @@ export function DashboardSidebar({
             NAVIGATION — collapsed mode: icon strip only
         ══════════════════════════════════════════════════ */}
         {isSidebarCollapsed ? (
-          <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6">
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden py-7">
             <div className="flex flex-col items-center gap-2 px-1.5">
               {groups.map((group, index) => {
                 const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
@@ -263,7 +275,7 @@ export function DashboardSidebar({
                       }
                     }}
                     title={group.title}
-                    className={`relative flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 ${
+                    className={`relative flex ${isTenantDashboard ? "h-11 w-11" : "h-10 w-10"} items-center justify-center rounded-lg transition-all duration-200 ${
                       isGroupActive || isPanelActive
                         ? activeHighlightClass
                         : `${isApplicationsPage ? "text-white/70" : sidebarBaseTextClass} ${hoverClass}`
@@ -276,7 +288,7 @@ export function DashboardSidebar({
                           : `${isApplicationsPage ? "text-white" : "text-[#4E5D70]"}`
                       }`}
                     >
-                      {React.cloneElement(group.icon as React.ReactElement<any>, { className: `w-5 h-5 ${isTenantDashboard ? "text-[#3E5876]" : "text-white"}` })}
+                        {React.cloneElement(group.icon as React.ReactElement<any>, { className: `${isTenantDashboard ? "w-5.5 h-5.5" : "w-5 h-5"} ${isTenantDashboard ? "text-[#3E5876]" : "text-white"}` })}
                     </span>
                   </button>
                 )
@@ -289,7 +301,7 @@ export function DashboardSidebar({
           ══════════════════════════════════════════════════ */
           <div className="flex flex-1 min-h-0 overflow-hidden">
             {/* ── Fixed icon rail (40px) ── */}
-            <div className="flex flex-col py-6 gap-0.5 shrink-0 w-[40px] items-center overflow-y-auto no-scrollbar">
+            <div className="flex flex-col py-7 gap-1 shrink-0 w-[44px] items-center overflow-y-auto no-scrollbar">
               {groups.map((group, groupIndex) => {
                 const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
                 if (isSettingsGroup) return null
@@ -303,7 +315,7 @@ export function DashboardSidebar({
                 const isLit = isHoveredGroup || (!isPanelOpen && isGroupActive)
 
                 return (
-                  <div key={groupIndex} className="flex h-9 w-full items-center justify-center">
+                  <div key={groupIndex} className={`flex ${isTenantDashboard ? "h-11" : "h-9"} w-full items-center justify-center`}>
                     <button
                       onMouseEnter={() => setHoveredGroup(groupIndex)}
                       onMouseLeave={() => setHoveredGroup(null)}
@@ -316,7 +328,7 @@ export function DashboardSidebar({
                         }
                       }}
                       title={group.title}
-                      className={`flex h-9 w-9 items-center justify-center rounded-l-md transition-all duration-150 ${
+                      className={`flex ${isTenantDashboard ? "h-10 w-10" : "h-9 w-9"} items-center justify-center rounded-l-md transition-all duration-150 ${
                         isLit
                           ? activeHighlightClass
                           : `${isApplicationsPage ? "text-white/70" : sidebarBaseTextClass} ${hoverClass}`
@@ -340,7 +352,7 @@ export function DashboardSidebar({
                   isPanelOpen ? "-translate-x-full" : "translate-x-0"
                 }`}
               >
-                <div className="flex flex-col py-6 gap-0.5 overflow-y-auto flex-1 pr-2 no-scrollbar">
+                <div className="flex flex-col py-7 gap-1 overflow-y-auto flex-1 pr-2 no-scrollbar">
                   {groups.map((group, groupIndex) => {
                     const isSettingsGroup = !isTenantDashboard && group.title === "Settings"
                     if (isSettingsGroup) return null
@@ -352,7 +364,7 @@ export function DashboardSidebar({
                     const isLit = isHoveredGroup || (!isPanelOpen && isGroupActive)
 
                     return (
-                      <div key={groupIndex} className="h-9 flex items-center group">
+                      <div key={groupIndex} className={`${isTenantDashboard ? "h-11" : "h-9"} flex items-center group`}>
                         <button
                           onMouseEnter={() => setHoveredGroup(groupIndex)}
                           onMouseLeave={() => setHoveredGroup(null)}
@@ -364,7 +376,7 @@ export function DashboardSidebar({
                               handleGroupClick(groupIndex)
                             }
                           }}
-                          className={`relative flex items-center justify-between w-full h-9 rounded-r-md pl-1 pr-2 py-1.5 ${groupTitleTextClass} transition-all duration-150 before:absolute before:-left-[40px] before:top-0 before:h-full before:w-[40px] before:content-[''] ${
+                          className={`relative flex items-center justify-between w-full ${isTenantDashboard ? "h-10 pl-2.5 pr-3 py-2" : "h-9 pl-1 pr-2 py-1.5"} rounded-r-md ${groupTitleTextClass} transition-all duration-150 before:absolute before:-left-[40px] before:top-0 before:h-full before:w-[40px] before:content-[''] ${
                             isLit
                               ? connectedHighlightClass
                               : `${isApplicationsPage ? "text-white" : "text-[#4E5D70]"} ${sidebarHoverBg} ${sidebarHoverText}`
@@ -412,12 +424,12 @@ export function DashboardSidebar({
                     </div>
 
                     {/* Sub-items */}
-                    <nav className="flex-1 overflow-y-auto px-1 pb-4 space-y-0.5 no-scrollbar">
+                    <nav className="flex-1 overflow-y-auto px-1 pb-4 space-y-1 no-scrollbar">
                       {groups[activePanelGroup].items.map((item, itemIndex) => (
                         <button
                           key={itemIndex}
                           onClick={() => { handleNavigation(item.path) }}
-                          className={`flex w-full items-center px-2 py-2 rounded-md ${subItemTextClass} transition-all duration-200 ${
+                          className={`flex w-full items-center ${isTenantDashboard ? "px-2.5 py-2.5" : "px-2 py-2"} rounded-md ${subItemTextClass} transition-all duration-200 ${
                             item.active
                               ? isApplicationsPage
                                 ? "bg-[#113B5E] text-white shadow-sm"
@@ -439,7 +451,7 @@ export function DashboardSidebar({
         )}
 
         {/* Footer */}
-        <div className={`mt-auto border-t ${sidebarBorderColor} px-3 py-3 ${isSidebarCollapsed ? "px-2" : ""}`}>
+        <div className={`mt-auto border-t ${sidebarBorderColor} px-3 py-4 ${isSidebarCollapsed ? "px-2" : ""}`}>
           {isTenantDashboard ? (
             <button
               onClick={handleLogoutClick}
@@ -489,7 +501,7 @@ export function DashboardSidebar({
       {/* ── Collapsed mode flyout panel ── */}
       {isSidebarCollapsed && (
         <div
-          className={`absolute top-0 left-[68px] h-screen ${isTenantDashboard ? "w-[240px]" : "w-[200px]"} ${sidebarBg} border-r ${sidebarBorderColor} flex flex-col z-30 transition-all duration-300 ease-out ${
+          className={`absolute top-0 left-[68px] h-screen ${isTenantDashboard ? "w-[272px]" : "w-[200px]"} ${sidebarBg} border-r ${sidebarBorderColor} flex flex-col z-30 transition-all duration-300 ease-out ${
             isPanelOpen
               ? "translate-x-0 opacity-100 shadow-[8px_0_20px_-4px_rgba(0,0,0,0.12)]"
               : "-translate-x-3 opacity-0 pointer-events-none"
