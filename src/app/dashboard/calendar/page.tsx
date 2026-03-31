@@ -388,9 +388,9 @@ function CalendarContent() {
       <DashboardSidebar isSidebarCollapsed={isSidebarCollapsed} onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)} onLogout={() => { localStorage.clear(); router.push("/auth/signin") }} appBrandName="BMS" />
       <div className="min-w-0 flex-1 flex flex-col">
         <DashboardHeader title="Calendar" subtitle="Calendar management" searchQuery={searchQuery} onSearchChange={setSearchQuery} onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)} />
-        <main className="flex-1 overflow-y-auto p-3 md:p-4">
-          <div className="mx-auto w-full max-w-none space-y-4">
-            <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(31,53,73,0.08)] flex flex-wrap items-center justify-between gap-3">
+        <main className="flex-1 overflow-y-auto p-2 md:p-3">
+          <div className="mx-auto w-full max-w-none space-y-2.5">
+            <div className="rounded-xl bg-white p-3 shadow-[0_8px_24px_rgba(31,53,73,0.08)] flex flex-wrap items-center justify-between gap-2.5">
               <div className="flex items-center gap-2">
                 <Button variant="outline" onClick={() => setFocus(new Date(focus.getFullYear(), focus.getMonth() - 1, focus.getDate()))}><ChevronLeft className="h-4 w-4" /></Button>
                 <Button variant="outline" onClick={() => setFocus(new Date())}>Today</Button>
@@ -404,9 +404,9 @@ function CalendarContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_160px] gap-2.5">
-              <aside className="space-y-2.5">
-                <div className="rounded-2xl bg-white p-4 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
+            <div className="grid grid-cols-1 xl:grid-cols-[220px_minmax(0,1fr)_160px] gap-2">
+              <aside className="space-y-2">
+                <div className="rounded-xl bg-white p-3 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
                   <div className="text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Selected Date</div>
                   <div className="mt-2 text-sm font-semibold text-slate-700">{selectedDate.toLocaleDateString()}</div>
                   <div className="mt-2 space-y-2">
@@ -426,7 +426,7 @@ function CalendarContent() {
                     </button>
                   </div>
                 </div>
-                <div className="rounded-2xl bg-white p-2.5 space-y-2 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
+                <div className="rounded-xl bg-white p-2.5 space-y-2 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
                 <Filter label="Tenant" value={tenantFilter} onChange={setTenantFilter} options={["all", ...tenants.map((t) => t.id)]} />
                 <Filter label="Unit" value={unitFilter} onChange={setUnitFilter} options={["all", ...units.map((u) => u.id)]} />
                 <Filter label="Status" value={statusFilter} onChange={(v) => setStatusFilter(v as "all" | Event["status"])} options={["all", "upcoming", "completed", "cancelled"]} />
@@ -434,7 +434,7 @@ function CalendarContent() {
                 </div>
               </aside>
 
-              <section className="rounded-2xl bg-white p-3 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
+              <section className="rounded-xl bg-white p-2.5 shadow-[0_8px_24px_rgba(31,53,73,0.08)]">
                 {view === "month" && (
                   <div className="grid grid-cols-7 gap-2">
                     {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <div key={d} className="text-[11px] uppercase font-bold text-slate-500 px-1">{d}</div>)}
@@ -444,7 +444,7 @@ function CalendarContent() {
                         <div key={dateKey(d)} onClick={() => setSelectedDate(d)} onDragOver={(e) => e.preventDefault()} onDrop={(e) => {
                           const movedId = e.dataTransfer.getData("event-id")
                           if (movedId) setEvents((prev) => prev.map((x) => x.id === movedId ? { ...x, startDate: new Date(d.getFullYear(), d.getMonth(), d.getDate(), x.startDate.getHours(), x.startDate.getMinutes()) } : x))
-                        }} className={`min-h-[106px] rounded-xl border p-1.5 ${d.getMonth() === focus.getMonth() ? "border-slate-200" : "border-slate-100 bg-slate-50"}`}>
+                        }} className={`min-h-[96px] rounded-xl border p-1.5 ${d.getMonth() === focus.getMonth() ? "border-slate-200" : "border-slate-100 bg-slate-50"}`}>
                           <div className="flex items-center justify-between">
                             <span
                               className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
@@ -506,7 +506,7 @@ function CalendarContent() {
                 )}
               </section>
 
-              <aside className="space-y-2.5">
+              <aside className="space-y-2">
                 <Widget title="Today's events" value={todayEvents} tone="blue" />
                 <Widget title="Upcoming events" value={upcomingEvents} tone="emerald" />
                 <Widget title="Urgent events" value={urgentEvents} tone="rose" />

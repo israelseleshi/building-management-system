@@ -14,6 +14,8 @@ import {
   Copy,
   Check,
   X,
+  Bell,
+  Menu,
 } from "lucide-react"
 
 type ApplicationStatus =
@@ -230,6 +232,28 @@ function ApplicantsContent() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <header className="border-b border-[#D5DDE7] bg-white">
+          <div className="flex h-14 items-center justify-between px-5">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#4A5D73] hover:bg-[#EFF4FA]"
+                aria-label="Toggle navigation"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="text-[1.05rem] font-semibold uppercase tracking-[0.08em] text-[#1F3549]">Applicant&apos;s</div>
+            </div>
+            <button
+              type="button"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#4A5D73] hover:bg-[#EFF4FA]"
+              aria-label="Notifications"
+            >
+              <Bell className="h-4.5 w-4.5" />
+            </button>
+          </div>
+        </header>
 
         <main
           className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 md:px-6"
@@ -696,7 +720,7 @@ function StatusSidebar({
   onSelectStatus: (status: ApplicationStatus | "All") => void
 }) {
   return (
-    <div className="w-full space-y-2.5">
+    <div className="w-full space-y-2">
       {cards.map((card) => {
         const isActive = activeStatus === card.label
         return (
@@ -704,7 +728,7 @@ function StatusSidebar({
             key={card.label}
             type="button"
             onClick={() => onSelectStatus(isActive ? "All" : card.label)}
-            className="flex h-[66px] w-full flex-col items-start justify-center rounded-md px-4 text-left transition-transform hover:-translate-y-0.5"
+            className="flex h-[58px] w-full flex-col items-start justify-center overflow-hidden rounded-md px-3.5 text-left transition-transform hover:-translate-y-0.5"
             style={{
               backgroundColor: card.tone,
               boxShadow: isActive
@@ -713,8 +737,8 @@ function StatusSidebar({
               color: "#FFFFFF",
             }}
           >
-            <div className="text-[1.45rem] font-bold leading-none">{card.count}</div>
-            <div className="mt-1 text-[0.62rem] font-medium uppercase tracking-[0.03em]">
+            <div className="text-[1.2rem] font-bold leading-none">{card.count}</div>
+            <div className="mt-0.5 truncate text-[0.56rem] font-medium uppercase tracking-[0.03em]">
               {card.label}
             </div>
           </button>

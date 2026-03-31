@@ -20,9 +20,23 @@ import {
   Mail,
   MessagesSquare,
   RefreshCw,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  List,
+  ListOrdered,
+  Subscript,
+  Superscript,
+  Link2,
+  Eraser,
+  Undo2,
+  Redo2,
 } from "lucide-react"
 import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function ChatPage() {
   return (
@@ -67,6 +81,34 @@ type MessageItem = {
   attachments: Array<{ url: string; name: string }>
 }
 
+const getInitials = (fullName: string) => {
+  const cleaned = fullName.trim()
+  if (!cleaned) return "?"
+  const parts = cleaned.split(/\s+/).filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase()
+}
+
+function InitialCircle({
+  fullName,
+  size = "md",
+}: {
+  fullName: string
+  size?: "md" | "lg"
+}) {
+  const styleBySize = size === "lg"
+    ? "h-12 w-12 text-[1.05rem]"
+    : "h-10 w-10 text-[0.9rem]"
+  return (
+    <div
+      className={`inline-flex shrink-0 items-center justify-center rounded-full border-2 border-[#F97316] bg-white font-semibold text-[#F97316] ${styleBySize}`}
+      aria-label={fullName}
+    >
+      {getInitials(fullName)}
+    </div>
+  )
+}
+
 function ChatContent() {
   const router = useRouter()
   const t = useTranslations("Tenant")
@@ -88,12 +130,15 @@ function ChatContent() {
   const [emailAttachment, setEmailAttachment] = useState<{ file: File; name: string; url: string } | null>(null)
   const [emailSubject, setEmailSubject] = useState("")
   const [emailBody, setEmailBody] = useState("")
+  const [emailFontFamily, setEmailFontFamily] = useState("sans-serif")
+  const [emailFontSize, setEmailFontSize] = useState("3")
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const [unitFilter, setUnitFilter] = useState("all")
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const emailFileInputRef = useRef<HTMLInputElement>(null)
+  const emailEditorRef = useRef<HTMLDivElement>(null)
 
   const topEmojis = [
     "\u{1F600}",
@@ -493,12 +538,23 @@ function ChatContent() {
         if (data.success) {
           setEmailSubject("")
           setEmailBody("")
+          if (emailEditorRef.current) {
+            emailEditorRef.current.innerHTML = ""
+          }
           setEmailAttachment(null)
         }
       } catch (error) {
         console.error("Error sending email mode message:", error)
       }
     })()
+  }
+
+  const execEmail = (command: string, value?: string) => {
+    emailEditorRef.current?.focus()
+    document.execCommand(command, false, value)
+    if (emailEditorRef.current) {
+      setEmailBody(emailEditorRef.current.innerHTML)
+    }
   }
 
   const handleLogout = () => {
@@ -598,16 +654,13 @@ function ChatContent() {
                     return (
                       <button key={contact.user_id} type="button" onClick={() => void handlePersonClick(idx)} className={`w-full border-b border-[#EEF2F8] px-2 py-1 text-left ${isActive ? "bg-[#EEF4FB]" : "hover:bg-[#F8FBFF]"}`}>
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-9 w-9">
-                            {contact.profile_picture && <AvatarImage src={contact.profile_picture} />}
-                            <AvatarFallback>{contact.full_name[0]}</AvatarFallback>
-                          </Avatar>
+                          <InitialCircle fullName={contact.full_name} />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="truncate text-[12px] font-medium text-[#203247]">{contact.full_name}</p>
-                              <span className="text-[10px] text-[#8392a4] capitalize">{contact.role}</span>
+                              <p className="truncate text-[12px] font-semibold text-[#202938]">{contact.full_name}</p>
+                              <span className="shrink-0 text-[10px] text-[#8392a4] capitalize">{contact.role}</span>
                             </div>
-                            <p className="truncate text-[11px] text-[#6C7D90]">
+                            <p className="truncate text-[11px] leading-tight text-[#6C7D90]">
                               {contact.unit_number || contact.building_name}
                             </p>
                           </div>
@@ -620,13 +673,10 @@ function ChatContent() {
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col bg-[#FDFDFE]">
-              <div className="h-[62px] border-b border-[#E3E8F0] bg-white px-5 flex items-center justify-between">
+              <div className="h-[74px] border-b border-[#E3E8F0] bg-white px-5 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex flex-col items-center">
-                    <Avatar className="h-10 w-10">
-                      {currentPerson?.profile_picture && <AvatarImage src={currentPerson.profile_picture} />}
-                      <AvatarFallback>{currentPerson?.full_name?.[0] || "?"}</AvatarFallback>
-                    </Avatar>
+                    <InitialCircle fullName={currentPerson?.full_name || "Unknown"} size="lg" />
                     <span className="mt-0.5 text-[10px] font-semibold text-[#6C7D90]">{currentPerson?.unit_number || "Unit -"}</span>
                   </div>
                   <div className="min-w-0 self-center">
@@ -783,7 +833,47 @@ function ChatContent() {
                           </div>
                           <div className="grid grid-cols-[70px_1fr] gap-2">
                             <label className="pt-2 text-sm text-[#5F6F82]">Message</label>
-                            <textarea value={emailBody} onChange={(e) => setEmailBody(e.target.value)} placeholder="Write your email..." rows={10} className="w-full rounded-md border border-[#D2DCE8] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20" />
+                            <div className="rounded-md border border-[#D2DCE8] bg-white">
+                              <div className="flex flex-wrap items-center gap-1 border-b border-[#E7EDF5] p-2">
+                                <select value={emailFontFamily} onChange={(e) => { setEmailFontFamily(e.target.value); execEmail("fontName", e.target.value) }} className="h-8 w-[126px] rounded border border-[#D2DCE8] bg-white px-2 text-xs">
+                                  <option value="sans-serif">sans-serif</option>
+                                  <option value="serif">serif</option>
+                                  <option value="monospace">monospace</option>
+                                  <option value="Arial">Arial</option>
+                                </select>
+                                <select value={emailFontSize} onChange={(e) => { setEmailFontSize(e.target.value); execEmail("fontSize", e.target.value) }} className="h-8 w-[76px] rounded border border-[#D2DCE8] bg-white px-2 text-xs">
+                                  <option value="1">8pt</option>
+                                  <option value="2">10pt</option>
+                                  <option value="3">12pt</option>
+                                  <option value="4">14pt</option>
+                                  <option value="5">18pt</option>
+                                </select>
+                                <button type="button" onClick={() => execEmail("bold")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Bold className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("italic")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Italic className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("underline")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Underline className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("strikeThrough")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Strikethrough className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("justifyLeft")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><AlignLeft className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("justifyCenter")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><AlignCenter className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("justifyRight")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><AlignRight className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("insertUnorderedList")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><List className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("insertOrderedList")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><ListOrdered className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("subscript")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Subscript className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("superscript")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Superscript className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => { const url = window.prompt("Enter URL"); if (url) execEmail("createLink", url) }} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Link2 className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("removeFormat")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Eraser className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("undo")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Undo2 className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("redo")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Redo2 className="h-4 w-4" /></button>
+                              </div>
+                              <div
+                                ref={emailEditorRef}
+                                contentEditable
+                                suppressContentEditableWarning
+                                onInput={(e) => setEmailBody(e.currentTarget.innerHTML)}
+                                className="min-h-[220px] w-full px-3 py-2 text-sm outline-none"
+                                style={{ fontFamily: emailFontFamily }}
+                                data-placeholder="Write your email..."
+                              />
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center justify-between border-t border-[#E7EDF5] px-4 py-3">
