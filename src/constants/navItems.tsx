@@ -22,7 +22,6 @@ import {
   Calendar,
   ShieldCheck,
   ClipboardList,
-  Send,
   FileInput,
 } from "lucide-react"
 
@@ -83,7 +82,6 @@ const landlordGroups: NavGroupBase[] = [
     items: [
       { icon: <ClipboardList className="w-5 h-5" />, name: "Applicant's", path: "/dashboard/applications/applicants" },
       { icon: <FileInput className="w-5 h-5" />, name: "Forms", path: "/dashboard/applications/forms" },
-      { icon: <Send className="w-5 h-5" />, name: "Requests Sent", path: "/dashboard/applications/requests" },
     ],
   },
   {

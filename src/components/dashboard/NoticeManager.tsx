@@ -61,8 +61,8 @@ export default function NoticeManager({ allowSubmit = true }: { allowSubmit?: bo
 
   const canNext = (() => {
     if (step === 1) return selectedUnits.length > 0
-    if (step === 2) return inApp || email || sms
-    if (step === 3) return title.trim().length > 0 && message.trim().length > 0
+    if (step === 2) return title.trim().length > 0 && message.trim().length > 0
+    if (step === 3) return inApp || email || sms
     return true
   })()
 
@@ -163,26 +163,6 @@ export default function NoticeManager({ allowSubmit = true }: { allowSubmit?: bo
 
         {step === 2 && (
           <div className="space-y-4">
-            <div className="text-sm font-semibold uppercase tracking-wide text-[#4B647E]">Notification Channels</div>
-            <div className="space-y-2 rounded-lg border border-[#D7E1EE] p-4">
-              <label className="flex items-center justify-between rounded-md border border-[#DCE6F2] px-3 py-2">
-                <span className="text-sm font-medium text-[#21364C]">In-App Notification (default)</span>
-                <input type="checkbox" checked={inApp} onChange={(e) => setInApp(e.target.checked)} className="h-4 w-4 accent-[#3096DA]" />
-              </label>
-              <label className="flex items-center justify-between rounded-md border border-[#DCE6F2] px-3 py-2">
-                <span className="text-sm font-medium text-[#21364C]">Email</span>
-                <input type="checkbox" checked={email} onChange={(e) => setEmail(e.target.checked)} className="h-4 w-4 accent-[#3096DA]" />
-              </label>
-              <label className="flex items-center justify-between rounded-md border border-[#DCE6F2] px-3 py-2">
-                <span className="text-sm font-medium text-[#21364C]">SMS</span>
-                <input type="checkbox" checked={sms} onChange={(e) => setSms(e.target.checked)} className="h-4 w-4 accent-[#3096DA]" />
-              </label>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-4">
             <div className="text-sm font-semibold uppercase tracking-wide text-[#4B647E]">Announcement Content</div>
             <Input
               value={title}
@@ -197,6 +177,26 @@ export default function NoticeManager({ allowSubmit = true }: { allowSubmit?: bo
               rows={8}
               className="border-[#C8D6E6]"
             />
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-4">
+            <div className="text-sm font-semibold uppercase tracking-wide text-[#4B647E]">Notification Channels</div>
+            <div className="space-y-2 rounded-lg border border-[#D7E1EE] p-4">
+              <label className="flex items-center justify-between rounded-md border border-[#DCE6F2] px-3 py-2 bg-gray-50">
+                <span className="text-sm font-medium text-[#21364C]">In-App Notification <span className="text-xs text-[#7C8FA4]">(Default)</span></span>
+                <input type="checkbox" checked={inApp} disabled className="h-4 w-4 accent-[#3096DA] cursor-not-allowed" />
+              </label>
+              <label className="flex items-center justify-between rounded-md border border-[#DCE6F2] px-3 py-2 hover:bg-[#F7FAFF] cursor-pointer">
+                <span className="text-sm font-medium text-[#21364C]">SMS</span>
+                <input type="checkbox" checked={sms} onChange={(e) => setSms(e.target.checked)} className="h-4 w-4 accent-[#3096DA]" />
+              </label>
+              <label className="flex items-center justify-between rounded-md border border-[#DCE6F2] px-3 py-2 hover:bg-[#F7FAFF] cursor-pointer">
+                <span className="text-sm font-medium text-[#21364C]">Email</span>
+                <input type="checkbox" checked={email} onChange={(e) => setEmail(e.target.checked)} className="h-4 w-4 accent-[#3096DA]" />
+              </label>
+            </div>
           </div>
         )}
 
@@ -251,8 +251,8 @@ export default function NoticeManager({ allowSubmit = true }: { allowSubmit?: bo
 function StepIndicator({ step }: { step: WizardStep }) {
   const steps = [
     "Units",
-    "Channel",
     "Content",
+    "Channel",
     "Review",
     "Done",
   ]
