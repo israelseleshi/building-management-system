@@ -75,19 +75,23 @@ export default function NoticeManager({ allowSubmit = true }: { allowSubmit?: bo
 
   const handleCancel = () => {
     if (step === 5) {
-      setStep(1)
-      setTitle("")
-      setMessage("")
-      setSearch("")
-      setSelectedUnits([])
-      setEmail(false)
-      setSms(false)
-      setInApp(true)
-      setSentVia([])
-      setError(null)
+      handleAcknowledgeSuccess()
       return
     }
     setStep((prev) => (prev > 1 ? ((prev - 1) as WizardStep) : 1))
+  }
+
+  const handleAcknowledgeSuccess = () => {
+    setStep(1)
+    setTitle("")
+    setMessage("")
+    setSearch("")
+    setSelectedUnits([])
+    setEmail(false)
+    setSms(false)
+    setInApp(true)
+    setSentVia([])
+    setError(null)
   }
 
   const handleFinish = () => {
@@ -211,27 +215,36 @@ export default function NoticeManager({ allowSubmit = true }: { allowSubmit?: bo
         )}
 
         {step === 5 && (
-          <div className="mx-auto max-w-[440px] rounded-xl border border-[#D1E2F5] bg-white p-6 text-center shadow-[0_10px_24px_rgba(27,88,138,0.12)]">
-            <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#2F95DA] text-white">
+          <div className="mx-auto max-w-[460px] rounded-xl border border-[#2A87C9] bg-gradient-to-b from-[#3096DA] to-[#2C86C5] p-6 text-center text-white shadow-[0_12px_30px_rgba(20,78,123,0.35)]">
+            <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white">
               <Check className="h-6 w-6" />
             </div>
-            <div className="text-xl font-semibold text-[#1E3951]">Announcement Sent</div>
-            <div className="mt-2 text-sm text-[#5D748C]">
+            <div className="text-xl font-semibold">Announcement Sent</div>
+            <div className="mt-2 text-sm text-white/90">
               Your announcement was successfully sent via: {sentVia.join(", ")}.
             </div>
-            <div className="mt-4 rounded-md bg-[#F2F7FD] p-3 text-left text-sm text-[#33506B]">
+            <div className="mt-4 rounded-md bg-white/15 p-3 text-left text-sm text-white">
               <div className="font-semibold">{title}</div>
               <div className="mt-1">Units reached: {selectedUnits.length}</div>
             </div>
+            <Button
+              type="button"
+              onClick={handleAcknowledgeSuccess}
+              className="mt-5 h-10 min-w-28 bg-white text-[#1F5F90] hover:bg-[#EAF4FD]"
+            >
+              Okay
+            </Button>
           </div>
         )}
 
         {error && <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">{error}</div>}
 
         <div className="mt-6 flex items-center justify-end gap-2">
-          <Button type="button" variant="outline" onClick={handleCancel}>
-            {step === 5 ? "Create Another" : "Cancel"}
-          </Button>
+          {step < 5 && (
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+          )}
           {step < 4 && (
             <Button type="button" className="bg-[#3096DA] text-white hover:bg-[#2787C7]" onClick={handleNext} disabled={!canNext}>
               Next

@@ -454,7 +454,7 @@ function ListingsContent() {
 
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title="My Listings"
+          title="My Units"
           subtitle="Manage your units"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

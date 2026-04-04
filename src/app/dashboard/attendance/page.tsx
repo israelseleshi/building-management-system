@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Fragment, useEffect, useMemo, useState } from "react"
 import dayjs from "dayjs"
@@ -562,8 +562,8 @@ function AttendanceContent() {
           onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
         />
 
-        <main className="flex-1 overflow-y-auto p-5 md:p-6">
-          <div className="mx-auto max-w-[1400px] space-y-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-5">
+          <div className="mx-auto max-w-[1400px] space-y-4">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {[
                 { label: "Total Businesses", value: summary.totalShops, icon: Store, tone: "bg-slate-100 text-slate-700" },
@@ -573,26 +573,26 @@ function AttendanceContent() {
               ].map((card, index) => (
                 <div 
                   key={`${card.label}-${index}`} 
-                  className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
+                  className="rounded-2xl p-4 transition-all duration-300 shadow-sm"
                   style={{
-                    backgroundColor: "var(--card)",
-                    boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
+                    backgroundColor: "#FFFFFF",
+                    boxShadow: "0 8px 18px rgba(31, 53, 73, 0.1)",
                   }}
                 >
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${card.tone}`}>
-                      <card.icon className="h-5 w-5" />
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${card.tone}`}>
+                      <card.icon className="h-4.5 w-4.5" />
                     </div>
                     <MutedText className="text-[11px] uppercase tracking-[0.16em]">{card.label}</MutedText>
                   </div>
-                  <div className="text-3xl font-semibold text-foreground">{card.value}</div>
+                  <div className="text-2xl font-semibold text-foreground">{card.value}</div>
                 </div>
               ))}
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
               <div className="overflow-x-auto">
-                <TabsList className="h-auto gap-2 rounded-2xl border border-border/60 bg-card p-2">
+                <TabsList className="h-auto gap-2 rounded-2xl border border-border/60 bg-white p-2">
                   {tabItems.map((tab, index) => (
                     <TabsTrigger
                       key={`${tab.value}-${index}`}
@@ -607,7 +607,7 @@ function AttendanceContent() {
               </div>
 
               <TabsContent value="shop-records" className="space-y-5">
-                <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <Heading level={3} className="text-lg text-foreground">
                       Attendance Records
@@ -730,7 +730,7 @@ function AttendanceContent() {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -838,7 +838,7 @@ function AttendanceContent() {
               </TabsContent>
 
               <TabsContent value="exception-records" className="space-y-5">
-                <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <Heading level={3} className="text-lg text-foreground">
                       Attendance Issues
@@ -870,10 +870,10 @@ function AttendanceContent() {
                     <div className="w-full max-w-xs">
                       <FilterField label="Severity">
                         <Select value={filters.severity} onValueChange={(value) => setFilters((current) => ({ ...current, severity: value }))}>
-                          <SelectTrigger className="bg-card text-foreground">
+                          <SelectTrigger className="bg-white text-foreground">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-card">
+                          <SelectContent className="bg-white">
                             <SelectItem value="all">All Severity</SelectItem>
                             <SelectItem value="slight">Slight</SelectItem>
                             <SelectItem value="medium">Medium</SelectItem>
@@ -886,7 +886,7 @@ function AttendanceContent() {
                   </div>
 
                   <div className="mb-5">
-                    <div className="rounded-2xl border border-border/60 bg-background/50 p-4">
+                    <div className="rounded-2xl border border-border/60 bg-white p-4">
                       <div className="mb-3">
                         <Heading level={4} className="text-base text-foreground">
                           Warning Log
@@ -894,7 +894,7 @@ function AttendanceContent() {
                       </div>
                       <div className="space-y-3">
                         {filteredWarnings.slice(0, 6).map((warning, index) => (
-                          <div key={`${warning.id}-${index}`} className="rounded-xl border border-border/60 bg-card p-3">
+                          <div key={`${warning.id}-${index}`} className="rounded-xl border border-border/60 bg-white p-3">
                             <div className="font-medium text-foreground">{warning.shopName}</div>
                             <div className="text-xs text-muted-foreground">
                               {warning.unit} | {warning.templateName} | {warning.channel}
@@ -917,7 +917,7 @@ function AttendanceContent() {
                     {filteredExceptions.map((exception, index) => (
                       <div
                         key={`${exception.shopId}-${exception.date}-${exception.unit}-${index}`}
-                        className="rounded-2xl border border-border/60 bg-background/50 p-4"
+                        className="rounded-2xl border border-border/60 bg-white p-4"
                       >
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                           <div>
@@ -967,7 +967,7 @@ function AttendanceContent() {
               </TabsContent>
 
               <TabsContent value="device-logs" className="space-y-5">
-                <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                   <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <Heading level={3} className="text-lg text-foreground">
                       Raw Device Logs
@@ -999,10 +999,10 @@ function AttendanceContent() {
                     </FilterField>
                     <FilterField label="Device">
                       <Select value={filters.deviceId} onValueChange={(value) => setFilters((current) => ({ ...current, deviceId: value }))}>
-                        <SelectTrigger className="bg-card text-foreground">
+                        <SelectTrigger className="bg-white text-foreground">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-card">
+                        <SelectContent className="bg-white">
                           <SelectItem value="all">All Devices</SelectItem>
                           {deviceOptions.map((deviceId, index) => (
                             <SelectItem key={`${deviceId}-${index}`} value={deviceId}>
@@ -1021,10 +1021,10 @@ function AttendanceContent() {
                     </FilterField>
                     <FilterField label="Unit">
                       <Select value={simulationShopId} onValueChange={setSimulationShopId}>
-                        <SelectTrigger className="bg-card text-foreground">
+                        <SelectTrigger className="bg-white text-foreground">
                           <SelectValue placeholder="Select unit" />
                         </SelectTrigger>
-                        <SelectContent className="bg-card">
+                        <SelectContent className="bg-white">
                           {activeShops.map((shop, index) => (
                             <SelectItem key={`${shop.id}-${index}`} value={shop.id}>
                               {shop.unit} | {shop.name}
@@ -1044,7 +1044,7 @@ function AttendanceContent() {
                   </div>
                 </section>
 
-                <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1089,7 +1089,7 @@ function AttendanceContent() {
 
               <TabsContent value="manual-adjustments" className="space-y-5">
                 <div className="grid gap-5 xl:grid-cols-[1.05fr,1.35fr]">
-                  <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                  <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                     <Heading level={3} className="text-lg text-foreground">
                       Add Manual Adjustment
                     </Heading>
@@ -1100,10 +1100,10 @@ function AttendanceContent() {
                           value={manualForm.shopId || undefined}
                           onValueChange={(value) => setManualForm((current) => ({ ...current, shopId: value }))}
                         >
-                          <SelectTrigger className="bg-card text-foreground">
+                          <SelectTrigger className="bg-white text-foreground">
                             <SelectValue placeholder="Select a business" />
                           </SelectTrigger>
-                          <SelectContent className="bg-card">
+                          <SelectContent className="bg-white">
                             {shops.map((shop, index) => (
                               <SelectItem key={`${shop.id}-${index}`} value={shop.id}>
                                 {shop.name}
@@ -1126,10 +1126,10 @@ function AttendanceContent() {
                             setManualForm((current) => ({ ...current, newStatus: value }))
                           }
                         >
-                          <SelectTrigger className="bg-card text-foreground">
+                          <SelectTrigger className="bg-white text-foreground">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-card">
+                          <SelectContent className="bg-white">
                             <SelectItem value="On Time">On Time</SelectItem>
                             <SelectItem value="Slight Late">Slight Late</SelectItem>
                             <SelectItem value="Late">Late</SelectItem>
@@ -1151,7 +1151,7 @@ function AttendanceContent() {
                     </div>
                   </section>
 
-                  <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                  <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                     <div className="mb-4 flex items-center justify-between">
                       <Heading level={3} className="text-lg text-foreground">
                         Audit Log
@@ -1166,7 +1166,7 @@ function AttendanceContent() {
                         return (
                           <div
                             key={`${adjustment.id}-${index}`}
-                            className="rounded-2xl border border-border/60 bg-background/50 p-4"
+                            className="rounded-2xl border border-border/60 bg-white p-4"
                           >
                             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                               <div>
@@ -1196,7 +1196,7 @@ function AttendanceContent() {
 
               <TabsContent value="configurations" className="space-y-5">
                 <div className="grid gap-5 xl:grid-cols-[1fr,1.4fr]">
-                  <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                  <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                     <Heading level={3} className="text-lg text-foreground">
                       System Rules
                     </Heading>
@@ -1349,7 +1349,7 @@ function AttendanceContent() {
                     )}
                   </section>
 
-                  <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                  <section className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
                     <Heading level={3} className="text-lg text-foreground">
                       Business-Specific Overrides
                     </Heading>
@@ -1364,10 +1364,10 @@ function AttendanceContent() {
                       </FilterField>
                       <FilterField label="Unit">
                         <Select value={overrideUnit} onValueChange={setOverrideUnit}>
-                          <SelectTrigger className="bg-card text-foreground">
+                          <SelectTrigger className="bg-white text-foreground">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-card">
+                          <SelectContent className="bg-white">
                             <SelectItem value="all">All Units</SelectItem>
                             {unitOptions.map((unit, index) => (
                               <SelectItem key={`${unit}-${index}`} value={unit}>
@@ -1388,7 +1388,7 @@ function AttendanceContent() {
                         return (
                           <div
                             key={`${shop.id}-${index}`}
-                            className="grid gap-4 rounded-2xl border border-border/60 bg-background/50 p-4 md:grid-cols-[1.2fr,180px,180px]"
+                            className="grid gap-4 rounded-2xl border border-border/60 bg-white p-4 md:grid-cols-[1.2fr,180px,180px]"
                           >
                             <div>
                               <div className="font-semibold text-foreground">{shop.name}</div>
@@ -1485,10 +1485,10 @@ function AttendanceContent() {
                   value={warningDraft.issueKey || undefined}
                   onValueChange={(value) => setWarningDraft((current) => ({ ...current, issueKey: value }))}
                 >
-                  <SelectTrigger className="bg-card text-foreground">
+                  <SelectTrigger className="bg-white text-foreground">
                     <SelectValue placeholder="Select attendance issue" />
                   </SelectTrigger>
-                  <SelectContent className="bg-card">
+                  <SelectContent className="bg-white">
                     {filteredExceptions.map((exception, index) => (
                       <SelectItem
                         key={`${exception.shopId}-${exception.date}-${exception.unit}-${index}`}
@@ -1507,10 +1507,10 @@ function AttendanceContent() {
                     setWarningDraft((current) => ({ ...current, templateId: value as WarningTemplateId }))
                   }
                 >
-                  <SelectTrigger className="bg-card text-foreground">
+                  <SelectTrigger className="bg-white text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-card">
+                  <SelectContent className="bg-white">
                     {warningTemplates.map((template, index) => (
                       <SelectItem key={`${template.id}-${index}`} value={template.id}>
                         {template.name}
@@ -1526,10 +1526,10 @@ function AttendanceContent() {
                     setWarningDraft((current) => ({ ...current, channel: value }))
                   }
                 >
-                  <SelectTrigger className="bg-card text-foreground">
+                  <SelectTrigger className="bg-white text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-card">
+                  <SelectContent className="bg-white">
                     <SelectItem value="email">Email</SelectItem>
                     <SelectItem value="sms">SMS</SelectItem>
                     <SelectItem value="in-app">In-App</SelectItem>

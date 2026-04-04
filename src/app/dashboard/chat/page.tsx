@@ -705,7 +705,7 @@ function ChatContent() {
 
       <div className="flex-1 min-h-0 transition-all duration-300 ease-in-out flex flex-col">
         <DashboardHeader
-          title="Messaging"
+          title="Chat"
           subtitle={messagingMode === "chat" ? "Chat" : "Email"}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

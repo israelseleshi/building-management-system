@@ -263,7 +263,7 @@ function LandlordDocumentsContent() {
 
         <div className="flex-1 transition-all duration-300 ease-in-out">
           <DashboardHeader
-            title="Tenant Documents"
+            title="Documents"
             subtitle="Loading documents..."
             onToggleSidebar={toggleSidebar}
           />
@@ -291,7 +291,7 @@ function LandlordDocumentsContent() {
 
       <div className="flex-1 flex flex-col">
         <DashboardHeader
-          title="Tenant Documents"
+          title="Documents"
           subtitle="Review and manage tenant documents"
           onToggleSidebar={toggleSidebar}
         />

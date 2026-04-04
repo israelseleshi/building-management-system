@@ -198,7 +198,7 @@ function ReportsContent() {
 
         <div className="flex-1 flex flex-col">
           <DashboardHeader
-            title="Reports & Warnings"
+            title="Reports"
             subtitle="Monitor rent risk, incidents, and top-performing tenants"
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -224,7 +224,7 @@ function ReportsContent() {
 
       <div className="flex-1 flex flex-col">
         <DashboardHeader
-          title="Reports & Warnings"
+          title="Reports"
           subtitle="Monitor rent risk, incidents, and top-performing tenants"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
