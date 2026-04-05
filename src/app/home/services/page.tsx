@@ -88,35 +88,40 @@ const features = [
     icon: Wrench, 
     title: "Maintenance Management", 
     desc: "Tenants can submit maintenance requests and complaints directly. Administrators can assign tasks to employees and track progress from submission to completion, improving response time and accountability.",
-    image: "/building-image_1.jpg"
+    image: "/building-image_1.jpg",
+    hasDetail: true
   },
   { 
     id: 10,
     icon: ShieldCheck, 
     title: "Document Management", 
     desc: "Generation of professional invoices, storage, and review of tenant documents. Documents like identification, proof of income, and rental records are securely managed, reducing paperwork.",
-    image: "/Digital-Documents.png"
+    image: "/Digital-Documents.png",
+    hasDetail: true
   },
   { 
     id: 11,
     icon: Clock, 
     title: "Commercial Operations", 
     desc: "For commercial properties, attendance tracking capabilities using fingerprint-based systems allow administrators to monitor opening times of business units and identify delays or irregularities.",
-    image: "/Attendance-Tracking.png"
+    image: "/Attendance-Tracking.png",
+    hasDetail: true
   },
   { 
     id: 12,
     icon: PieChart, 
     title: "Reporting & Analytics", 
     desc: "Access structured reports and analytics, including monthly income summaries, occupancy trends, and automated financial performance metrics. Enable informed decision-making.",
-    image: "/Centralized-Dashboard.png"
+    image: "/Centralized-Dashboard.png",
+    hasDetail: true
   },
   { 
     id: 13,
     icon: Smartphone, 
     title: "Tenant Experience", 
     desc: "A dedicated tenant interface to improve transparency. Tenants can view invoices, track payment history, receive notifications, browse listings, and submit requests, creating a professional interaction.",
-    image: "/In-App-Messaging.png"
+    image: "/In-App-Messaging.png",
+    hasDetail: true
   }
 ]
 
@@ -203,9 +208,19 @@ export default function ServicesPage() {
                   <p style={{ fontSize: "1.25rem", lineHeight: 1.8, opacity: 0.85, color: NAVY }}>
                     {feat.desc}
                   </p>
-                  {feat.hasDetail && activeIndex === 0 && (
+                  {feat.hasDetail && (
                     <Link 
-                      href="/home/services/property-management"
+                      href={(() => {
+                        const routes: Record<number, string> = {
+                          0: "/home/services/property-management",
+                          1: "/home/services/tenant-experience",
+                          8: "/home/services/maintenance-management",
+                          9: "/home/services/document-management",
+                          10: "/home/services/commercial-operations",
+                          11: "/home/services/reporting-analytics"
+                        }
+                        return routes[activeIndex] || "/home/services"
+                      })()}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -277,9 +292,19 @@ export default function ServicesPage() {
                       {String(activeIndex + 1).padStart(2, "0")}
                     </div>
                     <h3 style={{ fontSize: "2rem", fontWeight: 600 }}>{features[activeIndex].title}</h3>
-                    {activeIndex === 0 && (
+                    {features[activeIndex].hasDetail && (
                       <Link 
-                        href="/home/services/property-management"
+                        href={(() => {
+                          const routes: Record<number, string> = {
+                            0: "/home/services/property-management",
+                            1: "/home/services/tenant-experience",
+                            8: "/home/services/maintenance-management",
+                            9: "/home/services/document-management",
+                            10: "/home/services/commercial-operations",
+                            11: "/home/services/reporting-analytics"
+                          }
+                          return routes[activeIndex] || "/home/services"
+                        })()}
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
