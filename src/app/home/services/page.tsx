@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { 
   Building2, 
   Users2, 
@@ -17,7 +18,8 @@ import {
   ShieldCheck, 
   Clock,
   PieChart,
-  Smartphone
+  Smartphone,
+  ArrowRight
 } from "lucide-react"
 
 const NAVY = "#1F3549"
@@ -29,7 +31,8 @@ const features = [
     icon: Building2, 
     title: "Property and Unit Management", 
     desc: "Smart BMS provides a structured way to manage all units within a building. Administrators can track occupancy status, organize unit-level data, and maintain a clear overview of the building's structure. This ensures that all operational information is centralized and easily accessible.",
-    image: "/Multi-Property-Support.png"
+    image: "/Multi-Property-Support.png",
+    hasDetail: true
   },
   { 
     id: 2,
@@ -200,6 +203,26 @@ export default function ServicesPage() {
                   <p style={{ fontSize: "1.25rem", lineHeight: 1.8, opacity: 0.85, color: NAVY }}>
                     {feat.desc}
                   </p>
+                  {feat.hasDetail && activeIndex === 0 && (
+                    <Link 
+                      href="/home/services/property-management"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        marginTop: "1.5rem",
+                        padding: "0.875rem 1.5rem",
+                        backgroundColor: NAVY,
+                        color: "white",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        borderRadius: "12px",
+                        fontSize: "1rem"
+                      }}
+                    >
+                      View Details <ArrowRight size={18} />
+                    </Link>
+                  )}
                 </div>
               )
             })}
@@ -254,6 +277,26 @@ export default function ServicesPage() {
                       {String(activeIndex + 1).padStart(2, "0")}
                     </div>
                     <h3 style={{ fontSize: "2rem", fontWeight: 600 }}>{features[activeIndex].title}</h3>
+                    {activeIndex === 0 && (
+                      <Link 
+                        href="/home/services/property-management"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          marginTop: "1rem",
+                          padding: "0.75rem 1.25rem",
+                          backgroundColor: "white",
+                          color: NAVY,
+                          fontWeight: 600,
+                          textDecoration: "none",
+                          borderRadius: "10px",
+                          fontSize: "0.875rem"
+                        }}
+                      >
+                        View Details <ArrowRight size={16} />
+                      </Link>
+                    )}
                   </div>
                 </motion.div>
               </AnimatePresence>
