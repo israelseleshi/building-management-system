@@ -43,7 +43,8 @@ export function DashboardSidebar({
           Properties: "nav.properties",
           Management: "nav.management",
           Communication: "nav.communication",
-          Insights: "nav.insights",
+          Reports: "nav.reports",
+          Insights: "nav.reports",
           Settings: "nav.settings",
         }
 
@@ -52,8 +53,12 @@ export function DashboardSidebar({
           Listings: "nav.listings",
           "My Rents": "nav.myRents",
           Documents: "nav.documents",
+          "Leave Requests": "nav.leaveRequests",
           Chat: "nav.chat",
           Reports: "nav.reports",
+          Payments: "nav.reports",
+          Maintenance: "nav.maintenance",
+          Notifications: "nav.notifications",
           Settings: "nav.settings",
         }
 

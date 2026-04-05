@@ -224,8 +224,10 @@ export default function ServicesPage() {
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
+                        justifyContent: "center",
                         gap: "0.5rem",
                         marginTop: "1.5rem",
+                        width: "70%",
                         padding: "0.875rem 1.5rem",
                         backgroundColor: NAVY,
                         color: "white",
@@ -308,6 +310,8 @@ export default function ServicesPage() {
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
+                          justifyContent: "center",
+                          width: "70%",
                           gap: "0.5rem",
                           marginTop: "1rem",
                           padding: "0.75rem 1.25rem",

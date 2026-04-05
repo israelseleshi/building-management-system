@@ -12,10 +12,13 @@
       "management": "አስተዳደር",
       "myRents": "የኪራዮቼ",
       "documents": "ሰነዶች",
+      "leaveRequests": "የልቀት ጥያቄዎች",
       "communication": "ግንኙነት",
       "chat": "ውይይት",
       "insights": "ግንዛቤ",
       "reports": "ሪፖርቶች",
+      "maintenance": "ጥገና",
+      "notifications": "ማሳወቂያዎች",
       "settings": "ቅንብሮች",
       "logout": "ውጣ"
     },

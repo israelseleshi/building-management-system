@@ -12,10 +12,13 @@
       "management": "Management",
       "myRents": "My Rents",
       "documents": "Documents",
+      "leaveRequests": "Leave Requests",
       "communication": "Communication",
       "chat": "Chat",
       "insights": "Insights",
       "reports": "Reports",
+      "maintenance": "Maintenance",
+      "notifications": "Notifications",
       "settings": "Settings",
       "logout": "Log Out"
     },
