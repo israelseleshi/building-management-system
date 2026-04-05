@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Heading } from "@/components/ui/typography"
 import { Search, Globe, MapPin, AlignLeft } from "lucide-react"
@@ -36,11 +37,47 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [localQuery, setLocalQuery] = useState("")
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
 
   const currentLocale = useLocale()
   const normalizedPathname = pathname.replace(/^\/(en|am)(?=\/|$)/, "")
   const isTenantDashboard = normalizedPathname.startsWith("/tenant-dashboard")
   const isOverviewStyleHeader = Boolean(buildingName)
+  const hasExternalSearchState = typeof onSearchChange === "function"
+  const activeQuery = (hasExternalSearchState ? searchQuery : localQuery).trim()
+
+  const globalSearchItems = useMemo(
+    () => [
+      { label: "Dashboard", path: "/dashboard", keywords: "overview home" },
+      { label: "Calendar", path: "/dashboard/calendar", keywords: "schedule events" },
+      { label: "My Units", path: "/dashboard/listings", keywords: "units listings rentals" },
+      { label: "Create Units", path: "/dashboard/create", keywords: "add create listing unit" },
+      { label: "Tenants", path: "/dashboard/tenants", keywords: "people tenant portal" },
+      { label: "Employees", path: "/dashboard/employees", keywords: "staff team people" },
+      { label: "Attendance", path: "/dashboard/attendance", keywords: "staff checkin time tracking" },
+      { label: "Chat", path: "/dashboard/chat", keywords: "messages messaging inbox" },
+      { label: "Announcements", path: "/dashboard/notices", keywords: "notice notices broadcast" },
+      { label: "Payouts", path: "/dashboard/payouts", keywords: "payments transfer finance" },
+      { label: "Invoices", path: "/dashboard/invoices", keywords: "billing invoice payments" },
+      { label: "Documents", path: "/dashboard/documents", keywords: "files tenant docs" },
+      { label: "Reports", path: "/dashboard/reports", keywords: "risk warnings reports" },
+      { label: "Analytics", path: "/dashboard/analytics", keywords: "insights charts trends" },
+      { label: "Settings", path: "/dashboard/settings", keywords: "account preferences configuration" },
+      { label: "Settings - Account", path: "/dashboard/settings", keywords: "profile account user details" },
+      { label: "Settings - Notifications", path: "/dashboard/settings", keywords: "alerts notifications email sms" },
+      { label: "Settings - Security", path: "/dashboard/settings", keywords: "password security access" },
+    ],
+    []
+  )
+
+  const globalMatches = useMemo(() => {
+    const q = activeQuery.toLowerCase()
+    if (!q) return []
+    return globalSearchItems
+      .filter((item) => `${item.label} ${item.keywords}`.toLowerCase().includes(q))
+      .slice(0, 8)
+  }, [activeQuery, globalSearchItems])
 
   const handleToggleLocale = () => {
     const nextLocale = currentLocale === "en" ? "am" : "en"
@@ -51,6 +88,20 @@ export function DashboardHeader({
     } catch {
       router.refresh()
     }
+  }
+
+  const handleSearchChange = (value: string) => {
+    if (hasExternalSearchState) {
+      onSearchChange?.(value)
+    } else {
+      setLocalQuery(value)
+    }
+  }
+
+  const navigateToSearchItem = (path: string) => {
+    setIsSearchFocused(false)
+    if (!hasExternalSearchState) setLocalQuery("")
+    router.push(path)
   }
 
   return (
@@ -117,10 +168,33 @@ export function DashboardHeader({
             <input
               type="text"
               placeholder={searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => onSearchChange?.(e.target.value)}
+              value={hasExternalSearchState ? searchQuery : localQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setTimeout(() => setIsSearchFocused(false), 120)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && globalMatches.length > 0) {
+                  event.preventDefault()
+                  navigateToSearchItem(globalMatches[0].path)
+                }
+              }}
               className="h-10 w-64 rounded-lg border border-border bg-card py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
             />
+            {isSearchFocused && activeQuery.length >= 2 && globalMatches.length > 0 && (
+              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[80] overflow-hidden rounded-xl border border-border bg-white shadow-lg">
+                {globalMatches.map((item) => (
+                  <button
+                    key={`${item.path}-${item.label}`}
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => navigateToSearchItem(item.path)}
+                    className="block w-full border-b border-border/50 px-3 py-2.5 text-left text-sm text-foreground hover:bg-muted/50 last:border-b-0"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {isTenantDashboard && (

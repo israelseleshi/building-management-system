@@ -21,11 +21,25 @@ import {
   Smile,
   Paperclip,
   MessagesSquare,
-  RotateCcw,
+  RefreshCw,
   Users,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  List,
+  ListOrdered,
+  Subscript,
+  Superscript,
+  Link2,
+  Eraser,
+  Undo2,
+  Redo2,
 } from "lucide-react"
 import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function ChatPage() {
   return (
@@ -65,6 +79,7 @@ type MessageItem = {
   id: string
   senderId: string
   message: string
+  sentAt: string
   timestamp: string
   isOwn: boolean
   attachments: Array<{ url: string; name: string }>
@@ -85,6 +100,34 @@ type HistoryItem = {
   lastSentAt: string | null
 }
 
+const getInitials = (fullName: string) => {
+  const cleaned = fullName.trim()
+  if (!cleaned) return "?"
+  const parts = cleaned.split(/\s+/).filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0] || ""}${parts[parts.length - 1][0] || ""}`.toUpperCase()
+}
+
+function InitialCircle({
+  fullName,
+  size = "md",
+}: {
+  fullName: string
+  size?: "md" | "lg"
+}) {
+  const styleBySize = size === "lg"
+    ? "h-12 w-12 text-[1.05rem]"
+    : "h-10 w-10 text-[0.9rem]"
+  return (
+    <div
+      className={`inline-flex shrink-0 items-center justify-center rounded-full border-2 border-[#F97316] bg-white font-semibold text-[#F97316] ${styleBySize}`}
+      aria-label={fullName}
+    >
+      {getInitials(fullName)}
+    </div>
+  )
+}
+
 function ChatContent() {
   const router = useRouter()
 
@@ -103,15 +146,18 @@ function ChatContent() {
   const [messagingMode, setMessagingMode] = useState<"chat" | "email">("chat")
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
   const [unitFilter, setUnitFilter] = useState("all")
-  const [conversationScope, setConversationScope] = useState("following")
 
   const [emailSubject, setEmailSubject] = useState("")
   const [emailBody, setEmailBody] = useState("")
+  const [emailFontFamily, setEmailFontFamily] = useState("sans-serif")
+  const [emailFontSize, setEmailFontSize] = useState("3")
   const [pendingAttachment, setPendingAttachment] = useState<{ file: File; name: string; url: string } | null>(null)
   const [emailAttachment, setEmailAttachment] = useState<{ file: File; name: string; url: string } | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const emailFileInputRef = useRef<HTMLInputElement>(null)
+  const emailEditorRef = useRef<HTMLDivElement>(null)
 
   const topEmojis = [
     "\u{1F600}",
@@ -316,6 +362,18 @@ function ChatContent() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
+  const formatConversationDay = (iso: string) => {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return ""
+    const now = new Date()
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const that = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+    const diffDays = Math.round((start.getTime() - that.getTime()) / 86400000)
+    if (diffDays === 0) return "TODAY"
+    if (diffDays === 1) return "YESTERDAY"
+    return d.toLocaleDateString()
+  }
+
   const unitOptions = useMemo(() => {
     const units = Array.from(new Set(historyItems.map((h) => h.unitNumber).filter(Boolean)))
     return ["all", ...units] as string[]
@@ -374,6 +432,7 @@ function ChatContent() {
             id: String(m.message_id),
             senderId: String(m.sender_id),
             message: m.content,
+            sentAt: String(m.sent_at),
             timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: String(m.sender_id) === currentUserId,
             attachments: normalizeAttachments(m.attachments),
@@ -391,6 +450,52 @@ function ChatContent() {
   const handleHistoryClick = (conversationId: number) => {
     setActiveConversationId(conversationId)
     setShowHeaderMenu(false)
+  }
+
+  const refreshChatData = async () => {
+    const token = getAuthToken()
+    if (!token) return
+
+    setIsRefreshing(true)
+    try {
+      const [convsResponse, contactsResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/conversations`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/conversations/contacts`, { headers: { Authorization: `Bearer ${token}` } }),
+      ])
+
+      const convsData = await convsResponse.json()
+      if (convsData.success) {
+        setConversations(convsData.data.conversations || [])
+      }
+
+      const contactsData = await contactsResponse.json()
+      if (contactsData.success) {
+        setContacts(contactsData.data.contacts || [])
+      }
+
+      if (activeConversationId) {
+        const msgsResponse = await fetch(`${API_BASE_URL}/conversations/${activeConversationId}/messages`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const msgsData = await msgsResponse.json()
+        if (msgsData.success) {
+          const builtMessages: MessageItem[] = msgsData.data.messages.map((m: any) => ({
+            id: String(m.message_id),
+            senderId: String(m.sender_id),
+            message: m.content,
+            sentAt: String(m.sent_at),
+            timestamp: new Date(m.sent_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isOwn: String(m.sender_id) === currentUserId,
+            attachments: normalizeAttachments(m.attachments),
+          }))
+          setMessages(builtMessages)
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing chat data:", error)
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   const postConversationMessage = async (
@@ -444,6 +549,7 @@ function ChatContent() {
             id: String(data.data.message.message_id),
             senderId: currentUserId || "",
             message: `${CHAT_REQUEST_PREFIX}${action}`,
+            sentAt: new Date().toISOString(),
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: true,
             attachments: [],
@@ -484,6 +590,7 @@ function ChatContent() {
             id: String(data.data.message.message_id),
             senderId: currentUserId || "",
             message: content,
+            sentAt: new Date().toISOString(),
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             isOwn: true,
             attachments: outgoingAttachments.map((item) => ({ url: item.url, name: item.name })),
@@ -549,12 +656,23 @@ function ChatContent() {
         if (data.success) {
           setEmailSubject("")
           setEmailBody("")
+          if (emailEditorRef.current) {
+            emailEditorRef.current.innerHTML = ""
+          }
           setEmailAttachment(null)
         }
       } catch (error) {
         console.error("Error sending email mode message:", error)
       }
     })()
+  }
+
+  const execEmail = (command: string, value?: string) => {
+    emailEditorRef.current?.focus()
+    document.execCommand(command, false, value)
+    if (emailEditorRef.current) {
+      setEmailBody(emailEditorRef.current.innerHTML)
+    }
   }
 
   const handleLogout = () => {
@@ -587,7 +705,7 @@ function ChatContent() {
 
       <div className="flex-1 min-h-0 transition-all duration-300 ease-in-out flex flex-col">
         <DashboardHeader
-          title="Messaging"
+          title="Chat"
           subtitle={messagingMode === "chat" ? "Chat" : "Email"}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -623,8 +741,15 @@ function ChatContent() {
               <div className="border-b border-[#E8EDF4]">
                 <div className="h-10 px-3 flex items-center justify-between">
                   <div className="text-sm font-semibold text-[#203247]">Recent conversations</div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-[#5F6F82] hover:text-[#0F4C81]">
-                    <RotateCcw className="h-3.5 w-3.5" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void refreshChatData()}
+                    disabled={isRefreshing}
+                    className="h-8 w-8 rounded-md border border-[#D2DCE8] bg-white text-[#2F6FA9] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
                   </Button>
                 </div>
                 <div className="px-3 pb-3 flex items-center gap-2">
@@ -632,10 +757,6 @@ function ChatContent() {
                     {unitOptions.map((opt) => (
                       <option key={opt} value={opt}>{opt === "all" ? "All units" : opt}</option>
                     ))}
-                  </select>
-                  <select value={conversationScope} onChange={(e) => setConversationScope(e.target.value)} className="h-9 min-w-[105px] rounded-md border border-[#D2DCE8] bg-white px-2 text-sm">
-                    <option value="following">Following</option>
-                    <option value="all">All</option>
                   </select>
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7A8EA5]" />
@@ -661,27 +782,24 @@ function ChatContent() {
                         key={item.conversationId}
                         type="button"
                         onClick={() => handleHistoryClick(item.conversationId)}
-                        className={`w-full border-b border-[#EEF2F8] px-2.5 py-1.5 text-left ${
+                        className={`w-full border-b border-[#EEF2F8] px-2 py-1 text-left ${
                           isActive ? "bg-[#EEF4FB]" : "hover:bg-[#F8FBFF]"
                         }`}
                       >
-                        <div className="flex items-start gap-2">
-                          <Avatar className="h-7 w-7">
-                            {item.profilePicture && <AvatarImage src={item.profilePicture} />}
-                            <AvatarFallback>{item.fullName[0]}</AvatarFallback>
-                          </Avatar>
+                        <div className="flex items-center gap-3">
+                          <InitialCircle fullName={item.fullName} />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="truncate text-[12px] font-medium text-[#203247]">{item.fullName}</p>
-                              <span className="text-[10px] text-[#8392a4]">{formatHistoryTime(item.lastSentAt)}</span>
+                              <p className="truncate text-[12px] font-semibold text-[#202938]">{item.fullName}</p>
+                              <span className="shrink-0 text-[10px] text-[#8392a4]">{formatHistoryTime(item.lastSentAt)}</span>
                               {item.unreadCount > 0 ? (
                                 <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2F80ED] px-1 text-[9px] text-white">
                                   {item.unreadCount}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="mt-0.5 truncate text-[11px] text-[#6C7D90]">
-                              {item.lastPreview || `${item.buildingName}${item.floor !== null ? ` - Floor ${item.floor}` : ""}`}
+                            <p className="truncate text-[11px] leading-tight text-[#6C7D90]">
+                              {item.lastPreview || `${item.unitNumber || item.buildingName}`}
                             </p>
                           </div>
                         </div>
@@ -693,14 +811,14 @@ function ChatContent() {
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col bg-[#FDFDFE]">
-              <div className="h-[62px] border-b border-[#E3E8F0] bg-white px-5 flex items-center justify-between">
+              <div className="h-[74px] border-b border-[#E3E8F0] bg-white px-5 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar className="h-9 w-9">
-                    {activeHistoryItem?.profilePicture && <AvatarImage src={activeHistoryItem.profilePicture} />}
-                    <AvatarFallback>{activeHistoryItem?.fullName?.[0] || "?"}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-[#203247]">
+                  <div className="flex flex-col items-center">
+                    <InitialCircle fullName={activeHistoryItem?.fullName || "Unknown"} size="lg" />
+                    <span className="mt-0.5 text-[10px] font-semibold text-[#6C7D90]">{activeHistoryItem?.unitNumber || "Unit -"}</span>
+                  </div>
+                  <div className="min-w-0 self-center">
+                    <p className="truncate text-base font-semibold text-[#203247]">
                       {activeHistoryItem?.fullName || "Select a conversation"}
                     </p>
                     {activeHistoryItem?.buildingName ? (
@@ -735,9 +853,21 @@ function ChatContent() {
                         <Button size="sm" onClick={() => void sendChatRequestAction("REQUEST")} className="bg-[#2F80ED] text-white hover:bg-[#1F6FD8]">Send chat request</Button>
                       </div>
                     ) : (
-                      messages.map((msg) => (
-                        <div key={msg.id} className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}>
-                          <div className="max-w-[72%]">
+                      messages.map((msg, index) => {
+                        const dayLabel = formatConversationDay(msg.sentAt)
+                        const prevLabel = index > 0 ? formatConversationDay(messages[index - 1].sentAt) : ""
+                        const showDay = dayLabel !== prevLabel
+                        return (
+                        <div key={msg.id}>
+                          {showDay && (
+                            <div className="my-3 flex items-center gap-3 text-[11px] font-semibold uppercase text-[#9AA9BA]">
+                              <div className="h-px flex-1 bg-[#D9E2EC]" />
+                              <span>{dayLabel}</span>
+                              <div className="h-px flex-1 bg-[#D9E2EC]" />
+                            </div>
+                          )}
+                        <div className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}>
+                          <div className="max-w-[74%]">
                             <div
                               className={`rounded-md px-3 py-2 text-sm ${
                                 msg.isOwn
@@ -778,7 +908,8 @@ function ChatContent() {
                             </p>
                           </div>
                         </div>
-                      ))
+                        </div>
+                      )})
                     )}
                   </div>
                   {requestPendingFromOther && (
@@ -833,7 +964,7 @@ function ChatContent() {
                         size="icon"
                         className="h-9 w-9 text-[#5F6F82] hover:bg-[#EEF4FB] hover:text-[#0F4C81]"
                         onClick={() => fileInputRef.current?.click()}
-                        disabled={!activeConversationId}
+                        disabled={!activeConversationId || !canSendChat}
                       >
                         <Paperclip className="h-4 w-4" />
                       </Button>
@@ -910,13 +1041,47 @@ function ChatContent() {
 
                           <div className="grid grid-cols-[70px_1fr] gap-2">
                             <label className="pt-2 text-sm text-[#5F6F82]">Message</label>
-                            <textarea
-                              value={emailBody}
-                              onChange={(e) => setEmailBody(e.target.value)}
-                              placeholder="Write your email..."
-                              rows={10}
-                              className="w-full rounded-md border border-[#D2DCE8] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
-                            />
+                            <div className="rounded-md border border-[#D2DCE8] bg-white">
+                              <div className="flex flex-wrap items-center gap-1 border-b border-[#E7EDF5] p-2">
+                                <select value={emailFontFamily} onChange={(e) => { setEmailFontFamily(e.target.value); execEmail("fontName", e.target.value) }} className="h-8 w-[126px] rounded border border-[#D2DCE8] bg-white px-2 text-xs">
+                                  <option value="sans-serif">sans-serif</option>
+                                  <option value="serif">serif</option>
+                                  <option value="monospace">monospace</option>
+                                  <option value="Arial">Arial</option>
+                                </select>
+                                <select value={emailFontSize} onChange={(e) => { setEmailFontSize(e.target.value); execEmail("fontSize", e.target.value) }} className="h-8 w-[76px] rounded border border-[#D2DCE8] bg-white px-2 text-xs">
+                                  <option value="1">8pt</option>
+                                  <option value="2">10pt</option>
+                                  <option value="3">12pt</option>
+                                  <option value="4">14pt</option>
+                                  <option value="5">18pt</option>
+                                </select>
+                                <button type="button" onClick={() => execEmail("bold")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Bold className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("italic")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Italic className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("underline")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Underline className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("strikeThrough")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Strikethrough className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("justifyLeft")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><AlignLeft className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("justifyCenter")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><AlignCenter className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("justifyRight")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><AlignRight className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("insertUnorderedList")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><List className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("insertOrderedList")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><ListOrdered className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("subscript")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Subscript className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("superscript")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Superscript className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => { const url = window.prompt("Enter URL"); if (url) execEmail("createLink", url) }} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Link2 className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("removeFormat")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Eraser className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("undo")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Undo2 className="h-4 w-4" /></button>
+                                <button type="button" onClick={() => execEmail("redo")} className="inline-flex h-8 w-8 items-center justify-center rounded text-[#30465f] hover:bg-[#F3F7FC]"><Redo2 className="h-4 w-4" /></button>
+                              </div>
+                              <div
+                                ref={emailEditorRef}
+                                contentEditable
+                                suppressContentEditableWarning
+                                onInput={(e) => setEmailBody(e.currentTarget.innerHTML)}
+                                className="min-h-[220px] w-full px-3 py-2 text-sm outline-none"
+                                style={{ fontFamily: emailFontFamily }}
+                                data-placeholder="Write your email..."
+                              />
+                            </div>
                           </div>
                         </div>
 

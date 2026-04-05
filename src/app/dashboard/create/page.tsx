@@ -232,7 +232,7 @@ function CreateListingContent() {
       {/* Main Content */}
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title="Create Listing"
+          title="Create Units"
           subtitle="Create a unit with essential details"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

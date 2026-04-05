@@ -824,7 +824,7 @@ function DashboardContent() {
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center justify-between bg-transparent p-2">
                         <div>
-                          <Text weight="medium" className="text-sm font-semibold text-foreground">Lily Smith</Text>
+                          <Text weight="medium" className="text-sm font-semibold text-foreground">Mehret Getachew</Text>
                           <MutedText className="mt-1 text-xs text-gray-500">Applied on May 14, 2021</MutedText>
                         </div>
                         <div className="flex items-center gap-10 text-lg font-semibold text-foreground">

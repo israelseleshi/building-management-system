@@ -57,7 +57,7 @@ const applicationData: ApplicationRecord[] = [
   {
     id: "app_001",
     status: "For Review",
-    applicantName: "Lily Smith",
+    applicantName: "Mehret Getachew",
     property: "Park Place Apartments, Park View Residences",
     residentialScore: "-",
     annualIncome: "-",

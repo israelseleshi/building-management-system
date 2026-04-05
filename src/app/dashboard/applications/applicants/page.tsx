@@ -6,17 +6,16 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { Button } from "@/components/ui/button"
 import {
-  Bell,
   ChevronDown,
   Filter,
   Send,
   CircleHelp,
-  AlignLeft,
-  Search,
   Link2,
   Copy,
   Check,
   X,
+  Bell,
+  Menu,
 } from "lucide-react"
 
 type ApplicationStatus =
@@ -25,7 +24,6 @@ type ApplicationStatus =
   | "For Review"
   | "Pending"
   | "Rejected"
-  | "Declined"
 
 type GroupBy = "Not Grouped" | "Group by Property" | "Group by Status"
 type ShareMethod = "email" | "url"
@@ -60,7 +58,7 @@ const applicationData: ApplicationRecord[] = [
   {
     id: "app_001",
     status: "For Review",
-    applicantName: "Lily Smith",
+    applicantName: "Mehret Getachew",
     property: "Rayuma Building",
     residentialScore: "-",
     annualIncome: "-",
@@ -80,7 +78,6 @@ export default function ApplicantsPage() {
 
 function ApplicantsContent() {
   const router = useRouter()
-  const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activeStatus, setActiveStatus] = useState<ApplicationStatus | "All">("All")
   const [groupBy, setGroupBy] = useState<GroupBy>("Not Grouped")
@@ -101,19 +98,9 @@ function ApplicantsContent() {
       if (activeStatus !== "All" && application.status !== activeStatus) {
         return false
       }
-
-      if (!searchQuery.trim()) {
-        return true
-      }
-
-      const query = searchQuery.toLowerCase()
-      return (
-        application.applicantName.toLowerCase().includes(query) ||
-        application.property.toLowerCase().includes(query) ||
-        application.status.toLowerCase().includes(query)
-      )
+      return true
     })
-  }, [activeStatus, searchQuery])
+  }, [activeStatus])
 
   const statusCards = useMemo(
     (): { label: ApplicationStatus; count: number; tone: string }[] => [
@@ -122,7 +109,6 @@ function ApplicantsContent() {
       { label: "For Review", count: 1, tone: theme.primary as string },
       { label: "Pending", count: 0, tone: theme.warning as string },
       { label: "Rejected", count: 3, tone: "#B6BCC5" },
-      { label: "Declined", count: 0, tone: theme.danger as string },
     ],
     []
   )
@@ -244,42 +230,26 @@ function ApplicantsContent() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-b" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
-          <div className="flex min-h-[52px] items-center justify-between gap-4 px-5">
-            <div className="flex min-w-0 items-center gap-4">
+        <header className="border-b border-[#D5DDE7] bg-white">
+          <div className="flex h-14 items-center justify-between px-5">
+            <div className="flex items-center gap-4">
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100"
-                aria-label="Toggle dashboard navigation"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#4A5D73] hover:bg-[#EFF4FA]"
+                aria-label="Toggle navigation"
               >
-                <AlignLeft className="h-[1.05rem] w-[1.05rem]" />
+                <Menu className="h-5 w-5" />
               </button>
-              <div className="truncate text-[0.8rem] font-semibold uppercase tracking-[0.08em]" style={{ color: theme.ink }}>
-                Applicant's
-              </div>
+              <div className="text-[1.05rem] font-semibold uppercase tracking-[0.08em] text-[#1F3549]">Applicant&apos;s</div>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="relative hidden sm:block">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-10 w-72 rounded-xl border bg-white py-2 pl-10 pr-4 text-sm outline-none"
-                  style={{ borderColor: "#1F3549", color: theme.ink }}
-                />
-              </div>
-              <button
-                type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100"
-                aria-label="Notifications"
-              >
-                <Bell className="h-[1.05rem] w-[1.05rem]" />
-              </button>
-            </div>
+            <button
+              type="button"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#4A5D73] hover:bg-[#EFF4FA]"
+              aria-label="Notifications"
+            >
+              <Bell className="h-4.5 w-4.5" />
+            </button>
           </div>
         </header>
 
@@ -351,18 +321,6 @@ function ApplicantsContent() {
               </div>
 
               <div className={`flex min-w-0 flex-1 flex-col transition-all duration-500 ${sendContentMotionClass}`}>
-                <header className="flex items-center justify-between border-b px-5 py-3" style={{ borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#0A2A43" }}>
-                  <h3 className="text-sm font-semibold text-white">How would you like to share your application?</h3>
-                  <button
-                    type="button"
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
-                    onClick={() => setIsSendApplicationOpen(false)}
-                    aria-label="Close send application modal"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </header>
-
                 <div className="grid min-h-0 flex-1 grid-cols-[200px_minmax(0,1fr)_250px]">
                   <aside className="border-r p-3" style={{ borderColor: theme.line, backgroundColor: "#0A2A43" }}>
                     <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Share Method</div>
@@ -387,6 +345,17 @@ function ApplicantsContent() {
                   </aside>
 
                   <div className="min-h-0 overflow-y-auto p-5">
+                    <div className="mb-4 flex items-center justify-between rounded-md border bg-white px-4 py-3" style={{ borderColor: theme.line }}>
+                      <h3 className="text-sm font-semibold" style={{ color: theme.ink }}>How would you like to share your application?</h3>
+                      <button
+                        type="button"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                        onClick={() => setIsSendApplicationOpen(false)}
+                        aria-label="Close send application modal"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
 
                     {shareMethod === "email" && (
                       <div className="space-y-4">
@@ -649,7 +618,6 @@ function ApplicationsTable({
     Approved: { backgroundColor: "#EAF7F1", color: theme.success },
     Pending: { backgroundColor: "#FFF2E3", color: theme.warning },
     Rejected: { backgroundColor: "#F1F3F5", color: "#6C7A89" },
-    Declined: { backgroundColor: "#FDECEA", color: theme.danger },
     "Lease/Term Created": { backgroundColor: "#EEF2F6", color: "#7D8A99" },
   }
 
@@ -749,7 +717,7 @@ function StatusSidebar({
   onSelectStatus: (status: ApplicationStatus | "All") => void
 }) {
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-2">
       {cards.map((card) => {
         const isActive = activeStatus === card.label
         return (
@@ -757,7 +725,7 @@ function StatusSidebar({
             key={card.label}
             type="button"
             onClick={() => onSelectStatus(isActive ? "All" : card.label)}
-            className="flex h-[82px] w-full flex-col items-start justify-center rounded-md px-5 text-left transition-transform hover:-translate-y-0.5"
+            className="flex h-[58px] w-full flex-col items-start justify-center overflow-hidden rounded-md px-3.5 text-left transition-transform hover:-translate-y-0.5"
             style={{
               backgroundColor: card.tone,
               boxShadow: isActive
@@ -766,8 +734,8 @@ function StatusSidebar({
               color: "#FFFFFF",
             }}
           >
-            <div className="text-[2rem] font-bold leading-none">{card.count}</div>
-            <div className="mt-1.5 text-[0.68rem] font-medium uppercase tracking-[0.03em]">
+            <div className="text-[1.2rem] font-bold leading-none">{card.count}</div>
+            <div className="mt-0.5 truncate text-[0.56rem] font-medium uppercase tracking-[0.03em]">
               {card.label}
             </div>
           </button>

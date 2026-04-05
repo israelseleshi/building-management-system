@@ -50,15 +50,15 @@ function NoticesPageContent() {
 
       <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title="Manage Global Notices"
-          subtitle="Post and view notices for all tenants"
+          title="Announcements"
+          subtitle="Create and send announcements to selected units"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onToggleSidebar={toggleSidebar}
         />
 
-        <main className="p-6 flex-1 flex flex-col items-center justify-center">
-          <div className="grid lg:grid-cols-2 gap-16 w-full max-w-6xl items-start">
+        <main className="p-6 flex-1 flex flex-col">
+          <div className="grid lg:grid-cols-2 gap-8 w-full max-w-6xl items-start mx-auto">
             <div>
               <NoticeManager />
             </div>
