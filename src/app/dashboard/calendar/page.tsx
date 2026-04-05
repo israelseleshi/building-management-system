@@ -229,10 +229,10 @@ function CalendarContent() {
   const [googleConnected, setGoogleConnected] = useState(() => typeof window !== "undefined" && localStorage.getItem(GOOGLE_CONNECTED_KEY) === "true")
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(() => (typeof window !== "undefined" ? localStorage.getItem(GOOGLE_LAST_SYNC_KEY) : null))
   const [syncNotice, setSyncNotice] = useState<string | null>(null)
-  const [tenantFilter, setTenantFilter] = useState<"all" | string>("all")
-  const [unitFilter, setUnitFilter] = useState<"all" | string>("all")
-  const [statusFilter, setStatusFilter] = useState<"all" | Event["status"]>("all")
-  const [priorityFilter, setPriorityFilter] = useState<"all" | Event["priority"]>("all")
+  const [tenantFilter] = useState<"all" | string>("all")
+  const [unitFilter] = useState<"all" | string>("all")
+  const [statusFilter] = useState<"all" | Event["status"]>("all")
+  const [priorityFilter] = useState<"all" | Event["priority"]>("all")
   const [title, setTitle] = useState("")
   const type: Event["type"] = "meeting"
   const [start, setStart] = useState(toInput(new Date()))
@@ -283,7 +283,6 @@ function CalendarContent() {
     return map
   }, [filteredEvents])
 
-  const selectedEvents = filteredEvents.filter((e) => sameDay(e.startDate, selectedDate))
   const upcomingEvents = filteredEvents.filter((e) => e.startDate <= new Date(new Date().setDate(new Date().getDate() + 3)) && e.startDate >= startDay(new Date())).length
 
   const exec = (command: string, value?: string) => {
