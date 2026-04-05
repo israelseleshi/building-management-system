@@ -181,7 +181,7 @@ export function DashboardHeader({
               className="h-10 w-64 rounded-lg border border-border bg-card py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground"
             />
             {isSearchFocused && activeQuery.length >= 2 && globalMatches.length > 0 && (
-              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[80] overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[80] overflow-hidden rounded-xl border border-border bg-white shadow-lg">
                 {globalMatches.map((item) => (
                   <button
                     key={`${item.path}-${item.label}`}

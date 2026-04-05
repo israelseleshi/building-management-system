@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { 
   Building2, 
   Users2, 
@@ -17,7 +18,8 @@ import {
   ShieldCheck, 
   Clock,
   PieChart,
-  Smartphone
+  Smartphone,
+  ArrowRight
 } from "lucide-react"
 
 const NAVY = "#1F3549"
@@ -29,7 +31,8 @@ const features = [
     icon: Building2, 
     title: "Property and Unit Management", 
     desc: "Smart BMS provides a structured way to manage all units within a building. Administrators can track occupancy status, organize unit-level data, and maintain a clear overview of the building's structure. This ensures that all operational information is centralized and easily accessible.",
-    image: "/Multi-Property-Support.png"
+    image: "/Multi-Property-Support.png",
+    hasDetail: true
   },
   { 
     id: 2,
@@ -85,35 +88,40 @@ const features = [
     icon: Wrench, 
     title: "Maintenance Management", 
     desc: "Tenants can submit maintenance requests and complaints directly. Administrators can assign tasks to employees and track progress from submission to completion, improving response time and accountability.",
-    image: "/building-image_1.jpg"
+    image: "/building-image_1.jpg",
+    hasDetail: true
   },
   { 
     id: 10,
     icon: ShieldCheck, 
     title: "Document Management", 
     desc: "Generation of professional invoices, storage, and review of tenant documents. Documents like identification, proof of income, and rental records are securely managed, reducing paperwork.",
-    image: "/Digital-Documents.png"
+    image: "/Digital-Documents.png",
+    hasDetail: true
   },
   { 
     id: 11,
     icon: Clock, 
     title: "Commercial Operations", 
     desc: "For commercial properties, attendance tracking capabilities using fingerprint-based systems allow administrators to monitor opening times of business units and identify delays or irregularities.",
-    image: "/Attendance-Tracking.png"
+    image: "/Attendance-Tracking.png",
+    hasDetail: true
   },
   { 
     id: 12,
     icon: PieChart, 
     title: "Reporting & Analytics", 
     desc: "Access structured reports and analytics, including monthly income summaries, occupancy trends, and automated financial performance metrics. Enable informed decision-making.",
-    image: "/Centralized-Dashboard.png"
+    image: "/Centralized-Dashboard.png",
+    hasDetail: true
   },
   { 
     id: 13,
     icon: Smartphone, 
     title: "Tenant Experience", 
     desc: "A dedicated tenant interface to improve transparency. Tenants can view invoices, track payment history, receive notifications, browse listings, and submit requests, creating a professional interaction.",
-    image: "/In-App-Messaging.png"
+    image: "/In-App-Messaging.png",
+    hasDetail: true
   }
 ]
 
@@ -200,6 +208,36 @@ export default function ServicesPage() {
                   <p style={{ fontSize: "1.25rem", lineHeight: 1.8, opacity: 0.85, color: NAVY }}>
                     {feat.desc}
                   </p>
+                  {feat.hasDetail && (
+                    <Link 
+                      href={(() => {
+                        const routes: Record<number, string> = {
+                          0: "/home/services/property-management",
+                          1: "/home/services/tenant-experience",
+                          8: "/home/services/maintenance-management",
+                          9: "/home/services/document-management",
+                          10: "/home/services/commercial-operations",
+                          11: "/home/services/reporting-analytics"
+                        }
+                        return routes[activeIndex] || "/home/services"
+                      })()}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        marginTop: "1.5rem",
+                        padding: "0.875rem 1.5rem",
+                        backgroundColor: NAVY,
+                        color: "white",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        borderRadius: "12px",
+                        fontSize: "1rem"
+                      }}
+                    >
+                      View Details <ArrowRight size={18} />
+                    </Link>
+                  )}
                 </div>
               )
             })}
@@ -254,6 +292,36 @@ export default function ServicesPage() {
                       {String(activeIndex + 1).padStart(2, "0")}
                     </div>
                     <h3 style={{ fontSize: "2rem", fontWeight: 600 }}>{features[activeIndex].title}</h3>
+                    {features[activeIndex].hasDetail && (
+                      <Link 
+                        href={(() => {
+                          const routes: Record<number, string> = {
+                            0: "/home/services/property-management",
+                            1: "/home/services/tenant-experience",
+                            8: "/home/services/maintenance-management",
+                            9: "/home/services/document-management",
+                            10: "/home/services/commercial-operations",
+                            11: "/home/services/reporting-analytics"
+                          }
+                          return routes[activeIndex] || "/home/services"
+                        })()}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          marginTop: "1rem",
+                          padding: "0.75rem 1.25rem",
+                          backgroundColor: "white",
+                          color: NAVY,
+                          fontWeight: 600,
+                          textDecoration: "none",
+                          borderRadius: "10px",
+                          fontSize: "0.875rem"
+                        }}
+                      >
+                        View Details <ArrowRight size={16} />
+                      </Link>
+                    )}
                   </div>
                 </motion.div>
               </AnimatePresence>

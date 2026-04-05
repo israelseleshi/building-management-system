@@ -24,7 +24,6 @@ type ApplicationStatus =
   | "For Review"
   | "Pending"
   | "Rejected"
-  | "Declined"
 
 type GroupBy = "Not Grouped" | "Group by Property" | "Group by Status"
 type ShareMethod = "email" | "url"
@@ -110,7 +109,6 @@ function ApplicantsContent() {
       { label: "For Review", count: 1, tone: theme.primary as string },
       { label: "Pending", count: 0, tone: theme.warning as string },
       { label: "Rejected", count: 3, tone: "#B6BCC5" },
-      { label: "Declined", count: 0, tone: theme.danger as string },
     ],
     []
   )
@@ -620,7 +618,6 @@ function ApplicationsTable({
     Approved: { backgroundColor: "#EAF7F1", color: theme.success },
     Pending: { backgroundColor: "#FFF2E3", color: theme.warning },
     Rejected: { backgroundColor: "#F1F3F5", color: "#6C7A89" },
-    Declined: { backgroundColor: "#FDECEA", color: theme.danger },
     "Lease/Term Created": { backgroundColor: "#EEF2F6", color: "#7D8A99" },
   }
 
