@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, Trash2, CheckCheck, AlertCircle, MessageSquare, DollarSign, Wrench, Home } from "lucide-react"
+import { Bell, Trash2, CheckCheck, AlertCircle, MessageSquare, DollarSign, Wrench, Home, FileText, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -16,11 +16,13 @@ import { useRouter } from "next/navigation"
 
 const notificationIcons: Record<string, React.ReactNode> = {
   payment: <DollarSign className="w-4 h-4 text-emerald-600" />,
-  inquiry: <MessageSquare className="w-4 h-4 text-blue-600" />,
-  message: <MessageSquare className="w-4 h-4 text-purple-600" />,
+  reminder: <Calendar className="w-4 h-4 text-blue-600" />,
   maintenance: <Wrench className="w-4 h-4 text-orange-600" />,
-  listing: <Home className="w-4 h-4 text-cyan-600" />,
+  document: <FileText className="w-4 h-4 text-purple-600" />,
+  message: <MessageSquare className="w-4 h-4 text-cyan-600" />,
   system: <AlertCircle className="w-4 h-4 text-gray-600" />,
+  inquiry: <MessageSquare className="w-4 h-4 text-blue-600" />,
+  listing: <Home className="w-4 h-4 text-cyan-600" />,
 }
 
 const priorityColors: Record<string, string> = {
@@ -34,6 +36,22 @@ export function NotificationsDropdown() {
   const router = useRouter()
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) {
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    } else if (diffDays === 1) {
+      return "Yesterday"
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`
+    } else {
+      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    }
+  }
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.is_read) {
@@ -117,13 +135,13 @@ export function NotificationsDropdown() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
+                        <div className="flex items-center gap-2">
                           <p className="font-medium text-sm text-gray-900">
                             {notification.title}
                           </p>
-                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                            {notification.message}
-                          </p>
+                          {!notification.is_read && (
+                            <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                          )}
                         </div>
                         <Button
                           variant="ghost"
@@ -134,11 +152,11 @@ export function NotificationsDropdown() {
                           <Trash2 className="w-3 h-3 text-gray-400 hover:text-red-600" />
                         </Button>
                       </div>
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                        {notification.message}
+                      </p>
                       <p className="text-xs text-gray-400 mt-2">
-                        {new Date(notification.created_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatTime(notification.created_at)}
                       </p>
                     </div>
                   </div>
@@ -158,7 +176,7 @@ export function NotificationsDropdown() {
                 size="sm"
                 className="w-full text-xs text-blue-600 hover:text-blue-700"
                 onClick={() => {
-                  router.push("/dashboard/notifications")
+                  router.push("/tenant-dashboard/notifications")
                   setIsOpen(false)
                 }}
               >

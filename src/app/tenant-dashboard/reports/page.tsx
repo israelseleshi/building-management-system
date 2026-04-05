@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -17,7 +17,9 @@ import {
   CreditCard,
   CheckCircle2,
   AlertCircle,
-  Clock
+  Clock,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import {
   BarChart,
@@ -53,23 +55,8 @@ const mockPaymentHistory: PaymentRecord[] = [
   { id: "8", date: "2025-10-01", amount: 15000, type: "rent", status: "paid", description: "October 2025 Rent", reference: "RNT-2025-010" },
   { id: "9", date: "2025-09-01", amount: 15000, type: "rent", status: "paid", description: "September 2025 Rent", reference: "RNT-2025-009" },
   { id: "10", date: "2025-08-15", amount: 45000, type: "deposit", status: "paid", description: "Security Deposit", reference: "DEP-2025-001" },
-]
-
-const monthlyData = [
-  { month: "Aug", rent: 15000, utilities: 0, other: 0 },
-  { month: "Sep", rent: 15000, utilities: 0, other: 0 },
-  { month: "Oct", rent: 15000, utilities: 0, other: 0 },
-  { month: "Nov", rent: 15000, utilities: 0, other: 0 },
-  { month: "Dec", rent: 15000, utilities: 4500, other: 0 },
-  { month: "Jan", rent: 15000, utilities: 0, other: 0 },
-  { month: "Feb", rent: 15000, utilities: 0, other: 0 },
-  { month: "Mar", rent: 15000, utilities: 0, other: 0 },
-]
-
-const paymentBreakdown = [
-  { name: "Rent", value: 135000, color: "#1F3549" },
-  { name: "Utilities", value: 4500, color: "#3b82f6" },
-  { name: "Other", value: 0, color: "#94a3b8" },
+  { id: "11", date: "2025-08-01", amount: 15000, type: "rent", status: "paid", description: "August 2025 Rent", reference: "RNT-2025-008" },
+  { id: "12", date: "2025-07-01", amount: 15000, type: "rent", status: "paid", description: "July 2025 Rent", reference: "RNT-2025-007" },
 ]
 
 const COLORS = ["#1F3549", "#3b82f6", "#94a3b8"]
@@ -79,6 +66,8 @@ const statusConfig = {
   pending: { label: "Pending", color: "text-yellow-700", bg: "bg-yellow-100" },
   overdue: { label: "Overdue", color: "text-red-700", bg: "bg-red-100" }
 }
+
+type DateRange = "3months" | "6months" | "12months"
 
 export default function TenantReportsPage() {
   return (
@@ -92,7 +81,9 @@ function TenantReportsContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [dateRange, setDateRange] = useState("12months")
+  const [dateRange, setDateRange] = useState<DateRange>("12months")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
   const router = useRouter()
   const t = useTranslations("Tenant")
 
@@ -119,6 +110,14 @@ function TenantReportsContent() {
     if (!isCurrentlyCollapsed) setIsSidebarCollapsed(true)
   }
 
+  const getMonthsToInclude = (range: DateRange): number => {
+    switch (range) {
+      case "3months": return 3
+      case "6months": return 6
+      case "12months": return 12
+    }
+  }
+
   const filteredPayments = mockPaymentHistory.filter((payment) => {
     const matchesType = filterType === "all" || payment.type === filterType
     const matchesSearch = searchQuery === "" || 
@@ -127,13 +126,84 @@ function TenantReportsContent() {
     return matchesType && matchesSearch
   })
 
-  const totalPaid = mockPaymentHistory
-    .filter(p => p.status === "paid")
-    .reduce((sum, p) => sum + p.amount, 0)
+  const chartData = useMemo(() => {
+    const months = getMonthsToInclude(dateRange)
+    const today = new Date()
+    const data: { month: string; rent: number; utilities: number; other: number }[] = []
 
-  const totalPending = mockPaymentHistory
-    .filter(p => p.status === "pending")
-    .reduce((sum, p) => sum + p.amount, 0)
+    for (let i = months - 1; i >= 0; i--) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1)
+      const monthStr = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" })
+      
+      const monthPayments = mockPaymentHistory.filter(p => {
+        const paymentDate = new Date(p.date)
+        return paymentDate.getFullYear() === date.getFullYear() && 
+               paymentDate.getMonth() === date.getMonth() &&
+               p.status === "paid"
+      })
+
+      const rentTotal = monthPayments.filter(p => p.type === "rent").reduce((sum, p) => sum + p.amount, 0)
+      const utilityTotal = monthPayments.filter(p => p.type === "utility").reduce((sum, p) => sum + p.amount, 0)
+      const otherTotal = monthPayments.filter(p => p.type !== "rent" && p.type !== "utility").reduce((sum, p) => sum + p.amount, 0)
+
+      data.push({
+        month: monthStr,
+        rent: rentTotal,
+        utilities: utilityTotal,
+        other: otherTotal
+      })
+    }
+
+    return data
+  }, [dateRange])
+
+  const paymentBreakdown = useMemo(() => {
+    const months = getMonthsToInclude(dateRange)
+    const today = new Date()
+    const startDate = new Date(today.getFullYear(), today.getMonth() - months + 1, 1)
+
+    const periodPayments = mockPaymentHistory.filter(p => {
+      const paymentDate = new Date(p.date)
+      return paymentDate >= startDate && p.status === "paid"
+    })
+
+    const rentTotal = periodPayments.filter(p => p.type === "rent").reduce((sum, p) => sum + p.amount, 0)
+    const utilityTotal = periodPayments.filter(p => p.type === "utility").reduce((sum, p) => sum + p.amount, 0)
+    const otherTotal = periodPayments.filter(p => p.type !== "rent" && p.type !== "utility").reduce((sum, p) => sum + p.amount, 0)
+
+    return [
+      { name: "Rent", value: rentTotal, color: "#1F3549" },
+      { name: "Utilities", value: utilityTotal, color: "#3b82f6" },
+      { name: "Other", value: otherTotal, color: "#94a3b8" },
+    ]
+  }, [dateRange])
+
+  const stats = useMemo(() => {
+    const months = getMonthsToInclude(dateRange)
+    const today = new Date()
+    const startDate = new Date(today.getFullYear(), today.getMonth() - months + 1, 1)
+
+    const periodPayments = mockPaymentHistory.filter(p => {
+      const paymentDate = new Date(p.date)
+      return paymentDate >= startDate
+    })
+
+    const totalPaid = periodPayments.filter(p => p.status === "paid").reduce((sum, p) => sum + p.amount, 0)
+    const totalPending = periodPayments.filter(p => p.status === "pending").reduce((sum, p) => sum + p.amount, 0)
+    const average = months > 0 ? Math.round(totalPaid / months) : 0
+
+    return { totalPaid, totalPending, average }
+  }, [dateRange])
+
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage)
+  const paginatedPayments = filteredPayments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   const formatCurrency = (amount: number) => {
     return `ETB ${amount.toLocaleString()}`
@@ -141,6 +211,14 @@ function TenantReportsContent() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  }
+
+  const getDateRangeLabel = (range: DateRange) => {
+    switch (range) {
+      case "3months": return "3-Month Average"
+      case "6months": return "6-Month Average"
+      case "12months": return "12-Month Average"
+    }
   }
 
   return (
@@ -169,7 +247,7 @@ function TenantReportsContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Total Paid</p>
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(totalPaid)}</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.totalPaid)}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                   <CheckCircle2 className="w-6 h-6 text-green-600" />
@@ -185,7 +263,7 @@ function TenantReportsContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Pending</p>
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(totalPending)}</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.totalPending)}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
                   <Clock className="w-6 h-6 text-yellow-600" />
@@ -200,8 +278,8 @@ function TenantReportsContent() {
             <div className="bg-card rounded-xl border border-border p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">12-Month Average</p>
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(15000)}</p>
+                  <p className="text-sm text-muted-foreground mb-1">{getDateRangeLabel(dateRange)}</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.average)}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
                   <DollarSign className="w-6 h-6 text-blue-600" />
@@ -221,7 +299,10 @@ function TenantReportsContent() {
                 <div className="flex gap-2">
                   <select
                     value={dateRange}
-                    onChange={(e) => setDateRange(e.target.value)}
+                    onChange={(e) => {
+                      setDateRange(e.target.value as DateRange)
+                      setCurrentPage(1)
+                    }}
                     className="px-3 py-1.5 border border-border rounded-lg bg-background text-foreground text-sm"
                   >
                     <option value="3months">Last 3 months</option>
@@ -232,7 +313,7 @@ function TenantReportsContent() {
               </div>
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData}>
+                  <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
                     <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
                     <YAxis stroke="#6b7280" fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
@@ -282,16 +363,27 @@ function TenantReportsContent() {
                   </div>
                 ))}
               </div>
+              <p className="text-center text-xs text-muted-foreground mt-3">
+                Last {dateRange === "3months" ? "3" : dateRange === "6months" ? "6" : "12"} months
+              </p>
             </div>
           </div>
 
           <div className="bg-card rounded-xl border border-border p-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-              <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
+              <h3 className="text-lg font-semibold text-foreground">
+                Recent Transactions
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  ({filteredPayments.length} total)
+                </span>
+              </h3>
               <div className="flex gap-2">
                 <select
                   value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
+                  onChange={(e) => {
+                    setFilterType(e.target.value)
+                    setCurrentPage(1)
+                  }}
                   className="px-4 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
                 >
                   <option value="all">All Types</option>
@@ -318,7 +410,7 @@ function TenantReportsContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPayments.map((payment) => {
+                  {paginatedPayments.map((payment) => {
                     const status = statusConfig[payment.status]
                     return (
                       <tr key={payment.id} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
@@ -356,6 +448,47 @@ function TenantReportsContent() {
                 </tbody>
               </table>
             </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                <p className="text-sm text-muted-foreground">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredPayments.length)} of {filteredPayments.length} transactions
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 px-3 py-1.5 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </button>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === page
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border hover:bg-muted"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1 px-3 py-1.5 border border-border rounded-lg hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
