@@ -14,7 +14,10 @@ import {
   Settings,
   Send,
   Grid,
-  FileText
+  FileText,
+  Wrench,
+  CreditCard,
+  Bell
 } from "lucide-react"
 import NoticeBoard from "@/components/dashboard/NoticeBoard"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -99,6 +102,24 @@ function DashboardContent() {
       name: t("nav.myRents"),
       path: "/tenant-dashboard/leases",
       active: activeTab === "leases"
+    },
+    {
+      icon: <CreditCard className="w-5 h-5" />,
+      name: t("nav.reports"),
+      path: "/tenant-dashboard/reports",
+      active: activeTab === "reports"
+    },
+    {
+      icon: <Wrench className="w-5 h-5" />,
+      name: t("nav.maintenance"),
+      path: "/tenant-dashboard/maintenance",
+      active: activeTab === "maintenance"
+    },
+    {
+      icon: <Bell className="w-5 h-5" />,
+      name: t("nav.notifications"),
+      path: "/tenant-dashboard/notifications",
+      active: activeTab === "notifications"
     },
     {
       icon: <FileText className="w-5 h-5" />,

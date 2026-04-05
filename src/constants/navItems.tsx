@@ -24,6 +24,8 @@ import {
   ClipboardList,
   Send,
   FileInput,
+  Wrench,
+  PlaneTakeoff,
 } from "lucide-react"
 
 export interface NavItemBase {
@@ -74,6 +76,7 @@ const landlordGroups: NavGroupBase[] = [
       { icon: <Building2 className="w-5 h-5" />, name: "My Units", path: "/dashboard/listings" },
       { icon: <PlusCircle className="w-5 h-5" />, name: "Create Units", path: "/dashboard/create" },
       { icon: <Calendar className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
+      { icon: <PlaneTakeoff className="w-5 h-5" />, name: "Leave Requests", path: "/dashboard/leave" },
     ],
     defaultOpen: true,
   },
@@ -155,7 +158,16 @@ const tenantGroups: NavGroupBase[] = [
     icon: <Grid className="w-5 h-5" />,
     items: [
       { icon: <Calendar className="w-5 h-5" />, name: "My Rents", path: "/tenant-dashboard/leases" },
+      { icon: <Wrench className="w-5 h-5" />, name: "Maintenance", path: "/tenant-dashboard/maintenance" },
       { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/tenant-dashboard/documents" },
+      { icon: <Send className="w-5 h-5" />, name: "Leave Requests", path: "/tenant-dashboard/leave" },
+    ],
+  },
+  {
+    title: "Reports",
+    icon: <BarChart3 className="w-5 h-5" />,
+    items: [
+      { icon: <ShieldCheck className="w-5 h-5" />, name: "Payments", path: "/tenant-dashboard/reports" },
     ],
   },
   {
@@ -163,14 +175,7 @@ const tenantGroups: NavGroupBase[] = [
     icon: <MessageSquare className="w-5 h-5" />,
     items: [
       { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/tenant-dashboard/chat" },
-      { icon: <Bell className="w-5 h-5" />, name: "Announcements", path: "/tenant-dashboard/announcements" },
-    ],
-  },
-  {
-    title: "Insights",
-    icon: <BarChart3 className="w-5 h-5" />,
-    items: [
-      { icon: <ShieldCheck className="w-5 h-5" />, name: "Reports", path: "/tenant-dashboard/reports" },
+      { icon: <Bell className="w-5 h-5" />, name: "Notifications", path: "/tenant-dashboard/notifications" },
     ],
   },
   {
