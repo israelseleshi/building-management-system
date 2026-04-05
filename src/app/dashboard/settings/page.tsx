@@ -187,14 +187,6 @@ function SettingsContent() {
     billingAddress: "Bole Road, Bole Sub-City, Addis Ababa, Ethiopia",
   })
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Text className="text-muted-foreground text-sm">Loading settings...</Text>
-      </div>
-    )
-  }
-
   const navItems = [
     {
       icon: <LayoutDashboard className="w-5 h-5" />,
@@ -543,6 +535,34 @@ function SettingsContent() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex bg-background">
+        <DashboardSidebar
+          navItems={navItems}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
+          onLogout={handleLogout}
+          onNavigate={handleSidebarNavigation}
+        />
+        <div className="flex-1 transition-all duration-300 ease-in-out">
+          <DashboardHeader
+            title="Settings"
+            subtitle="Manage your account and preferences"
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onToggleSidebar={toggleSidebar}
+          />
+          <main className="p-6">
+            <div className="max-w-5xl mx-auto">
+              <Text className="text-muted-foreground text-sm">Loading settings...</Text>
+            </div>
+          </main>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <DashboardSidebar
@@ -684,7 +704,7 @@ function SettingsContent() {
                         placeholder="Enter your building motto"
                         className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
                       />
-                      <Button type="button" onClick={handleSaveBuildingMotto} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                      <Button type="button" onClick={handleSaveBuildingMotto} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                         <Save className="mr-2 h-4 w-4" />
                         Save Motto
                       </Button>
@@ -706,7 +726,7 @@ function SettingsContent() {
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                     <Save className="w-4 h-4 mr-2" />
                     Save Changes
                   </Button>
@@ -780,7 +800,7 @@ function SettingsContent() {
                   </div>
 
                   <div className="flex gap-3 pt-4 border-t border-border">
-                    <Button onClick={handleChangePassword} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                    <Button onClick={handleChangePassword} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                       <Save className="w-4 h-4 mr-2" />
                       Update Password
                     </Button>
@@ -834,7 +854,7 @@ function SettingsContent() {
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                     <Save className="w-4 h-4 mr-2" />
                     Save Preferences
                   </Button>
@@ -881,7 +901,7 @@ function SettingsContent() {
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}>
+                  <Button style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
                     <Save className="w-4 h-4 mr-2" />
                     Update Billing
                   </Button>
@@ -941,3 +961,4 @@ function SettingsContent() {
     </div>
   )
 }
+

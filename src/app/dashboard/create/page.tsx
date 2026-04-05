@@ -406,7 +406,7 @@ function CreateListingContent() {
                     disabled={isSubmitting}
                     className="flex-1 h-12 text-base font-semibold rounded-xl border-0 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                     style={{ 
-                      backgroundColor: '#7D8B6F', 
+                      backgroundColor: '#3096DA', 
                       color: '#FFFFFF',
                       boxShadow: '0 4px 12px rgba(125, 139, 111, 0.3)'
                     }}
@@ -427,3 +427,4 @@ function CreateListingContent() {
     </div>
   )
 }
+

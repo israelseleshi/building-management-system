@@ -169,7 +169,7 @@ export default function NoticeBoard({ editable = false }: { editable?: boolean }
               <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending} style={{ backgroundColor: "#7D8B6F", color: "#FFF" }}>
+              <Button type="submit" disabled={isPending} style={{ backgroundColor: "#3096DA", color: "#FFF" }}>
                 {isPending ? "Updating..." : "Update Notice"}
               </Button>
             </DialogFooter>
@@ -179,3 +179,4 @@ export default function NoticeBoard({ editable = false }: { editable?: boolean }
     </div>
   )
 }
+

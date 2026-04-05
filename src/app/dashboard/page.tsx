@@ -42,10 +42,14 @@ function OccupancyLegendDot({ color, label }: { color: string; label: string }) 
 }
 
 function DashboardContent() {
+  const SIDEBAR_COLLAPSED_KEY = "bms.dashboard.sidebarCollapsed"
   const router = useRouter()
   const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState("")
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
+  })
   
   // Determine active tab based on current pathname
   // IMPORTANT: Check more specific paths first to avoid partial matches
@@ -114,6 +118,22 @@ function DashboardContent() {
             clearTimeout(timeout)
           }
         }
+
+        const parseJsonResponse = async <T,>(response: Response, label: string): Promise<T | null> => {
+          const contentType = response.headers.get("content-type") || ""
+          const rawBody = await response.text()
+          if (!rawBody) return null
+          if (!contentType.toLowerCase().includes("application/json")) {
+            console.warn(`Skipping non-JSON response from ${label}`)
+            return null
+          }
+          try {
+            return JSON.parse(rawBody) as T
+          } catch (error) {
+            console.warn(`Failed to parse JSON from ${label}`, error)
+            return null
+          }
+        }
         
         // Try to get user profile for the name
         try {
@@ -150,7 +170,11 @@ function DashboardContent() {
           return
         }
 
-        const buildingsPayload = await buildingsRes.json().catch(() => ({}))
+        const buildingsPayload = await parseJsonResponse<any>(buildingsRes, "/buildings")
+        if (!buildingsPayload) {
+          console.warn("Buildings response was not valid JSON")
+          return
+        }
         if (buildingsPayload?.success === false) {
           throw new Error(buildingsPayload?.error || buildingsPayload?.message || "Failed to load buildings")
         }
@@ -190,7 +214,11 @@ function DashboardContent() {
               15000
             )
             if (!unitsRes || !unitsRes.ok) return []
-            const unitsPayload = await unitsRes.json().catch(() => ({}))
+            const unitsPayload = await parseJsonResponse<any>(
+              unitsRes,
+              `/buildings/${buildingId}/units`
+            )
+            if (!unitsPayload) return []
             if (unitsPayload?.success === false) return []
             return (unitsPayload?.data?.units || []).map((unit: any) => ({ unit, buildingId }))
           })
@@ -268,6 +296,10 @@ function DashboardContent() {
       window.removeEventListener("storage", syncMotto)
     }
   }, [buildingId])
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isSidebarCollapsed))
+  }, [isSidebarCollapsed])
 
   const navItems = useMemo(() => [
     {
@@ -353,12 +385,6 @@ function DashboardContent() {
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed)
-  }
-
-  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
-    if (!isCurrentlyCollapsed) {
-      setIsSidebarCollapsed(true)
-    }
   }
 
   const collectionStats = useMemo(() => {
@@ -472,7 +498,6 @@ function DashboardContent() {
           navItems={navItems}
           isSidebarCollapsed={isSidebarCollapsed}
           onLogout={handleLogout}
-          onNavigate={handleSidebarNavigation}
           appBrandName="BMS"
         />
 
@@ -502,7 +527,6 @@ function DashboardContent() {
         navItems={navItems}
         isSidebarCollapsed={isSidebarCollapsed}
         onLogout={handleLogout}
-        onNavigate={handleSidebarNavigation}
         appBrandName="BMS"
       />
 
@@ -538,7 +562,7 @@ function DashboardContent() {
                           aria-label="Show collection by month"
                           value={selectedMonth}
                           onChange={(event) => setSelectedMonth(event.target.value)}
-                          className="rounded border border-gray-300 bg-[#F5E9D2] px-2 py-1 text-sm text-foreground outline-none"
+                          className="rounded border border-gray-300 bg-white px-2 py-1 text-sm text-foreground outline-none"
                         >
                           {monthOptions.map((month) => (
                             <option key={month} value={month}>
@@ -550,7 +574,7 @@ function DashboardContent() {
                           aria-label="Show collection by year"
                           value={selectedYear}
                           onChange={(event) => setSelectedYear(event.target.value)}
-                          className="rounded border border-gray-300 bg-[#F5E9D2] px-2 py-1 text-sm text-foreground outline-none"
+                          className="rounded border border-gray-300 bg-white px-2 py-1 text-sm text-foreground outline-none"
                         >
                           {yearOptions.map((year) => (
                             <option key={year} value={year.toString()}>
@@ -567,9 +591,9 @@ function DashboardContent() {
                       <Button
                         className="h-10 flex-1 justify-center rounded-md px-4 py-2 text-sm font-semibold"
                         style={{
-                          backgroundColor: "#7D8B6F",
+                          backgroundColor: "#3096DA",
                           color: "#FFFFFF",
-                          boxShadow: "0 4px 12px rgba(125, 139, 111, 0.28)",
+                          boxShadow: "0 4px 12px rgba(48, 150, 218, 0.32)",
                         }}
                         onClick={() => router.push("/dashboard/create")}
                       >
@@ -579,9 +603,9 @@ function DashboardContent() {
                       <Button
                         className="h-10 flex-1 justify-center rounded-md px-4 py-2 text-sm font-semibold"
                         style={{
-                          backgroundColor: "#7D8B6F",
+                          backgroundColor: "#3096DA",
                           color: "#FFFFFF",
-                          boxShadow: "0 4px 12px rgba(125, 139, 111, 0.28)",
+                          boxShadow: "0 4px 12px rgba(48, 150, 218, 0.32)",
                         }}
                         onClick={() => router.push("/dashboard/attendance")}
                       >
@@ -606,7 +630,7 @@ function DashboardContent() {
                       <div
                         className="relative flex h-36 w-36 items-center justify-center rounded-full"
                         style={{
-                          background: `conic-gradient(#7D8B6F 0deg ${Math.round(displayedCollectionStats.collectedRatio * 360)}deg, #C45B43 ${Math.round(displayedCollectionStats.collectedRatio * 360)}deg 360deg)`,
+                            background: `conic-gradient(#4DB6A1 0deg ${Math.round(displayedCollectionStats.collectedRatio * 360)}deg, #E15949 ${Math.round(displayedCollectionStats.collectedRatio * 360)}deg 360deg)`,
                         }}
                       >
                         <div
@@ -664,18 +688,18 @@ function DashboardContent() {
 
                       <div className="w-full space-y-4 text-left lg:w-1/3 lg:-mt-20 lg:text-right">
                         <div className="lg:mr-14">
-                          <div className="text-[16px] font-bold leading-none text-[#7D8B6F]">
+                          <div className="text-[16px] font-bold leading-none text-[#4DB6A1]">
                             {(displayedCollectionStats.collectedRatio * 100).toFixed(0)}%
                           </div>
-                          <div className="mt-1.5 text-[0.82rem] font-bold uppercase tracking-[0.05em] text-[#7D8B6F]">
+                          <div className="mt-1.5 text-[0.82rem] font-bold uppercase tracking-[0.05em] text-[#4DB6A1]">
                             Collected
                           </div>
                         </div>
                         <div>
                           <div className="text-[12px] font-bold uppercase tracking-[0.05em] text-foreground/70">Collected</div>
                           <div className="mt-2.5 flex items-start gap-2 lg:justify-end">
-                            <span className="pt-1 text-xs font-semibold text-[#7D8B6F]">ETB</span>
-                            <span className="text-[20px] font-bold leading-none text-[#7D8B6F]">
+                            <span className="pt-1 text-xs font-semibold text-[#4DB6A1]">ETB</span>
+                            <span className="text-[20px] font-bold leading-none text-[#4DB6A1]">
                               {displayedCollectionStats.collectedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                             </span>
                           </div>
@@ -714,15 +738,15 @@ function DashboardContent() {
                         <div>
                           <div className="text-base font-semibold text-foreground">Vacant Units</div>
                           <div className="mt-2.5 space-y-2">
-                            <OccupancyLegendDot color="#C45B43" label={`${occupancyStats.vacantUnlisted} unlisted`} />
-                            <OccupancyLegendDot color="#F39A3D" label={`${occupancyStats.vacantListed} listed`} />
+                            <OccupancyLegendDot color="#E15949" label={`${occupancyStats.vacantUnlisted} unlisted`} />
+                            <OccupancyLegendDot color="#F08B7E" label={`${occupancyStats.vacantListed} listed`} />
                           </div>
                         </div>
                         <div>
                           <div className="text-base font-semibold text-foreground">Occupied Units</div>
                           <div className="mt-2.5 space-y-2">
-                            <OccupancyLegendDot color="#7D8B6F" label={`${occupancyStats.occupiedUnlisted} unlisted`} />
-                            <OccupancyLegendDot color="#8B5FD3" label={`${occupancyStats.occupiedListed} listed`} />
+                            <OccupancyLegendDot color="#4DB6A1" label={`${occupancyStats.occupiedUnlisted} unlisted`} />
+                            <OccupancyLegendDot color="#7CD3C2" label={`${occupancyStats.occupiedListed} listed`} />
                           </div>
                         </div>
                       </div>
@@ -732,10 +756,10 @@ function DashboardContent() {
                           className="relative flex h-32 w-32 items-center justify-center rounded-full"
                           style={{
                             background: `conic-gradient(
-                              #C45B43 0deg ${(occupancyStats.vacantUnlisted / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
-                              #F39A3D ${(occupancyStats.vacantUnlisted / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
-                              #7D8B6F ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed + occupancyStats.occupiedUnlisted) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
-                              #8B5FD3 ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed + occupancyStats.occupiedUnlisted) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg 360deg
+                              #E15949 0deg ${(occupancyStats.vacantUnlisted / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #F08B7E ${(occupancyStats.vacantUnlisted / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #4DB6A1 ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed + occupancyStats.occupiedUnlisted) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg,
+                              #7CD3C2 ${((occupancyStats.vacantUnlisted + occupancyStats.vacantListed + occupancyStats.occupiedUnlisted) / Math.max(occupancyStats.totalUnits || 1, 1)) * 360}deg 360deg
                             )`,
                           }}
                         >

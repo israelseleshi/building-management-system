@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { type CSSProperties, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -77,13 +77,21 @@ export default function ApplicationsPage() {
 }
 
 function ApplicationsContent() {
+  const SIDEBAR_COLLAPSED_KEY = "bms.dashboard.sidebarCollapsed"
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
+  })
   const [activeTab, setActiveTab] = useState<ActiveTab>("Applications")
   const [activeStatus, setActiveStatus] = useState<ApplicationStatus | "All">("All")
   const [groupBy, setGroupBy] = useState<GroupBy>("Not Grouped")
   const [selectedFilter, setSelectedFilter] = useState("Filter...")
+  const [isRequestCardOpen, setIsRequestCardOpen] = useState(false)
+  const [requestRecipient, setRequestRecipient] = useState("")
+  const [requestChannel, setRequestChannel] = useState<"Email" | "SMS" | "In-App">("Email")
+  const [requestNotes, setRequestNotes] = useState("")
 
   const filteredApplications = useMemo(() => {
     return applicationData.filter((application) => {
@@ -130,11 +138,9 @@ function ApplicationsContent() {
     setIsSidebarCollapsed((prev) => !prev)
   }
 
-  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
-    if (!isCurrentlyCollapsed) {
-      setIsSidebarCollapsed(true)
-    }
-  }
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isSidebarCollapsed))
+  }, [isSidebarCollapsed])
 
   return (
     <div
@@ -145,13 +151,12 @@ function ApplicationsContent() {
           ["--card" as string]: theme.card,
           ["--background" as string]: theme.background,
           ["--border" as string]: theme.line,
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
       <DashboardSidebar
         isSidebarCollapsed={isSidebarCollapsed}
         onLogout={handleLogout}
-        onNavigate={handleSidebarNavigation}
         onToggleSidebar={toggleSidebar}
         appBrandName="BMS"
       />
@@ -197,7 +202,7 @@ function ApplicationsContent() {
         </header>
 
         <main
-          className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 md:px-6"
+          className="relative flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 md:px-6"
           style={{
             background:
               "linear-gradient(180deg, #E9EDF3 0%, #E6EBF2 42%, #E3E8EF 100%)",
@@ -222,6 +227,7 @@ function ApplicationsContent() {
                     onGroupByChange={setGroupBy}
                     resultCount={filteredApplications.length}
                     totalCount={applicationData.length}
+                    onOpenRequest={() => setIsRequestCardOpen(true)}
                   />
 
                   <ApplicationsTable
@@ -235,6 +241,7 @@ function ApplicationsContent() {
               <aside className="hidden xl:block">
                 <div className="mb-4">
                   <Button
+                    onClick={() => setIsRequestCardOpen(true)}
                     className="h-11 w-full rounded-md px-5 text-[0.85rem] font-medium shadow-sm"
                     style={{ backgroundColor: theme.primary, color: "#FFFFFF" }}
                   >
@@ -250,6 +257,73 @@ function ApplicationsContent() {
               </aside>
             </div>
           </div>
+
+          {isRequestCardOpen && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#E9EDF3]/70 px-4 py-6 backdrop-blur-[1px]">
+              <div className="w-full max-w-xl rounded-2xl border shadow-[0_16px_40px_rgba(31,53,73,0.18)]" style={{ backgroundColor: "#FFFFFF", borderColor: theme.line }}>
+                <div className="rounded-t-2xl border-b px-5 py-4" style={{ backgroundColor: "#FFFFFF", borderColor: theme.line }}>
+                  <div className="text-[0.82rem] font-semibold uppercase tracking-[0.06em]" style={{ color: theme.ink }}>
+                    Send Application Request
+                  </div>
+                </div>
+                <div className="space-y-4 px-5 py-5">
+                  <div>
+                    <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.06em]" style={{ color: theme.muted }}>
+                      Recipient
+                    </label>
+                    <input
+                      value={requestRecipient}
+                      onChange={(e) => setRequestRecipient(e.target.value)}
+                      placeholder="tenant@email.com or +251..."
+                      className="h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none"
+                      style={{ borderColor: theme.line, color: theme.ink }}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.06em]" style={{ color: theme.muted }}>
+                      Channel
+                    </label>
+                    <select
+                      value={requestChannel}
+                      onChange={(e) => setRequestChannel(e.target.value as "Email" | "SMS" | "In-App")}
+                      className="h-10 w-full rounded-lg border bg-white px-3 text-sm outline-none"
+                      style={{ borderColor: theme.line, color: theme.ink }}
+                    >
+                      <option value="Email">Email</option>
+                      <option value="SMS">SMS</option>
+                      <option value="In-App">In-App</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[0.7rem] font-semibold uppercase tracking-[0.06em]" style={{ color: theme.muted }}>
+                      Notes
+                    </label>
+                    <textarea
+                      value={requestNotes}
+                      onChange={(e) => setRequestNotes(e.target.value)}
+                      placeholder="Optional message for applicant..."
+                      className="min-h-[90px] w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none"
+                      style={{ borderColor: theme.line, color: theme.ink }}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 border-t px-5 py-4" style={{ borderColor: theme.line }}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsRequestCardOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => setIsRequestCardOpen(false)}
+                    style={{ backgroundColor: theme.primary, color: "#FFFFFF" }}
+                  >
+                    Send Request
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
@@ -295,6 +369,7 @@ function FilterBar({
   onGroupByChange,
   resultCount,
   totalCount,
+  onOpenRequest,
 }: {
   theme: Theme
   selectedFilter: string
@@ -303,6 +378,7 @@ function FilterBar({
   onGroupByChange: (value: GroupBy) => void
   resultCount: number
   totalCount: number
+  onOpenRequest: () => void
 }) {
   return (
     <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -342,6 +418,7 @@ function FilterBar({
       </div>
 
       <Button
+        onClick={onOpenRequest}
         className="h-10 rounded-md px-5 text-[0.82rem] font-medium shadow-sm xl:hidden"
         style={{ backgroundColor: theme.primary, color: "#FFFFFF" }}
       >

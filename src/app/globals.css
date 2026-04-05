@@ -115,7 +115,7 @@
 
 .menu-item-active {
   color: white;
-  background-color: #7D8B6F;
+  background-color: #1F3549;
 }
 
 .menu-item-inactive {
@@ -125,7 +125,7 @@
 }
 
 .menu-item-inactive:hover {
-  background-color: #7D8B6F;
+  background-color: #1F3549;
   color: white;
 }
 
@@ -196,11 +196,11 @@
 @keyframes blink {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 20px rgba(125, 139, 111, 0.6);
+    box-shadow: 0 0 20px rgba(31, 53, 73, 0.6);
   }
   50% {
     opacity: 0.7;
-    box-shadow: 0 0 40px rgba(125, 139, 111, 0.8);
+    box-shadow: 0 0 40px rgba(31, 53, 73, 0.8);
   }
 }
 
@@ -270,4 +270,20 @@
   font-family: var(--font-brand);
   font-weight: 800;
   letter-spacing: -0.03em;
+}
+
+body.tenant-portal-theme {
+  background-color: #eef1f8;
+}
+
+body.tenant-portal-theme .bg-background {
+  background-color: #eef1f8 !important;
+}
+
+body.tenant-portal-theme .bg-card {
+  background-color: #ffffff !important;
+}
+
+body.tenant-portal-theme .border-border {
+  border-color: #d8e0ec !important;
 }

@@ -22,6 +22,8 @@ import {
   Calendar,
   ShieldCheck,
   ClipboardList,
+  Send,
+  FileInput,
 } from "lucide-react"
 
 export interface NavItemBase {
@@ -59,27 +61,41 @@ const landlordGroups: NavGroupBase[] = [
     defaultOpen: true,
   },
   {
-    title: "Properties",
+    title: "Calendar",
+    icon: <Calendar className="w-5 h-5" />,
+    items: [
+      { icon: <Calendar className="w-5 h-5" />, name: "Calendar", path: "/dashboard/calendar" },
+    ],
+  },
+  {
+    title: "Rentals",
     icon: <Building className="w-5 h-5" />,
     items: [
-      { icon: <Building2 className="w-5 h-5" />, name: "My Listings", path: "/dashboard/listings" },
-      { icon: <PlusCircle className="w-5 h-5" />, name: "Create Listing", path: "/dashboard/create" },
+      { icon: <Building2 className="w-5 h-5" />, name: "My Units", path: "/dashboard/listings" },
+      { icon: <PlusCircle className="w-5 h-5" />, name: "Create Units", path: "/dashboard/create" },
+      { icon: <Calendar className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
     ],
     defaultOpen: true,
   },
   {
-    title: "Management",
+    title: "Applications",
     icon: <Grid className="w-5 h-5" />,
     items: [
-      { icon: <Users className="w-5 h-5" />, name: "Employees", path: "/dashboard/employees" },
-      { icon: <ClipboardList className="w-5 h-5" />, name: "Applications", path: "/dashboard/applications" },
-      { icon: <Clock3 className="w-5 h-5" />, name: "Attendance", path: "/dashboard/attendance" },
-      { icon: <Calendar className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
-      { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/dashboard/documents" },
+      { icon: <ClipboardList className="w-5 h-5" />, name: "Applicant's", path: "/dashboard/applications/applicants" },
+      { icon: <FileInput className="w-5 h-5" />, name: "Forms", path: "/dashboard/applications/forms" },
+      { icon: <Send className="w-5 h-5" />, name: "Requests Sent", path: "/dashboard/applications/requests" },
     ],
   },
   {
-    title: "Communication",
+    title: "People",
+    icon: <Users className="w-5 h-5" />,
+    items: [
+      { icon: <Users className="w-5 h-5" />, name: "Employees", path: "/dashboard/employees" },
+      { icon: <Clock3 className="w-5 h-5" />, name: "Attendance", path: "/dashboard/attendance" },
+    ],
+  },
+  {
+    title: "Messaging",
     icon: <MessageSquare className="w-5 h-5" />,
     items: [
       { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/dashboard/chat" },
@@ -87,11 +103,18 @@ const landlordGroups: NavGroupBase[] = [
     ],
   },
   {
-    title: "Finance",
+    title: "Accounting",
     icon: <DollarSign className="w-5 h-5" />,
     items: [
       { icon: <CreditCard className="w-5 h-5" />, name: "Payouts", path: "/dashboard/payouts" },
       { icon: <Receipt className="w-5 h-5" />, name: "Invoices", path: "/dashboard/invoices" },
+    ],
+  },
+  {
+    title: "Files",
+    icon: <FileText className="w-5 h-5" />,
+    items: [
+      { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/dashboard/documents" },
     ],
   },
   {
@@ -136,10 +159,11 @@ const tenantGroups: NavGroupBase[] = [
     ],
   },
   {
-    title: "Communication",
+    title: "Messaging",
     icon: <MessageSquare className="w-5 h-5" />,
     items: [
       { icon: <MessageSquare className="w-5 h-5" />, name: "Chat", path: "/tenant-dashboard/chat" },
+      { icon: <Bell className="w-5 h-5" />, name: "Announcements", path: "/tenant-dashboard/announcements" },
     ],
   },
   {

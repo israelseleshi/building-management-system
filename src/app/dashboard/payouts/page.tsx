@@ -399,7 +399,7 @@ function PayoutsContent() {
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <Button
               onClick={() => setAddPayoutModalOpen(true)}
-              className="bg-[#7D8B6F] hover:bg-[#6a7a5f] text-white"
+              className="bg-[#3096DA] hover:bg-[#277FB8] text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Request Payout
@@ -440,7 +440,7 @@ function PayoutsContent() {
           {/* Payouts Table */}
           {loading ? (
             <div className="flex items-center justify-center h-96">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D8B6F]"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3096DA]"></div>
             </div>
           ) : filteredPayouts.length === 0 ? (
             <Card className="bg-card border-border">
@@ -455,7 +455,7 @@ function PayoutsContent() {
                 {payouts.length === 0 && (
                   <Button
                     onClick={() => setAddPayoutModalOpen(true)}
-                    className="bg-[#7D8B6F] hover:bg-[#6a7a5f] text-white"
+                    className="bg-[#3096DA] hover:bg-[#277FB8] text-white"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Request Your First Payout
@@ -638,7 +638,7 @@ function PayoutsContent() {
             </Button>
             <Button
               onClick={handleAddPayout}
-              className="bg-[#7D8B6F] hover:bg-[#6a7a5f] text-white"
+              className="bg-[#3096DA] hover:bg-[#277FB8] text-white"
             >
               Create Payout Request
             </Button>
@@ -740,3 +740,4 @@ function PayoutsContent() {
     </div>
   )
 }
+

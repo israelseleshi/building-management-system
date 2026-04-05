@@ -571,7 +571,14 @@ function AttendanceContent() {
                 { label: "Late", value: summary.late, icon: Clock3, tone: "bg-amber-100 text-amber-700" },
                 { label: "Closed", value: summary.closed, icon: BellRing, tone: "bg-red-100 text-red-700" },
               ].map((card, index) => (
-                <div key={`${card.label}-${index}`} className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                <div 
+                  key={`${card.label}-${index}`} 
+                  className="rounded-2xl p-5 transition-all duration-300 shadow-sm"
+                  style={{
+                    backgroundColor: "var(--card)",
+                    boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
+                  }}
+                >
                   <div className="mb-4 flex items-center justify-between">
                     <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${card.tone}`}>
                       <card.icon className="h-5 w-5" />
@@ -590,7 +597,7 @@ function AttendanceContent() {
                     <TabsTrigger
                       key={`${tab.value}-${index}`}
                       value={tab.value}
-                      className="gap-2 rounded-xl border border-transparent px-4 py-2.5 text-muted-foreground data-[state=active]:border-[#7D8B6F] data-[state=active]:bg-[#7D8B6F] data-[state=active]:text-white data-[state=active]:shadow-sm"
+                      className="gap-2 rounded-xl border border-transparent px-4 py-2.5 text-muted-foreground data-[state=active]:border-[#3096DA] data-[state=active]:bg-[#3096DA] data-[state=active]:text-white data-[state=active]:shadow-sm"
                     >
                       <tab.icon className="h-4 w-4" />
                       <span>{tab.label}</span>
@@ -616,7 +623,7 @@ function AttendanceContent() {
                       </Button>
                       <Button
                         className="gap-2"
-                        style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                        style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                         onClick={handleProcessAttendance}
                         disabled={isProcessing}
                       >
@@ -941,7 +948,7 @@ function AttendanceContent() {
                             </Button>
                             <Button
                               size="sm"
-                              style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                              style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                               onClick={() => openManualAdjustment(exception)}
                             >
                               Adjust Record
@@ -972,7 +979,7 @@ function AttendanceContent() {
                       </Button>
                       <Button
                         className="gap-2"
-                        style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                        style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                         onClick={() => void simulateLog()}
                         disabled={!simulationShopId}
                       >
@@ -1138,7 +1145,7 @@ function AttendanceContent() {
                           placeholder="Technical issue, approved closure, or verified opening outside the scanner window."
                         />
                       </FilterField>
-                      <Button className="w-full" style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }} onClick={saveManualAdjustment}>
+                      <Button className="w-full" style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }} onClick={saveManualAdjustment}>
                         Save Adjustment
                       </Button>
                     </div>
@@ -1331,7 +1338,7 @@ function AttendanceContent() {
                         <div className="md:col-span-2">
                           <Button
                             className="w-full md:w-auto"
-                            style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                            style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                             onClick={saveConfig}
                             disabled={isSavingConfig}
                           >
@@ -1554,7 +1561,7 @@ function AttendanceContent() {
             >
               <Button
                 className="w-full"
-                style={{ backgroundColor: "#7D8B6F", color: "#FFFFFF" }}
+                style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}
                 onClick={sendWarning}
               >
                 Send Warning
@@ -1605,3 +1612,4 @@ function SortableHead({
     </TableHead>
   )
 }
+
