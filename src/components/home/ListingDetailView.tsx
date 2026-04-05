@@ -76,11 +76,11 @@ export function ListingDetailView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side - Image */}
         <div className="lg:col-span-1">
-          <Card className="overflow-hidden border-0 sticky top-6" style={{ boxShadow: '0 4px 12px rgba(107, 90, 70, 0.25)' }}>
+          <Card className="overflow-hidden border-0 sticky top-6" style={{ boxShadow: '0 4px 12px rgba(31, 53, 73, 0.25)' }}>
             <div className="relative h-80 overflow-hidden">
               {listing.featured && (
                 <div className="absolute top-4 left-4 z-10">
-                  <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 gap-1 animate-pulse">
+                  <Badge className="bg-[#1F3549]/10 text-[#1F3549] border-[#1F3549]/20 gap-1">
                     <Sparkles className="w-3 h-3" />
                     Featured
                   </Badge>
@@ -118,7 +118,7 @@ export function ListingDetailView({
                 <Text className="text-base">{listing.location}</Text>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary" className="bg-green-100 text-green-800 text-sm">
+                <Badge variant="secondary" className="bg-[#1F3549]/10 text-[#1F3549] text-sm">
                   <CheckCircle className="w-3 h-3 mr-1" /> Available
                 </Badge>
                 <Badge variant="outline" className="text-sm capitalize">
@@ -129,7 +129,7 @@ export function ListingDetailView({
             </div>
 
             {/* Price Section */}
-            <Card className="border-0 p-6" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
+            <Card className="border-0 p-6" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}>
               <div className="flex items-baseline justify-between">
                 <div>
                   <MutedText className="text-sm mb-2">Price</MutedText>
@@ -142,7 +142,7 @@ export function ListingDetailView({
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-1 mb-2">
-                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                    <Star className="w-5 h-5 text-[#1F3549] fill-[#1F3549]" />
                     <span className="font-semibold text-foreground">{listing.rating}</span>
                     <span className="text-sm text-muted-foreground">({listing.reviews} reviews)</span>
                   </div>
@@ -153,7 +153,7 @@ export function ListingDetailView({
             {/* Features Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {listing.capacity > 0 && (
-                <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
+                <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}>
                   <div className="flex justify-center mb-3">
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1F354920' }}>
                       <Users className="w-6 h-6 text-primary" />
@@ -168,7 +168,7 @@ export function ListingDetailView({
               )}
 
               {listing.parking > 0 && (
-                <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
+                <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}>
                   <div className="flex justify-center mb-3">
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1F354920' }}>
                       <Car className="w-6 h-6 text-primary" />
@@ -182,7 +182,7 @@ export function ListingDetailView({
                 </Card>
               )}
 
-              <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
+              <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}>
                 <div className="flex justify-center mb-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1F354920' }}>
                     <Square className="w-6 h-6 text-primary" />
@@ -195,7 +195,7 @@ export function ListingDetailView({
                 <Text size="sm" className="text-muted-foreground mt-1">m²</Text>
               </Card>
 
-              <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}>
+              <Card className="border-0 p-6 text-center" style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}>
                 <div className="flex justify-center mb-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#1F354920' }}>
                     <Home className="w-6 h-6 text-primary" />
@@ -222,7 +222,7 @@ export function ListingDetailView({
               <Card 
                 key={index} 
                 className="border-0 p-6 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-300"
-                style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}
+                style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}
               >
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: '#1F354920' }}>
                   <CheckCircle className="w-6 h-6 text-primary" />
@@ -242,7 +242,7 @@ export function ListingDetailView({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card 
             className="border-0 p-8 lg:col-span-2"
-            style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}
+            style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}
           >
             <Text className="text-muted-foreground mb-4 leading-relaxed">
               This is a premium {listing.type} property located in {listing.location}. 
@@ -265,7 +265,7 @@ export function ListingDetailView({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card 
             className="border-0 p-6 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-300"
-            style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}
+            style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}
           >
             <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#1F354920' }}>
               <Phone className="w-7 h-7 text-primary" />
@@ -275,7 +275,7 @@ export function ListingDetailView({
           </Card>
           <Card 
             className="border-0 p-6 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-300"
-            style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(107, 90, 70, 0.15)' }}
+            style={{ backgroundColor: 'var(--card)', boxShadow: '0 4px 12px rgba(31, 53, 73, 0.15)' }}
           >
             <div className="w-14 h-14 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: '#1F354920' }}>
               <Mail className="w-7 h-7 text-primary" />

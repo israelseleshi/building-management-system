@@ -46,7 +46,7 @@ interface Listing {
   listed: string
 }
 
-const ITEMS_PER_PAGE = 6
+const ITEMS_PER_PAGE = 8
 
 function ListingsPageContent() {
   const searchParams = useSearchParams()
