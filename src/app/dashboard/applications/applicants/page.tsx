@@ -482,21 +482,24 @@ function ApplicantsContent() {
                                 <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wide" style={{ color: theme.muted }}>
                                   Provider
                                 </label>
-                                <select
-                                  value={phoneProvider}
-                                  onChange={(event) => {
-                                    const provider = event.target.value as PhoneProvider
-                                    setPhoneProvider(provider)
-                                    if (phoneInput === "+2519" || phoneInput === "+2517" || phoneRecipients.length >= 4) {
-                                      setPhoneInput(provider)
-                                    }
-                                  }}
-                                  className="h-9 w-full rounded-md border bg-white px-2 text-xs outline-none"
-                                  style={{ borderColor: theme.line, color: theme.ink }}
-                                >
-                                  <option value="+2519">Ethio Telecom (+2519)</option>
-                                  <option value="+2517">Safaricom (+2517)</option>
-                                </select>
+                                <Select value={phoneProvider} onValueChange={(value) => {
+                                  const provider = value as PhoneProvider
+                                  setPhoneProvider(provider)
+                                  if (phoneInput === "+2519" || phoneInput === "+2517" || phoneRecipients.length >= 4) {
+                                    setPhoneInput(provider)
+                                  }
+                                }}>
+                                  <SelectTrigger 
+                                    className="h-9 w-full border rounded-md bg-white px-3 pr-10 text-xs"
+                                    style={{ borderColor: theme.line, color: theme.ink }}
+                                  >
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="+2519">Ethio Telecom (+2519)</SelectItem>
+                                    <SelectItem value="+2517">Safaricom (+2517)</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                               <input
                                 type="text"
