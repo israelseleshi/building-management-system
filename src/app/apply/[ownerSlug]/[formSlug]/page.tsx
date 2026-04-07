@@ -32,6 +32,13 @@ type BuildingProfile = {
   amenities: string[]
 }
 
+type TemplateBranding = {
+  title: string
+  shortDescription: string
+  logoUrl: string
+  headerUrl: string
+}
+
 const defaultBuilding: BuildingProfile = {
   name: "Smart BMS Property",
   tagline: "Dedicated online application page",
@@ -53,6 +60,27 @@ const buildingByOwnerSlug: Record<string, BuildingProfile> = {
     intro:
       "Welcome to Rayuma Building's dedicated application page. Review the details below and complete your application in one session.",
     amenities: ["Secure Entrance", "Elevator Access", "Reliable Utilities", "Shared Common Area"],
+  },
+}
+
+const brandingByFormSlug: Record<string, TemplateBranding> = {
+  "standard-addis-rental-form": {
+    title: "Standard Addis Rental Form",
+    shortDescription: "Main residential intake form for Addis Ababa properties",
+    logoUrl: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=220&q=80",
+    headerUrl: "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1400&q=80",
+  },
+  "commercial-tenant-form": {
+    title: "Commercial Tenant Form",
+    shortDescription: "Business tenant form with legal and TIN verification fields",
+    logoUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=220&q=80",
+    headerUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1400&q=80",
+  },
+  "shared-housing-form": {
+    title: "Shared Housing Form",
+    shortDescription: "Form optimized for shared compounds and family occupancy",
+    logoUrl: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=220&q=80",
+    headerUrl: "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?auto=format&fit=crop&w=1400&q=80",
   },
 }
 
@@ -162,6 +190,10 @@ export default function PublicApplyPage({ params }: ApplyPageProps) {
     () => buildingByOwnerSlug[ownerSlug] || { ...defaultBuilding, name: toTitle(ownerSlug) },
     [ownerSlug]
   )
+  const templateBranding = useMemo(
+    () => brandingByFormSlug[formSlug] || brandingByFormSlug["standard-addis-rental-form"],
+    [formSlug]
+  )
 
   const initialValues = useMemo(() => {
     const base: Record<string, string> = {}
@@ -211,12 +243,19 @@ export default function PublicApplyPage({ params }: ApplyPageProps) {
     <main className="min-h-screen bg-[#E8EEF4] px-4 py-8">
       <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border bg-white shadow-[0_20px_60px_rgba(10,42,67,0.15)]" style={{ borderColor: "#CCD6E2" }}>
         <header className="bg-gradient-to-r from-[#0A2A43] to-[#144D76] px-6 py-6 text-white">
+          <div className="mb-4 overflow-hidden rounded-xl border border-white/20">
+            <img src={templateBranding.headerUrl} alt={`${templateBranding.title} header`} className="h-36 w-full object-cover" />
+          </div>
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
+            <div className="flex items-start gap-3">
+              <img src={templateBranding.logoUrl} alt={`${templateBranding.title} logo`} className="h-12 w-12 rounded-full border border-white/30 object-cover" />
+              <div>
               <p className="text-xs uppercase tracking-[0.2em] text-white/70">Dedicated Building Portal</p>
               <h1 className="mt-1 text-2xl font-bold">{building.name}</h1>
               <p className="mt-1 text-sm text-white/80">{building.tagline}</p>
               <p className="mt-2 text-xs text-white/75">{building.location}</p>
+                <p className="mt-2 text-xs text-white/80">{templateBranding.shortDescription}</p>
+              </div>
             </div>
             <div className="rounded-lg bg-white/10 px-4 py-3 text-xs text-white/90 backdrop-blur-sm">
               <p className="font-semibold uppercase tracking-[0.12em]">Form Type</p>

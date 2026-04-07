@@ -32,6 +32,7 @@ type ApplicationStatus =
 type GroupBy = "Not Grouped" | "Group by Property" | "Group by Status"
 type ShareMethod = "email" | "url"
 type ContactChannel = "sms" | "email"
+type PhoneProvider = "+2519" | "+2517"
 type SendCardPhase = "closed" | "start" | "rising" | "splash" | "sliding" | "open"
 
 interface ApplicationRecord {
@@ -96,6 +97,7 @@ function ApplicantsContent() {
     sms: true,
     email: false,
   })
+  const [phoneProvider, setPhoneProvider] = useState<PhoneProvider>("+2519")
   const [phoneRecipients, setPhoneRecipients] = useState<string[]>([])
   const [emailRecipients, setEmailRecipients] = useState<string[]>([])
   const [phoneInput, setPhoneInput] = useState("+2519")
@@ -156,7 +158,7 @@ function ApplicantsContent() {
   }
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-  const isValidPhone = (value: string) => /^\+?2519\d{8}$/.test(value.replace(/\s+/g, ""))
+  const isValidPhone = (value: string) => /^\+?251(9|7)\d{8}$/.test(value.replace(/\s+/g, ""))
 
   const addRecipientsFromInput = (
     input: string,
@@ -182,14 +184,16 @@ function ApplicantsContent() {
     const { next, reachedLimit } = addRecipientsFromInput(emailInput, emailRecipients, isValidEmail)
     setEmailRecipients(next)
     setEmailInput("")
-    if (reachedLimit) setShareError("You can add up to 4 email recipients.")
+    if (reachedLimit || next.length >= 4) setShareError("Email recipient limit reached (4). Share to these 4 first, then come back to send more.")
   }
 
   const addPhonesFromInput = () => {
     const { next, reachedLimit } = addRecipientsFromInput(phoneInput, phoneRecipients, isValidPhone)
     setPhoneRecipients(next)
-    setPhoneInput("+2519")
-    if (reachedLimit) setShareError("You can add up to 4 phone recipients.")
+    setPhoneInput(phoneProvider)
+    if (reachedLimit || next.length >= 4) {
+      setShareError("Phone recipient limit reached (4). Share to these 4 first, then come back to send more.")
+    }
   }
 
   useEffect(() => {
@@ -402,7 +406,7 @@ function ApplicantsContent() {
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Select Template</label>
                           <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                             <SelectTrigger 
-                              className="h-10 w-full border rounded-md bg-white px-3 text-sm"
+                              className="h-10 w-full border rounded-md bg-white px-3 pr-10 text-sm"
                               style={{ borderColor: theme.line, color: theme.ink }}
                             >
                               <SelectValue placeholder="Select a template" />
@@ -423,7 +427,7 @@ function ApplicantsContent() {
                             Delivery Channels
                           </p>
                           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            <label className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm" style={{ borderColor: theme.line, color: theme.ink }}>
+                            <label className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-[#E9EDF3]" style={{ borderColor: theme.line, color: theme.ink }}>
                               <input
                                 type="checkbox"
                                 checked={contactModes.sms}
@@ -432,7 +436,7 @@ function ApplicantsContent() {
                               <Smartphone className="h-4 w-4" />
                               SMS
                             </label>
-                            <label className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm" style={{ borderColor: theme.line, color: theme.ink }}>
+                            <label className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-[#E9EDF3]" style={{ borderColor: theme.line, color: theme.ink }}>
                               <input
                                 type="checkbox"
                                 checked={contactModes.email}
@@ -474,19 +478,40 @@ function ApplicantsContent() {
                                   ))}
                                 </div>
                               )}
+                              <div className="mb-2">
+                                <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wide" style={{ color: theme.muted }}>
+                                  Provider
+                                </label>
+                                <select
+                                  value={phoneProvider}
+                                  onChange={(event) => {
+                                    const provider = event.target.value as PhoneProvider
+                                    setPhoneProvider(provider)
+                                    if (phoneInput === "+2519" || phoneInput === "+2517" || phoneRecipients.length >= 4) {
+                                      setPhoneInput(provider)
+                                    }
+                                  }}
+                                  className="h-9 w-full rounded-md border bg-white px-2 text-xs outline-none"
+                                  style={{ borderColor: theme.line, color: theme.ink }}
+                                >
+                                  <option value="+2519">Ethio Telecom (+2519)</option>
+                                  <option value="+2517">Safaricom (+2517)</option>
+                                </select>
+                              </div>
                               <input
                                 type="text"
-                                placeholder="Type +2519... then Enter or comma"
+                                placeholder={`Type ${phoneProvider}... then Enter or comma`}
                                 value={phoneInput}
                                 onChange={(event) => {
                                   const raw = event.target.value.replace(/\s+/g, "")
                                   if (!raw) {
-                                    setPhoneInput("+2519")
+                                    setPhoneInput(phoneProvider)
                                     return
                                   }
-                                  if (!raw.startsWith("+2519")) {
+                                  if (!raw.startsWith(phoneProvider)) {
                                     const digits = raw.replace(/[^\d]/g, "")
-                                    setPhoneInput(`+2519${digits.replace(/^2519/, "").replace(/^9/, "")}`)
+                                    const stripped = digits.replace(/^251[97]/, "").replace(/^[97]/, "")
+                                    setPhoneInput(`${phoneProvider}${stripped}`)
                                     return
                                   }
                                   setPhoneInput(raw)
@@ -500,6 +525,7 @@ function ApplicantsContent() {
                                 }}
                                 className="h-9 w-full border-0 bg-transparent px-1 text-sm outline-none"
                                 style={{ color: theme.ink }}
+                                disabled={phoneRecipients.length >= 4}
                               />
                             </div>
                             <p className="mt-1 text-xs" style={{ color: theme.muted }}>
@@ -549,6 +575,7 @@ function ApplicantsContent() {
                                 }}
                                 className="h-9 w-full border-0 bg-transparent px-1 text-sm outline-none"
                                 style={{ color: theme.ink }}
+                                disabled={emailRecipients.length >= 4}
                               />
                             </div>
                             <p className="mt-1 text-xs" style={{ color: theme.muted }}>
@@ -562,11 +589,12 @@ function ApplicantsContent() {
                           <textarea
                             value={customMessage}
                             onChange={(event) => setCustomMessage(event.target.value)}
+                            maxLength={280}
                             className="min-h-[92px] w-full rounded-md border bg-white px-3 py-2 text-sm outline-none"
-                            style={{ borderColor: theme.line, color: theme.ink }}
+                            style={{ borderColor: theme.line, color: theme.ink, resize: "none" }}
                           />
                           <p className="mt-1 text-xs" style={{ color: theme.muted }}>
-                            This description is specific to Email/SMS sharing.
+                            This description is specific to Email/SMS sharing ({customMessage.length}/280).
                           </p>
                         </div>
 

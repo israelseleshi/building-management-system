@@ -7,7 +7,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Bell, AlignLeft, Plus, Edit, Trash2, Copy, FileText, X, ChevronRight, Settings2, ListChecks, SlidersHorizontal, Eye, GripVertical, Upload, ImagePlus, CheckCircle, Star } from "lucide-react"
+import { Bell, AlignLeft, Plus, Edit, Trash2, FileText, X, ChevronRight, Settings2, ListChecks, SlidersHorizontal, Eye, GripVertical, Upload, ImagePlus, CheckCircle, Star } from "lucide-react"
 
 const theme: Record<string, string> = {
   primary: "#3498DB",
@@ -44,6 +44,9 @@ const initialSections: SectionConfig[] = [
   { id: "sec_reference", name: "References & Emergency Contact", fields: ["Reference Full Name", "Reference Phone", "Emergency Contact", "Emergency Contact Phone"], enabled: true, allowAdditionalEntries: true },
 ]
 
+const DEFAULT_LOGO_URL = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=220&q=80"
+const DEFAULT_HEADER_URL = "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1400&q=80"
+
 export default function FormsPage() {
   return <ProtectedRoute requiredRole="landlord"><FormsContent /></ProtectedRoute>
 }
@@ -57,10 +60,11 @@ function FormsContent() {
   const [formsData, setFormsData] = useState<FormTemplate[]>(forms)
   const [editingFormId, setEditingFormId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<FormTemplate | null>(null)
+  const [formActionMessage, setFormActionMessage] = useState("")
 
   const [settings, setSettings] = useState({
     templateName: "Addis Ababa Residential Form",
-    companyNameOnApplication: "Smart BMS",
+    templateDescription: "Main residential intake form for Addis Ababa properties",
     instructions: "Please complete all required information in English or Amharic. Attach clear ID and income-related evidence where required.",
     showHeaderLogo: true,
     showHeaderImage: true,
@@ -75,10 +79,10 @@ function FormsContent() {
 
   const [sections, setSections] = useState<SectionConfig[]>(initialSections)
   const [newSectionName, setNewSectionName] = useState("")
-  const [logoFileName, setLogoFileName] = useState("No logo uploaded")
-  const [headerImageFileName, setHeaderImageFileName] = useState("No image uploaded")
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
-  const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(null)
+  const [logoFileName, setLogoFileName] = useState("Default logo")
+  const [headerImageFileName, setHeaderImageFileName] = useState("Default header")
+  const [logoPreview, setLogoPreview] = useState<string | null>(DEFAULT_LOGO_URL)
+  const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(DEFAULT_HEADER_URL)
   const [customDraft, setCustomDraft] = useState({ controlType: "text" as "text" | "file", label: "", placeholder: "", required: false })
   const [customFields, setCustomFields] = useState([{ id: "cf_001", label: "Preferred Move-in Date", placeholder: "DD/MM/YYYY", required: true, controlType: "text" as "text" | "file" }])
 
@@ -94,8 +98,8 @@ function FormsContent() {
 
   useEffect(() => {
     return () => {
-      if (logoPreview) URL.revokeObjectURL(logoPreview)
-      if (headerImagePreview) URL.revokeObjectURL(headerImagePreview)
+      if (logoPreview?.startsWith("blob:")) URL.revokeObjectURL(logoPreview)
+      if (headerImagePreview?.startsWith("blob:")) URL.revokeObjectURL(headerImagePreview)
     }
   }, [logoPreview, headerImagePreview])
 
@@ -130,24 +134,11 @@ function FormsContent() {
     setSettings((current) => ({
       ...current,
       templateName: form.name,
-      instructions: form.description,
+      templateDescription: form.description,
     }))
     setEditingFormId(id)
     setBuilderOpen(true)
-    setActiveTab("settings")
-  }
-
-  const handleDuplicate = (id: string) => {
-    const form = formsData.find((item) => item.id === id)
-    if (!form) return
-    const duplicate: FormTemplate = {
-      ...form,
-      id: `frm_${Date.now()}`,
-      name: `${form.name} Copy`,
-      createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      isDefault: false,
-    }
-    setFormsData((current) => [duplicate, ...current])
+    setActiveTab("preview")
   }
 
   const requestDelete = (id: string) => {
@@ -169,12 +160,19 @@ function FormsContent() {
   }
 
   const setDefaultForm = (id: string) => {
+    const form = formsData.find((item) => item.id === id)
+    if (!form) return
+    if (form.status === "Draft") {
+      setFormActionMessage(`"${form.name}" is still a draft. Finish and activate it before setting as default.`)
+      return
+    }
+    setFormActionMessage("")
     setFormsData((current) => current.map((form) => ({ ...form, isDefault: form.id === id })))
   }
 
   const saveFormChanges = () => {
     const name = settings.templateName.trim()
-    const description = settings.instructions.trim()
+    const description = settings.templateDescription.trim()
     if (!name) return
 
     if (editingFormId) {
@@ -213,7 +211,7 @@ function FormsContent() {
     >
       <div className="mb-3 border-b pb-2" style={{ borderColor: theme.line }}>
         <h3 className="text-sm font-medium" style={{ color: theme.ink }}>Preview</h3>
-        <p className="text-xs" style={{ color: theme.muted }}>{settings.templateName} | {settings.companyNameOnApplication}</p>
+        <p className="text-xs" style={{ color: theme.muted }}>{settings.templateName} | {settings.templateDescription}</p>
       </div>
       {(settings.showHeaderLogo || settings.showHeaderImage) && (
         <div className="mb-4 rounded-md border" style={{ borderColor: theme.line, backgroundColor: "#EAF3FB" }}>
@@ -287,6 +285,11 @@ function FormsContent() {
                   <Plus className="h-3.5 w-3.5" />Create Form
                 </Button>
               </div>
+              {formActionMessage ? (
+                <div className="mb-3 rounded-md border px-3 py-2 text-xs" style={{ borderColor: "#F2D1A7", color: "#8A5A1F", backgroundColor: "#FFF8EE" }}>
+                  {formActionMessage}
+                </div>
+              ) : null}
 
               <div className="overflow-hidden rounded-lg border shadow-[0_6px_14px_rgba(94,118,145,0.05)]" style={{ borderColor: theme.line }}>
                 <table className="w-full border-collapse">
@@ -311,7 +314,6 @@ function FormsContent() {
                         <td className="px-3 py-2.5"><div className="flex items-center justify-center gap-1">
                           <button type="button" onClick={() => setDefaultForm(form.id)} className="flex h-7 items-center gap-1 rounded-md px-2 transition-colors hover:bg-slate-100 text-[0.65rem] font-medium" style={{ color: form.isDefault ? theme.success : theme.muted }} aria-label="Set as default form">{form.isDefault ? <CheckCircle className="h-3.5 w-3.5" /> : <Star className="h-3.5 w-3.5" />}{form.isDefault ? "Default" : "Set Default"}</button>
                           <button type="button" onClick={() => handleEdit(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-slate-100" aria-label="Edit form"><Edit className="h-3.5 w-3.5" style={{ color: theme.muted }} /></button>
-                          <button type="button" onClick={() => handleDuplicate(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-slate-100" aria-label="Duplicate form"><Copy className="h-3.5 w-3.5" style={{ color: theme.muted }} /></button>
                           <button type="button" onClick={() => requestDelete(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-red-50" aria-label="Delete form"><Trash2 className="h-3.5 w-3.5" style={{ color: theme.danger }} /></button>
                         </div></td>
                       </tr>
@@ -386,7 +388,7 @@ function FormsContent() {
                   {activeTab === "settings" && (
                     <div className="space-y-4">
                       <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Template Name *</label><Input value={settings.templateName} onChange={(e) => setSettings((c) => ({ ...c, templateName: e.target.value }))} /></div>
-                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Company Name on Application *</label><Input value={settings.companyNameOnApplication} onChange={(e) => setSettings((c) => ({ ...c, companyNameOnApplication: e.target.value }))} /></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Template Description *</label><Input value={settings.templateDescription} onChange={(e) => setSettings((c) => ({ ...c, templateDescription: e.target.value }))} /></div>
 
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <div className="space-y-1">
