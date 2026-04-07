@@ -7,7 +7,7 @@ import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Bell, AlignLeft, Plus, Edit, Trash2, Copy, FileText, X, ChevronRight, Settings2, ListChecks, SlidersHorizontal, Eye, GripVertical, Upload, ImagePlus } from "lucide-react"
+import { Bell, AlignLeft, Plus, Edit, Trash2, Copy, FileText, X, ChevronRight, Settings2, ListChecks, SlidersHorizontal, Eye, GripVertical, Upload, ImagePlus, CheckCircle, Star } from "lucide-react"
 
 const theme: Record<string, string> = {
   primary: "#3498DB",
@@ -27,11 +27,11 @@ const theme: Record<string, string> = {
 type BuilderTab = "settings" | "fields" | "custom" | "preview"
 type BuilderPhase = "closed" | "start" | "rising" | "splash" | "sliding" | "open"
 
-interface FormTemplate { id: string; name: string; description: string; fields: number; createdAt: string; status: "Active" | "Draft" }
+interface FormTemplate { id: string; name: string; description: string; fields: number; createdAt: string; status: "Active" | "Draft"; isDefault?: boolean }
 interface SectionConfig { id: string; name: string; fields: string[]; enabled: boolean; allowAdditionalEntries: boolean }
 
 const forms: FormTemplate[] = [
-  { id: "frm_001", name: "Standard Addis Rental Form", description: "Main residential intake form for Addis Ababa properties", fields: 17, createdAt: "Jan 15, 2026", status: "Active" },
+  { id: "frm_001", name: "Standard Addis Rental Form", description: "Main residential intake form for Addis Ababa properties", fields: 17, createdAt: "Jan 15, 2026", status: "Active", isDefault: true },
   { id: "frm_002", name: "Commercial Tenant Form", description: "Business tenant form with legal and TIN verification fields", fields: 19, createdAt: "Feb 20, 2026", status: "Active" },
   { id: "frm_003", name: "Shared Housing Form", description: "Form optimized for shared compounds and family occupancy", fields: 13, createdAt: "Mar 10, 2026", status: "Draft" },
 ]
@@ -54,6 +54,9 @@ function FormsContent() {
   const [builderOpen, setBuilderOpen] = useState(false)
   const [builderPhase, setBuilderPhase] = useState<BuilderPhase>("closed")
   const [activeTab, setActiveTab] = useState<BuilderTab>("settings")
+  const [formsData, setFormsData] = useState<FormTemplate[]>(forms)
+  const [editingFormId, setEditingFormId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<FormTemplate | null>(null)
 
   const [settings, setSettings] = useState({
     templateName: "Addis Ababa Residential Form",
@@ -122,15 +125,81 @@ function FormsContent() {
   }
 
   const handleEdit = (id: string) => {
-    console.log("Edit form:", id)
+    const form = formsData.find((item) => item.id === id)
+    if (!form) return
+    setSettings((current) => ({
+      ...current,
+      templateName: form.name,
+      instructions: form.description,
+    }))
+    setEditingFormId(id)
+    setBuilderOpen(true)
+    setActiveTab("settings")
   }
 
   const handleDuplicate = (id: string) => {
-    console.log("Duplicate form:", id)
+    const form = formsData.find((item) => item.id === id)
+    if (!form) return
+    const duplicate: FormTemplate = {
+      ...form,
+      id: `frm_${Date.now()}`,
+      name: `${form.name} Copy`,
+      createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      isDefault: false,
+    }
+    setFormsData((current) => [duplicate, ...current])
   }
 
-  const handleDelete = (id: string) => {
-    console.log("Delete form:", id)
+  const requestDelete = (id: string) => {
+    const form = formsData.find((item) => item.id === id)
+    if (!form) return
+    setDeleteTarget(form)
+  }
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return
+    setFormsData((current) => {
+      const remaining = current.filter((item) => item.id !== deleteTarget.id)
+      if (remaining.length > 0 && !remaining.some((item) => item.isDefault)) {
+        remaining[0] = { ...remaining[0], isDefault: true }
+      }
+      return remaining
+    })
+    setDeleteTarget(null)
+  }
+
+  const setDefaultForm = (id: string) => {
+    setFormsData((current) => current.map((form) => ({ ...form, isDefault: form.id === id })))
+  }
+
+  const saveFormChanges = () => {
+    const name = settings.templateName.trim()
+    const description = settings.instructions.trim()
+    if (!name) return
+
+    if (editingFormId) {
+      setFormsData((current) =>
+        current.map((form) =>
+          form.id === editingFormId
+            ? { ...form, name, description, fields: totalFieldCount }
+            : form
+        )
+      )
+    } else {
+      const newForm: FormTemplate = {
+        id: `frm_${Date.now()}`,
+        name,
+        description,
+        fields: totalFieldCount,
+        createdAt: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        status: "Draft",
+        isDefault: formsData.length === 0,
+      }
+      setFormsData((current) => [newForm, ...current])
+    }
+
+    setEditingFormId(null)
+    setBuilderOpen(false)
   }
 
   const cardMotionClass = builderPhase === "start" ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
@@ -182,7 +251,7 @@ function FormsContent() {
           </div>
         )}
       </div>
-      <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: theme.line }}><span className="text-xs" style={{ color: theme.muted }}>Total fields: {totalFieldCount}</span><div className="flex gap-2"><Button variant="outline" className="h-8 text-xs">Cancel</Button><Button className="h-8 text-xs" style={{ backgroundColor: theme.primary, color: "#fff" }}>Save</Button></div></div>
+      <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: theme.line }}><span className="text-xs" style={{ color: theme.muted }}>Total fields: {totalFieldCount}</span><div className="flex gap-2"><Button variant="outline" className="h-8 text-xs" onClick={() => { setBuilderOpen(false); setEditingFormId(null) }}>Cancel</Button><Button className="h-8 text-xs" style={{ backgroundColor: theme.primary, color: "#fff" }} onClick={saveFormChanges}>Save</Button></div></div>
     </div>
   )
 
@@ -214,7 +283,7 @@ function FormsContent() {
             <div className="rounded-xl border px-5 py-4 shadow-[0_6px_18px_rgba(94,118,145,0.05)] md:px-6" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-base font-medium" style={{ color: theme.ink }}>Application Forms</h2>
-                <Button className="h-9 rounded-md px-3 text-[0.78rem] font-medium shadow-sm gap-2" style={{ backgroundColor: theme.primary, color: "#FFFFFF" }} onClick={() => { setBuilderOpen(true); setActiveTab("settings") }}>
+                <Button className="h-9 rounded-md px-3 text-[0.78rem] font-medium shadow-sm gap-2" style={{ backgroundColor: theme.primary, color: "#FFFFFF" }} onClick={() => { setEditingFormId(null); setBuilderOpen(true); setActiveTab("settings") }}>
                   <Plus className="h-3.5 w-3.5" />Create Form
                 </Button>
               </div>
@@ -232,17 +301,18 @@ function FormsContent() {
                     </tr>
                   </thead>
                   <tbody style={{ backgroundColor: theme.card }}>
-                    {forms.map((form) => (
+                    {formsData.map((form) => (
                       <tr key={form.id} className="border-b transition-colors hover:bg-slate-50" style={{ borderColor: theme.line }}>
                         <td className="px-3 py-2.5"><div className="flex items-center gap-2.5"><div className="flex h-8 w-8 items-center justify-center rounded-md" style={{ backgroundColor: "#E8F2FF" }}><FileText className="h-4 w-4" style={{ color: theme.primary }} /></div><span className="text-[0.78rem] font-medium" style={{ color: theme.ink }}>{form.name}</span></div></td>
                         <td className="px-3 py-2.5 text-[0.76rem]" style={{ color: theme.muted }}>{form.description}</td>
                         <td className="px-3 py-2.5 text-center text-[0.76rem] font-medium" style={{ color: theme.ink }}>{form.fields}</td>
                         <td className="px-3 py-2.5 text-[0.76rem]" style={{ color: theme.muted }}>{form.createdAt}</td>
-                        <td className="px-3 py-2.5 text-center"><span className="inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium" style={{ backgroundColor: form.status === "Active" ? "#EAF7F1" : "#F1F3F5", color: form.status === "Active" ? theme.success : theme.muted }}>{form.status}</span></td>
+                        <td className="px-3 py-2.5 text-center"><span className="inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium" style={{ backgroundColor: form.status === "Active" ? "#EAF7F1" : "#F1F3F5", color: form.status === "Active" ? theme.success : theme.muted }}>{form.isDefault ? "Default" : form.status}</span></td>
                         <td className="px-3 py-2.5"><div className="flex items-center justify-center gap-1">
+                          <button type="button" onClick={() => setDefaultForm(form.id)} className="flex h-7 items-center gap-1 rounded-md px-2 transition-colors hover:bg-slate-100 text-[0.65rem] font-medium" style={{ color: form.isDefault ? theme.success : theme.muted }} aria-label="Set as default form">{form.isDefault ? <CheckCircle className="h-3.5 w-3.5" /> : <Star className="h-3.5 w-3.5" />}{form.isDefault ? "Default" : "Set Default"}</button>
                           <button type="button" onClick={() => handleEdit(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-slate-100" aria-label="Edit form"><Edit className="h-3.5 w-3.5" style={{ color: theme.muted }} /></button>
                           <button type="button" onClick={() => handleDuplicate(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-slate-100" aria-label="Duplicate form"><Copy className="h-3.5 w-3.5" style={{ color: theme.muted }} /></button>
-                          <button type="button" onClick={() => handleDelete(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-red-50" aria-label="Delete form"><Trash2 className="h-3.5 w-3.5" style={{ color: theme.danger }} /></button>
+                          <button type="button" onClick={() => requestDelete(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-red-50" aria-label="Delete form"><Trash2 className="h-3.5 w-3.5" style={{ color: theme.danger }} /></button>
                         </div></td>
                       </tr>
                     ))}
@@ -253,6 +323,27 @@ function FormsContent() {
           </div>
         </main>
       </div>
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-md rounded-xl border bg-white shadow-[0_20px_50px_rgba(18,30,53,0.22)]" style={{ borderColor: theme.line }}>
+            <div className="border-b px-5 py-4" style={{ borderColor: theme.line }}>
+              <h3 className="text-sm font-semibold" style={{ color: theme.ink }}>Delete Form</h3>
+              <p className="mt-1 text-xs" style={{ color: theme.muted }}>
+                Are you sure you want to delete "{deleteTarget.name}"? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-4">
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                Cancel
+              </Button>
+              <Button onClick={confirmDelete} style={{ backgroundColor: theme.danger, color: "#fff" }}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {builderOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/45 transition-opacity duration-300">

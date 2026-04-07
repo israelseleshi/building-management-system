@@ -355,7 +355,7 @@ export function DashboardSidebar({
             </div>
 
             {/* ── Sliding Panel Container ── */}
-            <div className="relative flex-1 min-h-0 overflow-visible">
+            <div className="relative flex-1 min-h-0 overflow-hidden">
               
               {/* Level 1: group title labels (slides out to left) */}
               <div

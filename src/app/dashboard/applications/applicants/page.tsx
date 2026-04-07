@@ -38,10 +38,10 @@ interface ApplicationRecord {
   id: string
   status: ApplicationStatus
   applicantName: string
-  property: string
-  residentialScore: string
-  annualIncome: string
-  backgroundCheck: string
+  unit: string
+  idVerification: "Verified" | "Pending" | "Not Submitted"
+  monthlyIncome: string
+  employment: "Employed" | "Self-employed" | "Business Owner" | "Unemployed"
 }
 
 const theme: Record<string, string> = {
@@ -64,10 +64,10 @@ const applicationData: ApplicationRecord[] = [
     id: "app_001",
     status: "For Review",
     applicantName: "Mehret Getachew",
-    property: "Rayuma Building",
-    residentialScore: "-",
-    annualIncome: "-",
-    backgroundCheck: "-",
+    unit: "A-101",
+    idVerification: "Verified",
+    monthlyIncome: "15,000 - 25,000",
+    employment: "Employed",
   },
 ]
 
@@ -98,7 +98,7 @@ function ApplicantsContent() {
   })
   const [phoneRecipients, setPhoneRecipients] = useState<string[]>([])
   const [emailRecipients, setEmailRecipients] = useState<string[]>([])
-  const [phoneInput, setPhoneInput] = useState("")
+  const [phoneInput, setPhoneInput] = useState("+2519")
   const [emailInput, setEmailInput] = useState("")
   const [customMessage, setCustomMessage] = useState("Please complete your rental application at your earliest convenience.")
   const [origin, setOrigin] = useState("")
@@ -156,7 +156,7 @@ function ApplicantsContent() {
   }
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-  const isValidPhone = (value: string) => /^\+?[1-9]\d{8,14}$/.test(value.replace(/\s+/g, ""))
+  const isValidPhone = (value: string) => /^\+?2519\d{8}$/.test(value.replace(/\s+/g, ""))
 
   const addRecipientsFromInput = (
     input: string,
@@ -165,7 +165,7 @@ function ApplicantsContent() {
   ) => {
     const tokens = input
       .split(/[,\s;]+/)
-      .map((token) => token.trim().toLowerCase())
+      .map((token) => token.trim())
       .filter(Boolean)
 
     if (tokens.length === 0) return { next: existing, reachedLimit: false }
@@ -188,7 +188,7 @@ function ApplicantsContent() {
   const addPhonesFromInput = () => {
     const { next, reachedLimit } = addRecipientsFromInput(phoneInput, phoneRecipients, isValidPhone)
     setPhoneRecipients(next)
-    setPhoneInput("")
+    setPhoneInput("+2519")
     if (reachedLimit) setShareError("You can add up to 4 phone recipients.")
   }
 
@@ -478,7 +478,19 @@ function ApplicantsContent() {
                                 type="text"
                                 placeholder="Type +2519... then Enter or comma"
                                 value={phoneInput}
-                                onChange={(event) => setPhoneInput(event.target.value)}
+                                onChange={(event) => {
+                                  const raw = event.target.value.replace(/\s+/g, "")
+                                  if (!raw) {
+                                    setPhoneInput("+2519")
+                                    return
+                                  }
+                                  if (!raw.startsWith("+2519")) {
+                                    const digits = raw.replace(/[^\d]/g, "")
+                                    setPhoneInput(`+2519${digits.replace(/^2519/, "").replace(/^9/, "")}`)
+                                    return
+                                  }
+                                  setPhoneInput(raw)
+                                }}
                                 onBlur={addPhonesFromInput}
                                 onKeyDown={(event) => {
                                   if (event.key === "Enter" || event.key === ",") {
@@ -774,10 +786,10 @@ function ApplicationsTable({
             <tr className="border-b" style={{ borderColor: theme.line }}>
               <TableHeaderCell label="Status" theme={theme} />
               <TableHeaderCell label="Applicant Name" theme={theme} />
-              <TableHeaderCell label="Property" theme={theme} />
-              <TableHeaderCell label="Residential Score" align="center" help theme={theme} />
-              <TableHeaderCell label="Annual Income" align="center" help theme={theme} />
-              <TableHeaderCell label="Background Check" align="center" theme={theme} />
+              <TableHeaderCell label="Unit" theme={theme} />
+              <TableHeaderCell label="ID Verification" align="center" help theme={theme} />
+              <TableHeaderCell label="Monthly Income (ETB)" align="center" help theme={theme} />
+              <TableHeaderCell label="Employment" align="center" theme={theme} />
             </tr>
           </thead>
           <tbody style={{ backgroundColor: theme.card }}>
@@ -806,17 +818,25 @@ function ApplicationsTable({
                   <td className="w-[18%] px-4 py-3 text-[0.82rem] font-medium" style={{ color: theme.ink }}>
                     {application.applicantName}
                   </td>
-                  <td className="w-[25%] truncate px-4 py-3 text-[0.82rem]" style={{ color: theme.ink }}>
-                    {application.property}
+                  <td className="w-[15%] px-4 py-3 text-[0.82rem]" style={{ color: theme.ink }}>
+                    {application.unit}
                   </td>
-                  <td className="w-[14%] px-4 py-3 text-center text-[0.82rem] font-medium" style={{ color: theme.ink }}>
-                    {application.residentialScore}
+                  <td className="w-[14%] px-4 py-3 text-center">
+                    <span
+                      className="inline-flex rounded-full px-3 py-1 text-[0.72rem] font-medium"
+                      style={{
+                        backgroundColor: application.idVerification === "Verified" ? "#EAF7F1" : application.idVerification === "Pending" ? "#FFF2E3" : "#F1F3F5",
+                        color: application.idVerification === "Verified" ? theme.success : application.idVerification === "Pending" ? theme.warning : theme.muted,
+                      }}
+                    >
+                      {application.idVerification}
+                    </span>
                   </td>
-                  <td className="w-[14%] px-4 py-3 text-center text-[0.82rem] font-medium" style={{ color: theme.ink }}>
-                    {application.annualIncome}
+                  <td className="w-[18%] px-4 py-3 text-center text-[0.82rem] font-medium" style={{ color: theme.ink }}>
+                    {application.monthlyIncome}
                   </td>
                   <td className="w-[16%] px-4 py-3 text-center text-[0.82rem] font-medium" style={{ color: theme.ink }}>
-                    {application.backgroundCheck}
+                    {application.employment}
                   </td>
                 </tr>
               ))
