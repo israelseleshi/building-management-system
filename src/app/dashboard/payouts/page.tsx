@@ -411,12 +411,12 @@ function PayoutsContent() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 w-40 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-              <option value="cancelled">Cancelled</option>
+              <option key="status-all" value="all">All Status</option>
+              <option key="status-pending" value="pending">Pending</option>
+              <option key="status-processing" value="processing">Processing</option>
+              <option key="status-completed" value="completed">Completed</option>
+              <option key="status-failed" value="failed">Failed</option>
+              <option key="status-cancelled" value="cancelled">Cancelled</option>
             </select>
 
             <select
@@ -424,11 +424,11 @@ function PayoutsContent() {
               onChange={(e) => setMethodFilter(e.target.value)}
               className="px-3 py-2 w-40 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="all">All Methods</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="mobile_money">Mobile Money</option>
-              <option value="check">Check</option>
-              <option value="cash">Cash</option>
+              <option key="method-all" value="all">All Methods</option>
+              <option key="method-bank" value="bank_transfer">Bank Transfer</option>
+              <option key="method-mobile" value="mobile_money">Mobile Money</option>
+              <option key="method-check" value="check">Check</option>
+              <option key="method-cash" value="cash">Cash</option>
             </select>
             </div>
 
@@ -565,7 +565,7 @@ function PayoutsContent() {
                 onChange={(e) => setFormData({ ...formData, property_id: e.target.value })}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
-                <option value="">Select property</option>
+                <option key="select-property" value="">Select property</option>
                 {properties.map((property) => (
                   <option key={property.id} value={property.id}>
                     {property.title}
@@ -593,10 +593,10 @@ function PayoutsContent() {
                 onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
               >
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="mobile_money">Mobile Money</option>
-                <option value="check">Check</option>
-                <option value="cash">Cash</option>
+                <option key="form-bank" value="bank_transfer">Bank Transfer</option>
+                <option key="form-mobile" value="mobile_money">Mobile Money</option>
+                <option key="form-check" value="check">Check</option>
+                <option key="form-cash" value="cash">Cash</option>
               </select>
             </div>
 

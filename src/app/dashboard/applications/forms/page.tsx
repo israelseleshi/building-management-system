@@ -143,18 +143,18 @@ function FormsContent() {
       style={{ borderColor: theme.line, backgroundColor: settings.useApplicantBackgroundTheme ? "#EAF3FB" : "#FFFFFF" }}
     >
       <div className="mb-3 border-b pb-2" style={{ borderColor: theme.line }}>
-        <h3 className="text-sm font-semibold" style={{ color: theme.ink }}>Preview</h3>
+        <h3 className="text-sm font-medium" style={{ color: theme.ink }}>Preview</h3>
         <p className="text-xs" style={{ color: theme.muted }}>{settings.templateName} | {settings.companyNameOnApplication}</p>
       </div>
       {(settings.showHeaderLogo || settings.showHeaderImage) && (
         <div className="mb-4 rounded-md border" style={{ borderColor: theme.line, backgroundColor: "#EAF3FB" }}>
           <div className="flex items-center gap-3 px-3 py-2">
             {settings.showHeaderLogo && (
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border bg-white text-xs font-bold" style={{ borderColor: theme.line, color: theme.accent }}>
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border bg-white text-xs font-medium" style={{ borderColor: theme.line, color: theme.accent }}>
                 {logoPreview ? <img src={logoPreview} alt="Header logo preview" className="h-full w-full object-cover" /> : "SB"}
               </div>
             )}
-            <div><div className="text-sm font-semibold" style={{ color: theme.ink }}>SMART BMS</div><div className="text-[0.7rem]" style={{ color: theme.muted }}>Rental Application</div></div>
+            <div><div className="text-sm font-medium" style={{ color: theme.ink }}>SMART BMS</div><div className="text-[0.7rem]" style={{ color: theme.muted }}>Rental Application</div></div>
           </div>
           {settings.showHeaderImage && (
             <div className="px-3 pb-3">
@@ -168,7 +168,7 @@ function FormsContent() {
       <div className="max-h-[500px] space-y-4 overflow-y-auto pr-1">
         {sections.filter((s) => s.enabled).map((section) => (
           <div key={section.id} className="rounded-md border" style={{ borderColor: theme.line }}>
-            <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: "#EAF3FB", color: theme.accent }}>{section.name}</div>
+            <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide" style={{ backgroundColor: "#EAF3FB", color: theme.accent }}>{section.name}</div>
             <div className="grid grid-cols-1 gap-2 p-3 md:grid-cols-2">
               {section.fields.map((field) => <div key={`${section.id}-${field}`} className="space-y-1"><label className="text-[0.7rem] font-medium" style={{ color: theme.muted }}>{field}</label><div className="h-8 rounded-md border bg-white" style={{ borderColor: theme.line }} /></div>)}
             </div>
@@ -177,7 +177,7 @@ function FormsContent() {
         ))}
         {customFields.length > 0 && (
           <div className="rounded-md border" style={{ borderColor: theme.line }}>
-            <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: "#EAF3FB", color: theme.accent }}>Custom Fields</div>
+            <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide" style={{ backgroundColor: "#EAF3FB", color: theme.accent }}>Custom Fields</div>
             <div className="space-y-2 p-3">{customFields.map((f) => <div key={f.id} className="space-y-1"><label className="text-[0.72rem] font-medium" style={{ color: theme.ink }}>{f.label}{f.required ? " *" : ""}</label><div className="h-8 rounded-md border bg-white" style={{ borderColor: theme.line }} /></div>)}</div>
           </div>
         )}
@@ -203,7 +203,7 @@ function FormsContent() {
               <button type="button" onClick={() => setIsSidebarCollapsed((prev) => !prev)} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100" aria-label="Toggle dashboard navigation">
                 <AlignLeft className="h-[1.05rem] w-[1.05rem]" />
               </button>
-              <div className="truncate text-[0.8rem] font-semibold uppercase tracking-[0.08em]" style={{ color: theme.ink }}>Forms</div>
+              <div className="truncate text-[0.8rem] font-medium uppercase tracking-[0.08em]" style={{ color: theme.ink }}>Forms</div>
             </div>
             <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100" aria-label="Notifications"><Bell className="h-[1.05rem] w-[1.05rem]" /></button>
           </div>
@@ -213,7 +213,7 @@ function FormsContent() {
           <div className="mx-auto w-full max-w-[1420px]">
             <div className="rounded-xl border px-5 py-4 shadow-[0_6px_18px_rgba(94,118,145,0.05)] md:px-6" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-base font-semibold" style={{ color: theme.ink }}>Application Forms</h2>
+                <h2 className="text-base font-medium" style={{ color: theme.ink }}>Application Forms</h2>
                 <Button className="h-9 rounded-md px-3 text-[0.78rem] font-medium shadow-sm gap-2" style={{ backgroundColor: theme.primary, color: "#FFFFFF" }} onClick={() => { setBuilderOpen(true); setActiveTab("settings") }}>
                   <Plus className="h-3.5 w-3.5" />Create Form
                 </Button>
@@ -223,12 +223,12 @@ function FormsContent() {
                 <table className="w-full border-collapse">
                   <thead style={{ backgroundColor: theme.tableHead }}>
                     <tr className="border-b" style={{ borderColor: theme.line }}>
-                      <th className="px-3 py-2 text-left text-[0.68rem] font-semibold" style={{ color: theme.muted }}>Form Name</th>
-                      <th className="px-3 py-2 text-left text-[0.68rem] font-semibold" style={{ color: theme.muted }}>Description</th>
-                      <th className="px-3 py-2 text-center text-[0.68rem] font-semibold" style={{ color: theme.muted }}>Fields</th>
-                      <th className="px-3 py-2 text-left text-[0.68rem] font-semibold" style={{ color: theme.muted }}>Created</th>
-                      <th className="px-3 py-2 text-center text-[0.68rem] font-semibold" style={{ color: theme.muted }}>Status</th>
-                      <th className="px-3 py-2 text-center text-[0.68rem] font-semibold" style={{ color: theme.muted }}>Actions</th>
+                      <th className="px-3 py-2 text-left text-[0.68rem] font-medium" style={{ color: theme.muted }}>Form Name</th>
+                      <th className="px-3 py-2 text-left text-[0.68rem] font-medium" style={{ color: theme.muted }}>Description</th>
+                      <th className="px-3 py-2 text-center text-[0.68rem] font-medium" style={{ color: theme.muted }}>Fields</th>
+                      <th className="px-3 py-2 text-left text-[0.68rem] font-medium" style={{ color: theme.muted }}>Created</th>
+                      <th className="px-3 py-2 text-center text-[0.68rem] font-medium" style={{ color: theme.muted }}>Status</th>
+                      <th className="px-3 py-2 text-center text-[0.68rem] font-medium" style={{ color: theme.muted }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody style={{ backgroundColor: theme.card }}>
@@ -238,7 +238,7 @@ function FormsContent() {
                         <td className="px-3 py-2.5 text-[0.76rem]" style={{ color: theme.muted }}>{form.description}</td>
                         <td className="px-3 py-2.5 text-center text-[0.76rem] font-medium" style={{ color: theme.ink }}>{form.fields}</td>
                         <td className="px-3 py-2.5 text-[0.76rem]" style={{ color: theme.muted }}>{form.createdAt}</td>
-                        <td className="px-3 py-2.5 text-center"><span className="inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-semibold" style={{ backgroundColor: form.status === "Active" ? "#EAF7F1" : "#F1F3F5", color: form.status === "Active" ? theme.success : theme.muted }}>{form.status}</span></td>
+                        <td className="px-3 py-2.5 text-center"><span className="inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium" style={{ backgroundColor: form.status === "Active" ? "#EAF7F1" : "#F1F3F5", color: form.status === "Active" ? theme.success : theme.muted }}>{form.status}</span></td>
                         <td className="px-3 py-2.5"><div className="flex items-center justify-center gap-1">
                           <button type="button" onClick={() => handleEdit(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-slate-100" aria-label="Edit form"><Edit className="h-3.5 w-3.5" style={{ color: theme.muted }} /></button>
                           <button type="button" onClick={() => handleDuplicate(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-slate-100" aria-label="Duplicate form"><Copy className="h-3.5 w-3.5" style={{ color: theme.muted }} /></button>
@@ -263,12 +263,12 @@ function FormsContent() {
             <div className={`absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-200 ${splashVisible ? "opacity-100" : "pointer-events-none opacity-0"}`} style={{ backgroundColor: theme.appNav }}>
               <div className="text-center text-white transition-all duration-500" style={{ transform: builderPhase === "rising" ? "translateY(40px)" : "translateY(0)" }}>
                 <div className="text-xs uppercase tracking-[0.3em] text-white/70">Launching</div>
-                <div className="mt-2 text-4xl font-bold tracking-tight">SMART BMS</div>
+                <div className="mt-2 text-4xl font-medium tracking-tight">SMART BMS</div>
               </div>
             </div>
 
             <aside className={`w-[220px] shrink-0 border-r transition-opacity duration-300 ${builderPhase === "open" ? "opacity-100" : "opacity-0"}`} style={{ backgroundColor: theme.appNav, borderColor: "rgba(255,255,255,0.08)" }}>
-              <div className="border-b px-4 py-4" style={{ borderColor: "rgba(255,255,255,0.12)" }}><p className="text-xs uppercase tracking-[0.18em] text-white/60">New</p><h3 className="mt-1 text-xl font-semibold text-white">Create Form</h3></div>
+              <div className="border-b px-4 py-4" style={{ borderColor: "rgba(255,255,255,0.12)" }}><p className="text-xs uppercase tracking-[0.18em] text-white/60">New</p><h3 className="mt-1 text-xl font-medium text-white">Create Form</h3></div>
               <nav className="space-y-1 p-3">
                 {[{ id: "settings" as const, label: "Form Settings", icon: Settings2 }, { id: "fields" as const, label: "Fields", icon: ListChecks }, { id: "custom" as const, label: "Custom Field", icon: SlidersHorizontal }, { id: "preview" as const, label: "Preview", icon: Eye }].map((item) => {
                   const Icon = item.icon
@@ -285,7 +285,7 @@ function FormsContent() {
             <section className={`flex min-w-0 flex-1 flex-col bg-[#F7FAFD] transition-all duration-500 ${contentMotionClass}`}>
               <header className="flex items-center justify-between border-b bg-white px-5 py-3" style={{ borderColor: theme.line }}>
                 <div>
-                  <h4 className="text-sm font-semibold" style={{ color: theme.ink }}>{activeTab === "settings" && "Form Settings"}{activeTab === "fields" && "Fields"}{activeTab === "custom" && "Custom Field"}{activeTab === "preview" && "Preview"}</h4>
+                  <h4 className="text-sm font-medium" style={{ color: theme.ink }}>{activeTab === "settings" && "Form Settings"}{activeTab === "fields" && "Fields"}{activeTab === "custom" && "Custom Field"}{activeTab === "preview" && "Preview"}</h4>
                   <p className="text-xs" style={{ color: theme.muted }}>Ethiopia-focused form builder for Smart BMS</p>
                 </div>
                 <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100" onClick={() => setBuilderOpen(false)} aria-label="Close form builder"><X className="h-4 w-4" /></button>
@@ -294,12 +294,12 @@ function FormsContent() {
               <div className="min-h-0 flex-1 overflow-y-auto p-4"><div className="rounded-lg border bg-white p-4" style={{ borderColor: theme.line }}>
                   {activeTab === "settings" && (
                     <div className="space-y-4">
-                      <div className="space-y-1"><label className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Template Name *</label><Input value={settings.templateName} onChange={(e) => setSettings((c) => ({ ...c, templateName: e.target.value }))} /></div>
-                      <div className="space-y-1"><label className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Company Name on Application *</label><Input value={settings.companyNameOnApplication} onChange={(e) => setSettings((c) => ({ ...c, companyNameOnApplication: e.target.value }))} /></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Template Name *</label><Input value={settings.templateName} onChange={(e) => setSettings((c) => ({ ...c, templateName: e.target.value }))} /></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Company Name on Application *</label><Input value={settings.companyNameOnApplication} onChange={(e) => setSettings((c) => ({ ...c, companyNameOnApplication: e.target.value }))} /></div>
 
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <div className="space-y-1">
-                          <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Header Logo</label>
+                          <label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Header Logo</label>
                           <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm" style={{ borderColor: theme.line, color: theme.ink }}><ImagePlus className="h-4 w-4" /> Upload logo
                             <input
                               type="file"
@@ -319,7 +319,7 @@ function FormsContent() {
                           <p className="text-xs" style={{ color: theme.muted }}>Shown at top of form header. Current: {logoFileName}</p>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Header Image</label>
+                          <label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Header Image</label>
                           <label className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm" style={{ borderColor: theme.line, color: theme.ink }}><Upload className="h-4 w-4" /> Upload image
                             <input
                               type="file"
@@ -340,7 +340,7 @@ function FormsContent() {
                         </div>
                       </div>
 
-                      <div className="space-y-1"><label className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Instructions</label><Textarea value={settings.instructions} maxLength={1000} rows={5} onChange={(e) => setSettings((c) => ({ ...c, instructions: e.target.value }))} /><div className="text-right text-xs" style={{ color: theme.muted }}>{settingsCharCount}/1000</div></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Instructions</label><Textarea value={settings.instructions} maxLength={1000} rows={5} onChange={(e) => setSettings((c) => ({ ...c, instructions: e.target.value }))} /><div className="text-right text-xs" style={{ color: theme.muted }}>{settingsCharCount}/1000</div></div>
 
                       <div className="space-y-3 border-t pt-3" style={{ borderColor: theme.line }}>
                         {[
@@ -372,7 +372,7 @@ function FormsContent() {
                     <div className="space-y-4">
                       {sections.map((section) => (
                         <div key={section.id} className="overflow-hidden rounded-md border" style={{ borderColor: theme.line }}>
-                          <div className="flex items-center justify-between px-3 py-2" style={{ backgroundColor: "#EAF3FB" }}><h5 className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.accent }}>{section.name}</h5><span className="text-xs" style={{ color: theme.muted }}>{section.fields.length} fields</span></div>
+                          <div className="flex items-center justify-between px-3 py-2" style={{ backgroundColor: "#EAF3FB" }}><h5 className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.accent }}>{section.name}</h5><span className="text-xs" style={{ color: theme.muted }}>{section.fields.length} fields</span></div>
                           <div className="space-y-3 p-3">
                             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{section.fields.map((field) => <div key={`${section.id}-${field}`} className="flex items-center gap-2 rounded-md border bg-[#F8FAFC] px-2 py-1.5" style={{ borderColor: theme.line }}><GripVertical className="h-3.5 w-3.5" style={{ color: "#B3C1CF" }} /><span className="text-xs" style={{ color: theme.ink }}>{field}</span></div>)}</div>
                             <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
@@ -384,7 +384,7 @@ function FormsContent() {
                       ))}
 
                       <div className="rounded-md border p-3" style={{ borderColor: theme.line }}>
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: theme.muted }}>Add Information Section</p>
+                        <p className="mb-2 text-xs font-medium uppercase tracking-wide" style={{ color: theme.muted }}>Add Information Section</p>
                         <div className="flex gap-2"><Input value={newSectionName} onChange={(e) => setNewSectionName(e.target.value)} placeholder="Example: Guarantor Information" /><Button type="button" variant="outline" onClick={addNewSection}>Add</Button></div>
                       </div>
 
@@ -394,12 +394,12 @@ function FormsContent() {
 
                   {activeTab === "custom" && (
                     <div className="space-y-4">
-                      <div className="space-y-2"><p className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Select Control Type</p><div className="flex gap-4 text-sm" style={{ color: theme.ink }}><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "text"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "text" }))} />Text Box</label><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "file"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "file" }))} />File Uploader</label></div></div>
-                      <div className="space-y-1"><label className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Label *</label><Input value={customDraft.label} placeholder="Example: Current Kebele Letter Available?" onChange={(e) => setCustomDraft((c) => ({ ...c, label: e.target.value }))} /></div>
+                      <div className="space-y-2"><p className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Select Control Type</p><div className="flex gap-4 text-sm" style={{ color: theme.ink }}><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "text"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "text" }))} />Text Box</label><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "file"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "file" }))} />File Uploader</label></div></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Label *</label><Input value={customDraft.label} placeholder="Example: Current Kebele Letter Available?" onChange={(e) => setCustomDraft((c) => ({ ...c, label: e.target.value }))} /></div>
                       <label className="inline-flex items-center gap-2 text-sm" style={{ color: theme.ink }}><input type="checkbox" checked={customDraft.required} onChange={(e) => setCustomDraft((c) => ({ ...c, required: e.target.checked }))} />Mark this field required</label>
-                      <div className="space-y-1"><label className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Placeholder Text</label><Input value={customDraft.placeholder} placeholder="Type placeholder text" onChange={(e) => setCustomDraft((c) => ({ ...c, placeholder: e.target.value }))} /></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Placeholder Text</label><Input value={customDraft.placeholder} placeholder="Type placeholder text" onChange={(e) => setCustomDraft((c) => ({ ...c, placeholder: e.target.value }))} /></div>
                       <Button type="button" variant="outline" className="gap-2" onClick={createCustomField}>{customDraft.controlType === "file" ? <Upload className="h-4 w-4" /> : <Plus className="h-4 w-4" />}Add Field</Button>
-                      {customFields.length > 0 && <div className="space-y-2 border-t pt-3" style={{ borderColor: theme.line }}><p className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.muted }}>Existing Custom Fields</p>{customFields.map((f) => <div key={f.id} className="rounded-md border px-3 py-2" style={{ borderColor: theme.line }}><p className="text-sm font-medium" style={{ color: theme.ink }}>{f.label}</p><p className="text-xs" style={{ color: theme.muted }}>{f.controlType === "file" ? "File uploader" : "Text box"}{f.required ? " | Required" : " | Optional"}</p></div>)}</div>}
+                      {customFields.length > 0 && <div className="space-y-2 border-t pt-3" style={{ borderColor: theme.line }}><p className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.muted }}>Existing Custom Fields</p>{customFields.map((f) => <div key={f.id} className="rounded-md border px-3 py-2" style={{ borderColor: theme.line }}><p className="text-sm font-medium" style={{ color: theme.ink }}>{f.label}</p><p className="text-xs" style={{ color: theme.muted }}>{f.controlType === "file" ? "File uploader" : "Text box"}{f.required ? " | Required" : " | Optional"}</p></div>)}</div>}
                     </div>
                   )}
 

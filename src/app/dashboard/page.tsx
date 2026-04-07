@@ -680,7 +680,7 @@ function DashboardContent() {
                       <div className="w-full space-y-2.5 text-center lg:w-1/3">
                         <div className="text-[0.82rem] font-semibold text-foreground/70">Processing: ETB 0.00</div>
                         <div className="text-[15px] font-bold text-foreground">
-                          Total: ETB {displayedCollectionStats.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          Target: ETB {displayedCollectionStats.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </div>
                         <div className="pt-1 text-[0.82rem] font-semibold text-[#C45B43]">Past Outstanding</div>
                         <div className="text-[18px] font-bold text-[#C45B43]">ETB 0.00</div>

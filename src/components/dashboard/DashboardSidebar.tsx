@@ -83,6 +83,7 @@ export function DashboardSidebar({
 
   const [activePanelGroup, setActivePanelGroup] = useState<number | null>(null)
   const [hoveredGroup, setHoveredGroup] = useState<number | null>(null)
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
 
   const handleGroupClick = (index: number) => {
     setActivePanelGroup((current) => {
@@ -117,13 +118,18 @@ export function DashboardSidebar({
     document.cookie = "userRole=; path=/; max-age=0"
   }
 
-  const handleLogoutClick = async () => {
+  const confirmLogout = async () => {
+    setIsLogoutConfirmOpen(false)
     clearClientAuth()
     router.replace("/auth/signin")
     router.refresh()
     Promise.resolve()
       .then(() => onLogout())
       .catch(() => {})
+  }
+
+  const handleLogoutClick = () => {
+    setIsLogoutConfirmOpen(true)
   }
 
   const handleNavigation = (path: string) => {
@@ -554,6 +560,33 @@ export function DashboardSidebar({
               </nav>
             </>
           )}
+        </div>
+      )}
+
+      {isLogoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/20 bg-[#0A2A43] shadow-[0_18px_50px_rgba(5,18,30,0.45)]">
+            <div className="border-b border-white/15 px-5 py-4">
+              <h3 className="text-base font-semibold text-white">Confirm Logout</h3>
+              <p className="mt-1 text-sm text-white/75">Are you sure you want to sign out from the dashboard?</p>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setIsLogoutConfirmOpen(false)}
+                className="h-9 rounded-md border border-white/20 px-4 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmLogout}
+                className="h-9 rounded-md bg-[#E15949] px-4 text-sm font-medium text-white transition-colors hover:bg-[#C84A3B]"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </aside>

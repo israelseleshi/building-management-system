@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   ChevronDown,
   Filter,
@@ -16,6 +17,9 @@ import {
   X,
   Bell,
   Menu,
+  Mail,
+  Smartphone,
+  Info,
 } from "lucide-react"
 
 type ApplicationStatus =
@@ -27,6 +31,7 @@ type ApplicationStatus =
 
 type GroupBy = "Not Grouped" | "Group by Property" | "Group by Status"
 type ShareMethod = "email" | "url"
+type ContactChannel = "sms" | "email"
 type SendCardPhase = "closed" | "start" | "rising" | "splash" | "sliding" | "open"
 
 interface ApplicationRecord {
@@ -86,12 +91,19 @@ function ApplicantsContent() {
   const [sendCardPhase, setSendCardPhase] = useState<SendCardPhase>("closed")
   const [shareMethod, setShareMethod] = useState<ShareMethod>("email")
   const [selectedTemplate, setSelectedTemplate] = useState("Standard Addis Rental Form")
-  const [recipientEmails, setRecipientEmails] = useState<string[]>([])
+  const [defaultTemplate, setDefaultTemplate] = useState("Application Only")
+  const [contactModes, setContactModes] = useState<Record<ContactChannel, boolean>>({
+    sms: true,
+    email: false,
+  })
+  const [phoneRecipients, setPhoneRecipients] = useState<string[]>([])
+  const [emailRecipients, setEmailRecipients] = useState<string[]>([])
+  const [phoneInput, setPhoneInput] = useState("")
   const [emailInput, setEmailInput] = useState("")
-  const [recipientPhone, setRecipientPhone] = useState("")
   const [customMessage, setCustomMessage] = useState("Please complete your rental application at your earliest convenience.")
   const [origin, setOrigin] = useState("")
   const [copied, setCopied] = useState(false)
+  const [shareError, setShareError] = useState("")
 
   const filteredApplications = useMemo(() => {
     return applicationData.filter((application) => {
@@ -143,27 +155,41 @@ function ApplicantsContent() {
     }
   }
 
-  const isValidEmail = (value: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  const isValidPhone = (value: string) => /^\+?[1-9]\d{8,14}$/.test(value.replace(/\s+/g, ""))
 
-  const addEmailsFromInput = () => {
-    const tokens = emailInput
+  const addRecipientsFromInput = (
+    input: string,
+    existing: string[],
+    validate: (value: string) => boolean
+  ) => {
+    const tokens = input
       .split(/[,\s;]+/)
       .map((token) => token.trim().toLowerCase())
       .filter(Boolean)
 
-    if (tokens.length === 0) return
+    if (tokens.length === 0) return { next: existing, reachedLimit: false }
 
-    setRecipientEmails((current) => {
-      const next = [...current]
-      for (const token of tokens) {
-        if (isValidEmail(token) && !next.includes(token)) {
-          next.push(token)
-        }
-      }
-      return next
-    })
+    const next = [...existing]
+    for (const token of tokens) {
+      if (next.length >= 4) return { next, reachedLimit: true }
+      if (validate(token) && !next.includes(token)) next.push(token)
+    }
+    return { next, reachedLimit: false }
+  }
+
+  const addEmailsFromInput = () => {
+    const { next, reachedLimit } = addRecipientsFromInput(emailInput, emailRecipients, isValidEmail)
+    setEmailRecipients(next)
     setEmailInput("")
+    if (reachedLimit) setShareError("You can add up to 4 email recipients.")
+  }
+
+  const addPhonesFromInput = () => {
+    const { next, reachedLimit } = addRecipientsFromInput(phoneInput, phoneRecipients, isValidPhone)
+    setPhoneRecipients(next)
+    setPhoneInput("")
+    if (reachedLimit) setShareError("You can add up to 4 phone recipients.")
   }
 
   useEffect(() => {
@@ -171,6 +197,7 @@ function ApplicantsContent() {
       setSendCardPhase("closed")
       return
     }
+    setShareError("")
 
     setSendCardPhase("start")
     const raf = requestAnimationFrame(() => setSendCardPhase("rising"))
@@ -200,6 +227,18 @@ function ApplicantsContent() {
   }
   const selectedFormSlug = formSlugByTemplate[selectedTemplate] || "standard-addis-rental-form"
   const generatedUrl = `${origin || "http://localhost:3000"}/apply/${ownerSlug}/${selectedFormSlug}`
+  const canSendViaChannel =
+    (contactModes.sms && phoneRecipients.length > 0) ||
+    (contactModes.email && emailRecipients.length > 0)
+
+  const handleSendApplication = () => {
+    if (!canSendViaChannel) {
+      setShareError("Add at least one phone number or email before sending.")
+      return
+    }
+    setShareError("")
+    setIsSendApplicationOpen(false)
+  }
 
   const sendCardMotionClass =
     sendCardPhase === "start" ? "translate-y-[120%] opacity-0" : "translate-y-0 opacity-100"
@@ -281,7 +320,7 @@ function ApplicantsContent() {
                   <ApplicationsTable
                     applications={filteredApplications}
                     theme={theme}
-                    onRowClick={(id) => console.log("Open application:", id)}
+                    onRowClick={(id) => router.push(`/dashboard/applications/applicants/${id}`)}
                   />
                 </div>
               </section>
@@ -330,7 +369,7 @@ function ApplicantsContent() {
                       className={`mb-1 flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm ${shareMethod === "email" ? "text-white" : "text-white/75 hover:text-white"}`}
                       style={{ backgroundColor: shareMethod === "email" ? "#113B5E" : "transparent" }}
                     >
-                      Via Email
+                      Via Email / SMS
                       <ChevronDown className={`h-3.5 w-3.5 ${shareMethod === "email" ? "rotate-[-90deg]" : "rotate-[-90deg] opacity-0"}`} />
                     </button>
                     <button
@@ -361,80 +400,150 @@ function ApplicantsContent() {
                       <div className="space-y-4">
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Select Template</label>
-                          <select
-                            value={selectedTemplate}
-                            onChange={(event) => setSelectedTemplate(event.target.value)}
-                            className="h-10 w-full rounded-md border bg-white px-3 text-sm outline-none"
-                            style={{ borderColor: theme.line, color: theme.ink }}
-                          >
-                            <option>Standard Addis Rental Form</option>
-                            <option>Commercial Tenant Form</option>
-                            <option>Shared Housing Form</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>
-                            Share Via Email (Multiple)
-                          </label>
-                          <div className="rounded-md border bg-white p-2" style={{ borderColor: theme.line }}>
-                            {recipientEmails.length > 0 && (
-                              <div className="mb-2 flex flex-wrap gap-1.5">
-                                {recipientEmails.map((email) => (
-                                  <span
-                                    key={email}
-                                    className="inline-flex items-center gap-1 rounded-full bg-[#E8F2FF] px-2 py-1 text-xs font-medium"
-                                    style={{ color: theme.primary }}
-                                  >
-                                    {email}
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setRecipientEmails((current) =>
-                                          current.filter((item) => item !== email)
-                                        )
-                                      }
-                                      className="rounded-full p-0.5 hover:bg-white"
-                                      aria-label={`Remove ${email}`}
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            <input
-                              type="text"
-                              placeholder="Type email then press Enter or comma"
-                              value={emailInput}
-                              onChange={(event) => setEmailInput(event.target.value)}
-                              onBlur={addEmailsFromInput}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === ",") {
-                                  event.preventDefault()
-                                  addEmailsFromInput()
-                                }
-                              }}
-                              className="h-9 w-full border-0 bg-transparent px-1 text-sm outline-none"
-                              style={{ color: theme.ink }}
-                            />
-                          </div>
+                          <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                            <SelectTrigger 
+                              className="h-10 w-full border rounded-md bg-white px-3 text-sm"
+                              style={{ borderColor: theme.line, color: theme.ink }}
+                            >
+                              <SelectValue placeholder="Select a template" />
+                            </SelectTrigger>
+                            <SelectContent style={{ borderColor: theme.line }}>
+                              <SelectItem value="Standard Addis Rental Form">Standard Addis Rental Form</SelectItem>
+                              <SelectItem value="Commercial Tenant Form">Commercial Tenant Form</SelectItem>
+                              <SelectItem value="Shared Housing Form">Shared Housing Form</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <p className="mt-1 text-xs" style={{ color: theme.muted }}>
-                            You can paste multiple emails separated by comma or space.
+                            Email/SMS lets you choose the exact template applicants should complete.
                           </p>
                         </div>
 
                         <div>
-                          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Ethio Telecom Number (Optional)</label>
-                          <input
-                            type="text"
-                            placeholder="+2519..."
-                            value={recipientPhone}
-                            onChange={(event) => setRecipientPhone(event.target.value)}
-                            className="h-10 w-full rounded-md border bg-white px-3 text-sm outline-none"
-                            style={{ borderColor: theme.line, color: theme.ink }}
-                          />
+                          <p className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>
+                            Delivery Channels
+                          </p>
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <label className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm" style={{ borderColor: theme.line, color: theme.ink }}>
+                              <input
+                                type="checkbox"
+                                checked={contactModes.sms}
+                                onChange={(event) => setContactModes((prev) => ({ ...prev, sms: event.target.checked }))}
+                              />
+                              <Smartphone className="h-4 w-4" />
+                              SMS
+                            </label>
+                            <label className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm" style={{ borderColor: theme.line, color: theme.ink }}>
+                              <input
+                                type="checkbox"
+                                checked={contactModes.email}
+                                onChange={(event) => setContactModes((prev) => ({ ...prev, email: event.target.checked }))}
+                              />
+                              <Mail className="h-4 w-4" />
+                              Email
+                            </label>
+                          </div>
+                          <p className="mt-1 text-xs" style={{ color: theme.muted }}>
+                            At least one channel with one recipient is required before sending.
+                          </p>
                         </div>
+
+                        {contactModes.sms && (
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>
+                              Share Via SMS (Up to 4)
+                            </label>
+                            <div className="rounded-md border bg-white p-2" style={{ borderColor: theme.line }}>
+                              {phoneRecipients.length > 0 && (
+                                <div className="mb-2 flex flex-wrap gap-1.5">
+                                  {phoneRecipients.map((phone) => (
+                                    <span
+                                      key={phone}
+                                      className="inline-flex items-center gap-1 rounded-full bg-[#E8F2FF] px-2 py-1 text-xs font-medium"
+                                      style={{ color: theme.primary }}
+                                    >
+                                      {phone}
+                                      <button
+                                        type="button"
+                                        onClick={() => setPhoneRecipients((current) => current.filter((item) => item !== phone))}
+                                        className="rounded-full p-0.5 hover:bg-white"
+                                        aria-label={`Remove ${phone}`}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              <input
+                                type="text"
+                                placeholder="Type +2519... then Enter or comma"
+                                value={phoneInput}
+                                onChange={(event) => setPhoneInput(event.target.value)}
+                                onBlur={addPhonesFromInput}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === ",") {
+                                    event.preventDefault()
+                                    addPhonesFromInput()
+                                  }
+                                }}
+                                className="h-9 w-full border-0 bg-transparent px-1 text-sm outline-none"
+                                style={{ color: theme.ink }}
+                              />
+                            </div>
+                            <p className="mt-1 text-xs" style={{ color: theme.muted }}>
+                              Use comma/space to add multiple numbers (max 4).
+                            </p>
+                          </div>
+                        )}
+
+                        {contactModes.email && (
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>
+                              Share Via Email (Up to 4)
+                            </label>
+                            <div className="rounded-md border bg-white p-2" style={{ borderColor: theme.line }}>
+                              {emailRecipients.length > 0 && (
+                                <div className="mb-2 flex flex-wrap gap-1.5">
+                                  {emailRecipients.map((email) => (
+                                    <span
+                                      key={email}
+                                      className="inline-flex items-center gap-1 rounded-full bg-[#E8F2FF] px-2 py-1 text-xs font-medium"
+                                      style={{ color: theme.primary }}
+                                    >
+                                      {email}
+                                      <button
+                                        type="button"
+                                        onClick={() => setEmailRecipients((current) => current.filter((item) => item !== email))}
+                                        className="rounded-full p-0.5 hover:bg-white"
+                                        aria-label={`Remove ${email}`}
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              <input
+                                type="text"
+                                placeholder="Type email then press Enter or comma"
+                                value={emailInput}
+                                onChange={(event) => setEmailInput(event.target.value)}
+                                onBlur={addEmailsFromInput}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === ",") {
+                                    event.preventDefault()
+                                    addEmailsFromInput()
+                                  }
+                                }}
+                                className="h-9 w-full border-0 bg-transparent px-1 text-sm outline-none"
+                                style={{ color: theme.ink }}
+                              />
+                            </div>
+                            <p className="mt-1 text-xs" style={{ color: theme.muted }}>
+                              Use comma/space to add multiple emails (max 4).
+                            </p>
+                          </div>
+                        )}
 
                         <div>
                           <label className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>Message</label>
@@ -444,16 +553,26 @@ function ApplicantsContent() {
                             className="min-h-[92px] w-full rounded-md border bg-white px-3 py-2 text-sm outline-none"
                             style={{ borderColor: theme.line, color: theme.ink }}
                           />
+                          <p className="mt-1 text-xs" style={{ color: theme.muted }}>
+                            This description is specific to Email/SMS sharing.
+                          </p>
                         </div>
+
+                        {shareError ? (
+                          <div className="rounded-md border px-3 py-2 text-xs" style={{ borderColor: "#F5C1C1", color: "#B93838", backgroundColor: "#FFF6F6" }}>
+                            {shareError}
+                          </div>
+                        ) : null}
 
                         <div className="flex justify-end">
                           <Button
                             className="h-9 px-5"
                             style={{ backgroundColor: theme.primary, color: "#fff" }}
-                            disabled={recipientEmails.length === 0}
+                            disabled={!canSendViaChannel}
+                            onClick={handleSendApplication}
                           >
                             <Send className="mr-2 h-4 w-4" />
-                            Send Application ({recipientEmails.length})
+                            Send Application
                           </Button>
                         </div>
                       </div>
@@ -463,7 +582,21 @@ function ApplicantsContent() {
                       <div className="space-y-4">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.muted }}>Default Settings</p>
-                          <div className="mt-1 text-sm font-semibold" style={{ color: theme.ink }}>Application Only</div>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div className="text-sm font-semibold" style={{ color: theme.ink }}>{defaultTemplate}</div>
+                            <button
+                              type="button"
+                              className="text-xs font-semibold underline"
+                              style={{ color: theme.primary }}
+                              onClick={() =>
+                                setDefaultTemplate((current) =>
+                                  current === "Application Only" ? "Standard Addis Rental Form" : "Application Only"
+                                )
+                              }
+                            >
+                              Change Default
+                            </button>
+                          </div>
                         </div>
 
                         <div>
@@ -496,35 +629,47 @@ function ApplicantsContent() {
                               Open
                             </a>
                           </div>
-                          <p className="mt-2 text-xs" style={{ color: theme.muted }}>
-                            Share this URL publicly on your building page so applicants can apply directly.
-                          </p>
+                          <div className="mt-2 rounded-md border bg-[#F8FBFF] px-3 py-2 text-xs leading-5" style={{ borderColor: "#D5E7F7", color: theme.muted }}>
+                            <div className="mb-1 inline-flex items-center gap-1 font-semibold" style={{ color: theme.ink }}>
+                              <Info className="h-3.5 w-3.5" />
+                              URL Usage
+                            </div>
+                            <p>
+                              The above URL always directs the applicant to your Default Application Template. To send a specific template, use Email/SMS and select it there.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
 
                   <aside className="border-l p-4" style={{ borderColor: theme.line, backgroundColor: "#F7FAFD" }}>
-                    <div className="rounded-md border p-3" style={{ borderColor: theme.line, backgroundColor: "#fff" }}>
-                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>SMART BMS</p>
-                      <div className="mt-2 h-24 rounded-md border bg-[#EAF3FB]" style={{ borderColor: theme.line }} />
+                    <div className="overflow-hidden rounded-md border bg-white" style={{ borderColor: theme.line }}>
+                      <div className="px-3 py-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>SMART BMS</p>
+                      </div>
+                      <img
+                        src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=900&q=80"
+                        alt="Property preview"
+                        className="h-28 w-full object-cover"
+                      />
                     </div>
                     <div className="mt-4 text-xs leading-5" style={{ color: theme.muted }}>
                       <p className="mb-2 font-semibold uppercase tracking-wide" style={{ color: theme.ink }}>How It Works</p>
-                      <p>1. Share by email or URL.</p>
-                      <p>2. Applicant submits the form online.</p>
-                      <p>3. You review applications in this dashboard.</p>
-                      <p>4. Optional Ethiopian contact channels can be added for reach.</p>
+                      {shareMethod === "url" ? (
+                        <>
+                          <p>1. Copy the URL and share it on your listing or website.</p>
+                          <p>2. Applicants open the link and fill your default template.</p>
+                          <p>3. You receive and review submissions in the Applicants dashboard.</p>
+                        </>
+                      ) : (
+                        <>
+                          <p>1. Select a template and choose SMS and/or Email channels.</p>
+                          <p>2. Add recipients (up to 4 per channel).</p>
+                          <p>3. Applicants receive the link with your message and apply.</p>
+                        </>
+                      )}
                     </div>
-                    {shareMethod === "url" && (
-                      <div className="mt-4 rounded-md border p-3 text-xs" style={{ borderColor: theme.line, backgroundColor: "#fff", color: theme.muted }}>
-                        <div className="mb-1 flex items-center gap-1 font-semibold" style={{ color: theme.ink }}>
-                          <Link2 className="h-3.5 w-3.5" />
-                          Public Link Tip
-                        </div>
-                        Add this URL to your property page button: "Apply Now".
-                      </div>
-                    )}
                   </aside>
                 </div>
               </div>
