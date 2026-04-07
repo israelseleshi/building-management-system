@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { Button } from "@/components/ui/button"
@@ -46,6 +46,11 @@ const initialSections: SectionConfig[] = [
 
 const DEFAULT_LOGO_URL = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=220&q=80"
 const DEFAULT_HEADER_URL = "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1400&q=80"
+const toSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
 
 export default function FormsPage() {
   return <ProtectedRoute requiredRole="landlord"><FormsContent /></ProtectedRoute>
@@ -53,6 +58,7 @@ export default function FormsPage() {
 
 function FormsContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [builderOpen, setBuilderOpen] = useState(false)
   const [builderPhase, setBuilderPhase] = useState<BuilderPhase>("closed")
@@ -84,7 +90,10 @@ function FormsContent() {
   const [logoPreview, setLogoPreview] = useState<string | null>(DEFAULT_LOGO_URL)
   const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(DEFAULT_HEADER_URL)
   const [customDraft, setCustomDraft] = useState({ controlType: "text" as "text" | "file", label: "", placeholder: "", required: false })
-  const [customFields, setCustomFields] = useState([{ id: "cf_001", label: "Preferred Move-in Date", placeholder: "DD/MM/YYYY", required: true, controlType: "text" as "text" | "file" }])
+  const [customTargetSectionId, setCustomTargetSectionId] = useState<string | null>(null)
+  const [editingFieldTarget, setEditingFieldTarget] = useState<{ sectionId: string; fieldIndex: number } | null>(null)
+  const [draggedFieldTarget, setDraggedFieldTarget] = useState<{ sectionId: string; fieldIndex: number } | null>(null)
+  const [blinkTick, setBlinkTick] = useState(0)
 
   useEffect(() => {
     if (!builderOpen) { setBuilderPhase("closed"); return }
@@ -103,6 +112,31 @@ function FormsContent() {
     }
   }, [logoPreview, headerImagePreview])
 
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const savedDefaultId = window.localStorage.getItem("bms_default_form_id")
+    if (!savedDefaultId) return
+    setFormsData((current) => {
+      if (!current.some((form) => form.id === savedDefaultId)) return current
+      return current.map((form) => ({ ...form, isDefault: form.id === savedDefaultId }))
+    })
+  }, [])
+
+  useEffect(() => {
+    if (searchParams.get("focusDefault") !== "1") return
+    let ticks = 0
+    const intervalId = window.setInterval(() => {
+      ticks += 1
+      setBlinkTick(ticks)
+      if (ticks >= 4) window.clearInterval(intervalId)
+    }, 320)
+    const defaultRow = document.querySelector("[data-default-form='true']")
+    if (defaultRow instanceof HTMLElement) {
+      defaultRow.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+    return () => window.clearInterval(intervalId)
+  }, [searchParams, formsData])
+
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated"); localStorage.removeItem("userRole"); localStorage.removeItem("authToken")
     document.cookie = "isAuthenticated=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT"
@@ -112,7 +146,10 @@ function FormsContent() {
   }
 
   const settingsCharCount = settings.instructions.length
-  const totalFieldCount = useMemo(() => sections.filter((s) => s.enabled).reduce((sum, s) => sum + s.fields.length, 0) + customFields.length, [sections, customFields])
+  const totalFieldCount = useMemo(
+    () => sections.filter((s) => s.enabled).reduce((sum, s) => sum + s.fields.length, 0),
+    [sections]
+  )
   const updateSection = (id: string, updates: Partial<SectionConfig>) => setSections((c) => c.map((s) => (s.id === id ? { ...s, ...updates } : s)))
 
   const addNewSection = () => {
@@ -123,9 +160,61 @@ function FormsContent() {
 
   const createCustomField = () => {
     const trimmedLabel = customDraft.label.trim(); if (!trimmedLabel) return
-    setCustomFields((c) => [...c, { id: `cf_${Date.now()}`, label: trimmedLabel, placeholder: customDraft.placeholder.trim(), required: customDraft.required, controlType: customDraft.controlType }])
+    if (editingFieldTarget) {
+      setSections((current) =>
+        current.map((section) => {
+          if (section.id !== editingFieldTarget.sectionId) return section
+          const nextFields = [...section.fields]
+          nextFields[editingFieldTarget.fieldIndex] = trimmedLabel
+          return { ...section, fields: nextFields }
+        })
+      )
+    } else if (customTargetSectionId) {
+      setSections((current) =>
+        current.map((section) =>
+          section.id === customTargetSectionId
+            ? { ...section, fields: [...section.fields, trimmedLabel] }
+            : section
+        )
+      )
+    } else {
+      setFormActionMessage("Select a section first from Fields, then add the field there.")
+      return
+    }
+    setFormActionMessage("")
+    setEditingFieldTarget(null)
+    setCustomTargetSectionId(null)
     setCustomDraft({ controlType: "text", label: "", placeholder: "", required: false })
     setActiveTab("fields")
+  }
+
+  const handleFieldClick = (sectionId: string, field: string, fieldIndex: number) => {
+    setEditingFieldTarget({ sectionId, fieldIndex })
+    setCustomTargetSectionId(sectionId)
+    setCustomDraft({ controlType: "text", label: field, placeholder: "", required: false })
+    setActiveTab("custom")
+  }
+
+  const openNewFieldForSection = (sectionId: string) => {
+    setEditingFieldTarget(null)
+    setCustomTargetSectionId(sectionId)
+    setCustomDraft({ controlType: "text", label: "", placeholder: "", required: false })
+    setActiveTab("custom")
+  }
+
+  const handleFieldDrop = (toSectionId: string, toFieldIndex: number) => {
+    if (!draggedFieldTarget || draggedFieldTarget.sectionId !== toSectionId) return
+    if (draggedFieldTarget.fieldIndex === toFieldIndex) return
+    setSections((current) =>
+      current.map((section) => {
+        if (section.id !== toSectionId) return section
+        const next = [...section.fields]
+        const [moved] = next.splice(draggedFieldTarget.fieldIndex, 1)
+        next.splice(toFieldIndex, 0, moved)
+        return { ...section, fields: next }
+      })
+    )
+    setDraggedFieldTarget(null)
   }
 
   const handleEdit = (id: string) => {
@@ -167,7 +256,12 @@ function FormsContent() {
       return
     }
     setFormActionMessage("")
-    setFormsData((current) => current.map((form) => ({ ...form, isDefault: form.id === id })))
+    setFormsData((current) => current.map((item) => ({ ...item, isDefault: item.id === id })))
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("bms_default_form_id", form.id)
+      window.localStorage.setItem("bms_default_form_name", form.name)
+      window.localStorage.setItem("bms_default_form_slug", toSlug(form.name))
+    }
   }
 
   const saveFormChanges = () => {
@@ -194,6 +288,11 @@ function FormsContent() {
         isDefault: formsData.length === 0,
       }
       setFormsData((current) => [newForm, ...current])
+      if (newForm.isDefault && typeof window !== "undefined") {
+        window.localStorage.setItem("bms_default_form_id", newForm.id)
+        window.localStorage.setItem("bms_default_form_name", newForm.name)
+        window.localStorage.setItem("bms_default_form_slug", toSlug(newForm.name))
+      }
     }
 
     setEditingFormId(null)
@@ -235,19 +334,13 @@ function FormsContent() {
       <div className="max-h-[500px] space-y-4 overflow-y-auto pr-1">
         {sections.filter((s) => s.enabled).map((section) => (
           <div key={section.id} className="rounded-md border" style={{ borderColor: theme.line }}>
-            <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide" style={{ backgroundColor: "#EAF3FB", color: theme.accent }}>{section.name}</div>
+            <div className="px-3 py-1.5 text-xs font-medium uppercase tracking-wide" style={{ backgroundColor: "#EAF3FB", color: theme.accent }}>{section.name}</div>
             <div className="grid grid-cols-1 gap-2 p-3 md:grid-cols-2">
               {section.fields.map((field) => <div key={`${section.id}-${field}`} className="space-y-1"><label className="text-[0.7rem] font-medium" style={{ color: theme.muted }}>{field}</label><div className="h-8 rounded-md border bg-white" style={{ borderColor: theme.line }} /></div>)}
             </div>
             {section.allowAdditionalEntries && <div className="px-3 pb-3 text-[0.72rem]" style={{ color: theme.muted }}>Applicants can add additional entries for this section.</div>}
           </div>
         ))}
-        {customFields.length > 0 && (
-          <div className="rounded-md border" style={{ borderColor: theme.line }}>
-            <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide" style={{ backgroundColor: "#EAF3FB", color: theme.accent }}>Custom Fields</div>
-            <div className="space-y-2 p-3">{customFields.map((f) => <div key={f.id} className="space-y-1"><label className="text-[0.72rem] font-medium" style={{ color: theme.ink }}>{f.label}{f.required ? " *" : ""}</label><div className="h-8 rounded-md border bg-white" style={{ borderColor: theme.line }} /></div>)}</div>
-          </div>
-        )}
       </div>
       <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: theme.line }}><span className="text-xs" style={{ color: theme.muted }}>Total fields: {totalFieldCount}</span><div className="flex gap-2"><Button variant="outline" className="h-8 text-xs" onClick={() => { setBuilderOpen(false); setEditingFormId(null) }}>Cancel</Button><Button className="h-8 text-xs" style={{ backgroundColor: theme.primary, color: "#fff" }} onClick={saveFormChanges}>Save</Button></div></div>
     </div>
@@ -304,20 +397,51 @@ function FormsContent() {
                     </tr>
                   </thead>
                   <tbody style={{ backgroundColor: theme.card }}>
-                    {formsData.map((form) => (
-                      <tr key={form.id} className="border-b transition-colors hover:bg-slate-50" style={{ borderColor: theme.line }}>
+                    {formsData.map((form) => {
+                      const shouldBlink = form.isDefault && blinkTick > 0 && blinkTick <= 4 && blinkTick % 2 === 1
+                      return (
+                      <tr
+                        key={form.id}
+                        data-default-form={form.isDefault ? "true" : "false"}
+                        className="border-b transition-colors hover:bg-slate-50"
+                        style={{
+                          borderColor: theme.line,
+                          backgroundColor: shouldBlink ? "#FFF8D8" : theme.card,
+                        }}
+                      >
                         <td className="px-3 py-2.5"><div className="flex items-center gap-2.5"><div className="flex h-8 w-8 items-center justify-center rounded-md" style={{ backgroundColor: "#E8F2FF" }}><FileText className="h-4 w-4" style={{ color: theme.primary }} /></div><span className="text-[0.78rem] font-medium" style={{ color: theme.ink }}>{form.name}</span></div></td>
                         <td className="px-3 py-2.5 text-[0.76rem]" style={{ color: theme.muted }}>{form.description}</td>
                         <td className="px-3 py-2.5 text-center text-[0.76rem] font-medium" style={{ color: theme.ink }}>{form.fields}</td>
                         <td className="px-3 py-2.5 text-[0.76rem]" style={{ color: theme.muted }}>{form.createdAt}</td>
-                        <td className="px-3 py-2.5 text-center"><span className="inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium" style={{ backgroundColor: form.status === "Active" ? "#EAF7F1" : "#F1F3F5", color: form.status === "Active" ? theme.success : theme.muted }}>{form.isDefault ? "Default" : form.status}</span></td>
+                        <td className="px-3 py-2.5 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <span
+                              className="inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium"
+                              style={{
+                                backgroundColor: form.status === "Active" ? "#EAF7F1" : "#F1F3F5",
+                                color: form.status === "Active" ? theme.success : theme.muted,
+                              }}
+                            >
+                              {form.status}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setDefaultForm(form.id)}
+                              className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.68rem] font-medium transition-colors hover:bg-slate-100"
+                              style={{ color: form.isDefault ? theme.success : theme.muted }}
+                              aria-label="Set as default form"
+                            >
+                              {form.isDefault ? <CheckCircle className="h-3.5 w-3.5" /> : <Star className="h-3.5 w-3.5" />}
+                              {form.isDefault ? "Default" : "Set Default"}
+                            </button>
+                          </div>
+                        </td>
                         <td className="px-3 py-2.5"><div className="flex items-center justify-center gap-1">
-                          <button type="button" onClick={() => setDefaultForm(form.id)} className="flex h-7 items-center gap-1 rounded-md px-2 transition-colors hover:bg-slate-100 text-[0.65rem] font-medium" style={{ color: form.isDefault ? theme.success : theme.muted }} aria-label="Set as default form">{form.isDefault ? <CheckCircle className="h-3.5 w-3.5" /> : <Star className="h-3.5 w-3.5" />}{form.isDefault ? "Default" : "Set Default"}</button>
                           <button type="button" onClick={() => handleEdit(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-slate-100" aria-label="Edit form"><Edit className="h-3.5 w-3.5" style={{ color: theme.muted }} /></button>
                           <button type="button" onClick={() => requestDelete(form.id)} className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-red-50" aria-label="Delete form"><Trash2 className="h-3.5 w-3.5" style={{ color: theme.danger }} /></button>
                         </div></td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>
@@ -376,7 +500,7 @@ function FormsContent() {
             </aside>
 
             <section className={`flex min-w-0 flex-1 flex-col bg-[#F7FAFD] transition-all duration-500 ${contentMotionClass}`}>
-              <header className="flex items-center justify-between border-b bg-white px-5 py-3" style={{ borderColor: theme.line }}>
+              <header className="flex items-center justify-between border-b bg-white px-5 py-2" style={{ borderColor: theme.line }}>
                 <div>
                   <h4 className="text-sm font-medium" style={{ color: theme.ink }}>{activeTab === "settings" && "Form Settings"}{activeTab === "fields" && "Fields"}{activeTab === "custom" && "Custom Field"}{activeTab === "preview" && "Preview"}</h4>
                   <p className="text-xs" style={{ color: theme.muted }}>Ethiopia-focused form builder for Smart BMS</p>
@@ -465,9 +589,43 @@ function FormsContent() {
                     <div className="space-y-4">
                       {sections.map((section) => (
                         <div key={section.id} className="overflow-hidden rounded-md border" style={{ borderColor: theme.line }}>
-                          <div className="flex items-center justify-between px-3 py-2" style={{ backgroundColor: "#EAF3FB" }}><h5 className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.accent }}>{section.name}</h5><span className="text-xs" style={{ color: theme.muted }}>{section.fields.length} fields</span></div>
+                          <div className="flex items-center justify-between px-3 py-1.5" style={{ backgroundColor: "#EAF3FB" }}>
+                            <div className="flex items-center gap-2">
+                              <h5 className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.accent }}>{section.name}</h5>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.68rem] font-medium hover:bg-white"
+                                style={{ color: theme.accent }}
+                                onClick={() => openNewFieldForSection(section.id)}
+                              >
+                                <Plus className="h-3 w-3" />
+                                Field
+                              </button>
+                            </div>
+                            <span className="text-xs" style={{ color: theme.muted }}>{section.fields.length} fields</span>
+                          </div>
                           <div className="space-y-3 p-3">
-                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{section.fields.map((field) => <div key={`${section.id}-${field}`} className="flex items-center gap-2 rounded-md border bg-[#F8FAFC] px-2 py-1.5" style={{ borderColor: theme.line }}><GripVertical className="h-3.5 w-3.5" style={{ color: "#B3C1CF" }} /><span className="text-xs" style={{ color: theme.ink }}>{field}</span></div>)}</div>
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                              {section.fields.map((field, fieldIndex) => (
+                                <button
+                                  key={`${section.id}-${field}-${fieldIndex}`}
+                                  type="button"
+                                  draggable
+                                  onDragStart={() => setDraggedFieldTarget({ sectionId: section.id, fieldIndex })}
+                                  onDragOver={(event) => {
+                                    if (draggedFieldTarget?.sectionId !== section.id) return
+                                    event.preventDefault()
+                                  }}
+                                  onDrop={() => handleFieldDrop(section.id, fieldIndex)}
+                                  onClick={() => handleFieldClick(section.id, field, fieldIndex)}
+                                  className="flex items-center gap-2 rounded-md border bg-[#F8FAFC] px-2 py-1.5 text-left transition-colors hover:bg-white"
+                                  style={{ borderColor: theme.line }}
+                                >
+                                  <GripVertical className="h-3.5 w-3.5" style={{ color: "#B3C1CF" }} />
+                                  <span className="text-xs" style={{ color: theme.ink }}>{field}</span>
+                                </button>
+                              ))}
+                            </div>
                             <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
                               <label className="inline-flex items-center gap-2" style={{ color: theme.ink }}><input type="checkbox" checked={section.enabled} onChange={(e) => updateSection(section.id, { enabled: e.target.checked })} />Enable this section</label>
                               <label className="inline-flex items-center gap-2" style={{ color: theme.ink }}><input type="checkbox" checked={section.allowAdditionalEntries} onChange={(e) => updateSection(section.id, { allowAdditionalEntries: e.target.checked })} />Allow applicants to add multiple entries</label>
@@ -480,19 +638,38 @@ function FormsContent() {
                         <p className="mb-2 text-xs font-medium uppercase tracking-wide" style={{ color: theme.muted }}>Add Information Section</p>
                         <div className="flex gap-2"><Input value={newSectionName} onChange={(e) => setNewSectionName(e.target.value)} placeholder="Example: Guarantor Information" /><Button type="button" variant="outline" onClick={addNewSection}>Add</Button></div>
                       </div>
-
-                      <button type="button" className="text-sm font-medium" style={{ color: theme.accent }} onClick={() => setActiveTab("custom")}>+ Add Custom Field</button>
                     </div>
                   )}
 
                   {activeTab === "custom" && (
                     <div className="space-y-4">
+                      {customTargetSectionId ? (
+                        <div className="rounded-md border px-3 py-2 text-xs" style={{ borderColor: "#C9DBEC", backgroundColor: "#F4F9FF", color: theme.ink }}>
+                          {editingFieldTarget ? "Editing field in selected section." : "Creating field in selected section."}
+                        </div>
+                      ) : null}
                       <div className="space-y-2"><p className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Select Control Type</p><div className="flex gap-4 text-sm" style={{ color: theme.ink }}><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "text"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "text" }))} />Text Box</label><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "file"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "file" }))} />File Uploader</label></div></div>
                       <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Label *</label><Input value={customDraft.label} placeholder="Example: Current Kebele Letter Available?" onChange={(e) => setCustomDraft((c) => ({ ...c, label: e.target.value }))} /></div>
                       <label className="inline-flex items-center gap-2 text-sm" style={{ color: theme.ink }}><input type="checkbox" checked={customDraft.required} onChange={(e) => setCustomDraft((c) => ({ ...c, required: e.target.checked }))} />Mark this field required</label>
                       <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Placeholder Text</label><Input value={customDraft.placeholder} placeholder="Type placeholder text" onChange={(e) => setCustomDraft((c) => ({ ...c, placeholder: e.target.value }))} /></div>
-                      <Button type="button" variant="outline" className="gap-2" onClick={createCustomField}>{customDraft.controlType === "file" ? <Upload className="h-4 w-4" /> : <Plus className="h-4 w-4" />}Add Field</Button>
-                      {customFields.length > 0 && <div className="space-y-2 border-t pt-3" style={{ borderColor: theme.line }}><p className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.muted }}>Existing Custom Fields</p>{customFields.map((f) => <div key={f.id} className="rounded-md border px-3 py-2" style={{ borderColor: theme.line }}><p className="text-sm font-medium" style={{ color: theme.ink }}>{f.label}</p><p className="text-xs" style={{ color: theme.muted }}>{f.controlType === "file" ? "File uploader" : "Text box"}{f.required ? " | Required" : " | Optional"}</p></div>)}</div>}
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" className="gap-2" onClick={createCustomField}>
+                          {customDraft.controlType === "file" ? <Upload className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                          {editingFieldTarget ? "Save Field" : "Add Field"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingFieldTarget(null)
+                            setCustomTargetSectionId(null)
+                            setCustomDraft({ controlType: "text", label: "", placeholder: "", required: false })
+                            setActiveTab("fields")
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
                   )}
 

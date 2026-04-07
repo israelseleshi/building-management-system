@@ -92,7 +92,8 @@ function ApplicantsContent() {
   const [sendCardPhase, setSendCardPhase] = useState<SendCardPhase>("closed")
   const [shareMethod, setShareMethod] = useState<ShareMethod>("email")
   const [selectedTemplate, setSelectedTemplate] = useState("Standard Addis Rental Form")
-  const [defaultTemplate, setDefaultTemplate] = useState("Application Only")
+  const [defaultTemplate, setDefaultTemplate] = useState("Standard Addis Rental Form")
+  const [defaultTemplateSlug, setDefaultTemplateSlug] = useState("standard-addis-rental-form")
   const [contactModes, setContactModes] = useState<Record<ContactChannel, boolean>>({
     sms: true,
     email: false,
@@ -220,6 +221,14 @@ function ApplicantsContent() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin)
+      const savedName = window.localStorage.getItem("bms_default_form_name")
+      const savedSlug = window.localStorage.getItem("bms_default_form_slug")
+      if (savedName) {
+        setDefaultTemplate(savedName)
+      }
+      if (savedSlug) {
+        setDefaultTemplateSlug(savedSlug)
+      }
     }
   }, [])
 
@@ -230,7 +239,8 @@ function ApplicantsContent() {
     "Shared Housing Form": "shared-housing-form",
   }
   const selectedFormSlug = formSlugByTemplate[selectedTemplate] || "standard-addis-rental-form"
-  const generatedUrl = `${origin || "http://localhost:3000"}/apply/${ownerSlug}/${selectedFormSlug}`
+  const generatedFormSlug = shareMethod === "url" ? defaultTemplateSlug : selectedFormSlug
+  const generatedUrl = `${origin || "http://localhost:3000"}/apply/${ownerSlug}/${generatedFormSlug}`
   const canSendViaChannel =
     (contactModes.sms && phoneRecipients.length > 0) ||
     (contactModes.email && emailRecipients.length > 0)
@@ -592,12 +602,12 @@ function ApplicantsContent() {
                           <textarea
                             value={customMessage}
                             onChange={(event) => setCustomMessage(event.target.value)}
-                            maxLength={280}
+                            maxLength={500}
                             className="min-h-[92px] w-full rounded-md border bg-white px-3 py-2 text-sm outline-none"
                             style={{ borderColor: theme.line, color: theme.ink, resize: "none" }}
                           />
                           <p className="mt-1 text-xs" style={{ color: theme.muted }}>
-                            This description is specific to Email/SMS sharing ({customMessage.length}/280).
+                            This description is specific to Email/SMS sharing ({customMessage.length}/500).
                           </p>
                         </div>
 
@@ -631,11 +641,7 @@ function ApplicantsContent() {
                               type="button"
                               className="text-xs font-semibold underline"
                               style={{ color: theme.primary }}
-                              onClick={() =>
-                                setDefaultTemplate((current) =>
-                                  current === "Application Only" ? "Standard Addis Rental Form" : "Application Only"
-                                )
-                              }
+                              onClick={() => router.push("/dashboard/applications/forms?focusDefault=1")}
                             >
                               Change Default
                             </button>
