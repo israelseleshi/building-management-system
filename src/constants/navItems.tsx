@@ -84,7 +84,7 @@ const landlordGroups: NavGroupBase[] = [
     title: "Applications",
     icon: <Grid className="w-5 h-5" />,
     items: [
-      { icon: <ClipboardList className="w-5 h-5" />, name: "Applicant's", path: "/dashboard/applications/applicants" },
+      { icon: <ClipboardList className="w-5 h-5" />, name: "Applicants", path: "/dashboard/applications/applicants" },
       { icon: <FileInput className="w-5 h-5" />, name: "Forms", path: "/dashboard/applications/forms" },
     ],
   },

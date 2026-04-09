@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type DragEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -75,9 +75,8 @@ function FormsContent() {
     showHeaderLogo: true,
     showHeaderImage: true,
     enableAmharicLabels: true,
-    requireEthiopianId: true,
-    requireGuarantorForHighRiskApplicants: false,
-    allowTelebirrOrCbeProof: true,
+    requireNationalId: true,
+    enableTenantRiskFlagAlerts: true,
     showRegionSubCityWoreda: true,
     allowCoApplicants: true,
     useApplicantBackgroundTheme: true,
@@ -89,7 +88,7 @@ function FormsContent() {
   const [headerImageFileName, setHeaderImageFileName] = useState("Default header")
   const [logoPreview, setLogoPreview] = useState<string | null>(DEFAULT_LOGO_URL)
   const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(DEFAULT_HEADER_URL)
-  const [customDraft, setCustomDraft] = useState({ controlType: "text" as "text" | "file", label: "", placeholder: "", required: false })
+  const [customDraft, setCustomDraft] = useState({ controlType: "text" as "text" | "file" | "yesno", label: "", placeholder: "", required: false })
   const [customTargetSectionId, setCustomTargetSectionId] = useState<string | null>(null)
   const [editingFieldTarget, setEditingFieldTarget] = useState<{ sectionId: string; fieldIndex: number } | null>(null)
   const [draggedFieldTarget, setDraggedFieldTarget] = useState<{ sectionId: string; fieldIndex: number } | null>(null)
@@ -111,6 +110,16 @@ function FormsContent() {
       if (headerImagePreview?.startsWith("blob:")) URL.revokeObjectURL(headerImagePreview)
     }
   }, [logoPreview, headerImagePreview])
+
+  useEffect(() => {
+    const clearDragState = () => setDraggedFieldTarget(null)
+    window.addEventListener("dragend", clearDragState)
+    window.addEventListener("drop", clearDragState)
+    return () => {
+      window.removeEventListener("dragend", clearDragState)
+      window.removeEventListener("drop", clearDragState)
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -160,12 +169,18 @@ function FormsContent() {
 
   const createCustomField = () => {
     const trimmedLabel = customDraft.label.trim(); if (!trimmedLabel) return
+    const finalLabel =
+      customDraft.controlType === "yesno"
+        ? `${trimmedLabel} (Yes/No)`
+        : customDraft.controlType === "file"
+        ? `${trimmedLabel} (File Upload)`
+        : trimmedLabel
     if (editingFieldTarget) {
       setSections((current) =>
         current.map((section) => {
           if (section.id !== editingFieldTarget.sectionId) return section
           const nextFields = [...section.fields]
-          nextFields[editingFieldTarget.fieldIndex] = trimmedLabel
+          nextFields[editingFieldTarget.fieldIndex] = finalLabel
           return { ...section, fields: nextFields }
         })
       )
@@ -173,7 +188,7 @@ function FormsContent() {
       setSections((current) =>
         current.map((section) =>
           section.id === customTargetSectionId
-            ? { ...section, fields: [...section.fields, trimmedLabel] }
+            ? { ...section, fields: [...section.fields, finalLabel] }
             : section
         )
       )
@@ -202,7 +217,33 @@ function FormsContent() {
     setActiveTab("custom")
   }
 
-  const handleFieldDrop = (toSectionId: string, toFieldIndex: number) => {
+  const deleteField = (sectionId: string, fieldIndex: number) => {
+    setSections((current) =>
+      current.map((section) =>
+        section.id === sectionId
+          ? { ...section, fields: section.fields.filter((_, index) => index !== fieldIndex) }
+          : section
+      )
+    )
+  }
+
+  const handleFieldDragStart = (
+    event: DragEvent<HTMLDivElement>,
+    sectionId: string,
+    fieldIndex: number
+  ) => {
+    event.dataTransfer.effectAllowed = "move"
+    event.dataTransfer.setData("text/plain", `${sectionId}:${fieldIndex}`)
+    setDraggedFieldTarget({ sectionId, fieldIndex })
+  }
+
+  const handleDropOnDeleteZone = (sectionId: string) => {
+    if (!draggedFieldTarget || draggedFieldTarget.sectionId !== sectionId) return
+    deleteField(sectionId, draggedFieldTarget.fieldIndex)
+    setDraggedFieldTarget(null)
+  }
+
+  const handleFieldDragOver = (toSectionId: string, toFieldIndex: number) => {
     if (!draggedFieldTarget || draggedFieldTarget.sectionId !== toSectionId) return
     if (draggedFieldTarget.fieldIndex === toFieldIndex) return
     setSections((current) =>
@@ -214,7 +255,7 @@ function FormsContent() {
         return { ...section, fields: next }
       })
     )
-    setDraggedFieldTarget(null)
+    setDraggedFieldTarget({ sectionId: toSectionId, fieldIndex: toFieldIndex })
   }
 
   const handleEdit = (id: string) => {
@@ -413,10 +454,10 @@ function FormsContent() {
                         <td className="px-3 py-2.5 text-[0.76rem]" style={{ color: theme.muted }}>{form.description}</td>
                         <td className="px-3 py-2.5 text-center text-[0.76rem] font-medium" style={{ color: theme.ink }}>{form.fields}</td>
                         <td className="px-3 py-2.5 text-[0.76rem]" style={{ color: theme.muted }}>{form.createdAt}</td>
-                        <td className="px-3 py-2.5 text-center">
-                          <div className="flex items-center justify-center gap-2">
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center justify-start gap-2">
                             <span
-                              className="inline-flex rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium"
+                              className="inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-[0.68rem] font-medium whitespace-nowrap w-[60px] justify-center"
                               style={{
                                 backgroundColor: form.status === "Active" ? "#EAF7F1" : "#F1F3F5",
                                 color: form.status === "Active" ? theme.success : theme.muted,
@@ -427,12 +468,12 @@ function FormsContent() {
                             <button
                               type="button"
                               onClick={() => setDefaultForm(form.id)}
-                              className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.68rem] font-medium transition-colors hover:bg-slate-100"
+                              className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.68rem] font-medium transition-colors hover:bg-slate-100 whitespace-nowrap"
                               style={{ color: form.isDefault ? theme.success : theme.muted }}
                               aria-label="Set as default form"
                             >
                               {form.isDefault ? <CheckCircle className="h-3.5 w-3.5" /> : <Star className="h-3.5 w-3.5" />}
-                              {form.isDefault ? "Default" : "Set Default"}
+                              <span className="w-[70px]">{form.isDefault ? "Default" : "Set Default"}</span>
                             </button>
                           </div>
                         </td>
@@ -500,10 +541,9 @@ function FormsContent() {
             </aside>
 
             <section className={`flex min-w-0 flex-1 flex-col bg-[#F7FAFD] transition-all duration-500 ${contentMotionClass}`}>
-              <header className="flex items-center justify-between border-b bg-white px-5 py-2" style={{ borderColor: theme.line }}>
+              <header className="flex items-center justify-between border-b bg-white px-5 py-1.5" style={{ borderColor: theme.line }}>
                 <div>
-                  <h4 className="text-sm font-medium" style={{ color: theme.ink }}>{activeTab === "settings" && "Form Settings"}{activeTab === "fields" && "Fields"}{activeTab === "custom" && "Custom Field"}{activeTab === "preview" && "Preview"}</h4>
-                  <p className="text-xs" style={{ color: theme.muted }}>Ethiopia-focused form builder for Smart BMS</p>
+                  <h4 className="text-sm font-medium leading-5" style={{ color: theme.ink }}>{activeTab === "settings" && "Form Settings"}{activeTab === "fields" && "Fields"}{activeTab === "custom" && "Custom Field"}{activeTab === "preview" && "Preview"}</h4>
                 </div>
                 <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100" onClick={() => setBuilderOpen(false)} aria-label="Close form builder"><X className="h-4 w-4" /></button>
               </header>
@@ -557,18 +597,17 @@ function FormsContent() {
                         </div>
                       </div>
 
-                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Instructions</label><Textarea value={settings.instructions} maxLength={1000} rows={5} onChange={(e) => setSettings((c) => ({ ...c, instructions: e.target.value }))} /><div className="text-right text-xs" style={{ color: theme.muted }}>{settingsCharCount}/1000</div></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Instructions</label><Textarea value={settings.instructions} maxLength={1000} rows={5} className="resize-none" onChange={(e) => setSettings((c) => ({ ...c, instructions: e.target.value }))} /><div className="text-right text-xs" style={{ color: theme.muted }}>{settingsCharCount}/1000</div></div>
 
                       <div className="space-y-3 border-t pt-3" style={{ borderColor: theme.line }}>
                         {[
                           { key: "showHeaderLogo" as const, title: "Show header logo", help: "Displays your organization logo at the top of the form." },
                           { key: "showHeaderImage" as const, title: "Show header image", help: "Displays a property or branding image below the logo." },
                           { key: "enableAmharicLabels" as const, title: "Enable Amharic labels", help: "Supports applicants who prefer Amharic labels." },
-                          { key: "requireEthiopianId" as const, title: "Require Ethiopian ID", help: "Collect Kebele ID, National ID, or Passport details." },
-                          { key: "allowTelebirrOrCbeProof" as const, title: "Allow Telebirr/CBE income proof", help: "Accept common Ethiopia payment proof methods." },
+                          { key: "requireNationalId" as const, title: "Require National ID", help: "Collect National ID details from each applicant." },
                           { key: "showRegionSubCityWoreda" as const, title: "Use Region/Sub-City/Woreda fields", help: "Uses Ethiopia-specific address hierarchy." },
                           { key: "allowCoApplicants" as const, title: "Allow co-applicants", help: "Lets families/shared renters apply on one form." },
-                          { key: "requireGuarantorForHighRiskApplicants" as const, title: "Require guarantor for flagged applicants", help: "Ask guarantor information for higher risk submissions." },
+                          { key: "enableTenantRiskFlagAlerts" as const, title: "Enable tenant risk flag alerts", help: "Our BMS platform keeps centralized tenant records; if an applicant was previously flagged for bad behavior at another property, admins are alerted during review." },
                           { key: "useApplicantBackgroundTheme" as const, title: "Use applicant-page background color", help: "Switch preview background from global white to applicant-style blue tint." },
                         ].map((toggle) => {
                           const enabled = settings[toggle.key]
@@ -594,36 +633,76 @@ function FormsContent() {
                               <h5 className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.accent }}>{section.name}</h5>
                               <button
                                 type="button"
-                                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.68rem] font-medium hover:bg-white"
+                                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.68rem] font-medium transition-colors"
                                 style={{ color: theme.accent }}
                                 onClick={() => openNewFieldForSection(section.id)}
+                                onMouseEnter={(event) => {
+                                  event.currentTarget.style.backgroundColor = "#DCE8F4"
+                                }}
+                                onMouseLeave={(event) => {
+                                  event.currentTarget.style.backgroundColor = "transparent"
+                                }}
                               >
                                 <Plus className="h-3 w-3" />
                                 Field
                               </button>
                             </div>
-                            <span className="text-xs" style={{ color: theme.muted }}>{section.fields.length} fields</span>
+                            <div className="flex items-center gap-2">
+                              {draggedFieldTarget?.sectionId === section.id ? (
+                                <div
+                                  onDragOver={(event) => event.preventDefault()}
+                                  onDrop={() => handleDropOnDeleteZone(section.id)}
+                                  className="inline-flex items-center gap-1 rounded-md border border-[#F2B8B2] bg-[#FFF5F4] px-2 py-0.5 text-[0.66rem] font-medium text-[#C43F34]"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                  Drop To Delete
+                                </div>
+                              ) : null}
+                              <span className="text-xs" style={{ color: theme.muted }}>{section.fields.length} fields</span>
+                            </div>
                           </div>
                           <div className="space-y-3 p-3">
-                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            <div
+                              className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+                              onDragEnd={() => setDraggedFieldTarget(null)}
+                              onDrop={() => setDraggedFieldTarget(null)}
+                            >
                               {section.fields.map((field, fieldIndex) => (
-                                <button
+                                <div
                                   key={`${section.id}-${field}-${fieldIndex}`}
-                                  type="button"
+                                  role="button"
+                                  tabIndex={0}
                                   draggable
-                                  onDragStart={() => setDraggedFieldTarget({ sectionId: section.id, fieldIndex })}
+                                  onDragStart={(event) => handleFieldDragStart(event, section.id, fieldIndex)}
                                   onDragOver={(event) => {
                                     if (draggedFieldTarget?.sectionId !== section.id) return
                                     event.preventDefault()
+                                    handleFieldDragOver(section.id, fieldIndex)
                                   }}
-                                  onDrop={() => handleFieldDrop(section.id, fieldIndex)}
+                                  onDrop={(event) => {
+                                    event.preventDefault()
+                                    setDraggedFieldTarget(null)
+                                  }}
                                   onClick={() => handleFieldClick(section.id, field, fieldIndex)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter" || event.key === " ") {
+                                      event.preventDefault()
+                                      handleFieldClick(section.id, field, fieldIndex)
+                                    }
+                                  }}
                                   className="flex items-center gap-2 rounded-md border bg-[#F8FAFC] px-2 py-1.5 text-left transition-colors hover:bg-white"
-                                  style={{ borderColor: theme.line }}
+                                  style={{
+                                    borderColor: theme.line,
+                                    opacity:
+                                      draggedFieldTarget?.sectionId === section.id &&
+                                      draggedFieldTarget.fieldIndex === fieldIndex
+                                        ? 0.35
+                                        : 1,
+                                  }}
                                 >
                                   <GripVertical className="h-3.5 w-3.5" style={{ color: "#B3C1CF" }} />
-                                  <span className="text-xs" style={{ color: theme.ink }}>{field}</span>
-                                </button>
+                                  <span className="text-xs flex-1" style={{ color: theme.ink }}>{field}</span>
+                                </div>
                               ))}
                             </div>
                             <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
@@ -636,7 +715,7 @@ function FormsContent() {
 
                       <div className="rounded-md border p-3" style={{ borderColor: theme.line }}>
                         <p className="mb-2 text-xs font-medium uppercase tracking-wide" style={{ color: theme.muted }}>Add Information Section</p>
-                        <div className="flex gap-2"><Input value={newSectionName} onChange={(e) => setNewSectionName(e.target.value)} placeholder="Example: Guarantor Information" /><Button type="button" variant="outline" onClick={addNewSection}>Add</Button></div>
+                        <div className="flex gap-2"><Input value={newSectionName} maxLength={60} onChange={(e) => setNewSectionName(e.target.value)} placeholder="Example: Guarantor Information" className="placeholder:text-slate-400 placeholder:font-normal" /><Button type="button" variant="outline" className="transition-colors hover:bg-[#EEF4FA]" onClick={addNewSection}>Add</Button></div>
                       </div>
                     </div>
                   )}
@@ -648,18 +727,19 @@ function FormsContent() {
                           {editingFieldTarget ? "Editing field in selected section." : "Creating field in selected section."}
                         </div>
                       ) : null}
-                      <div className="space-y-2"><p className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Select Control Type</p><div className="flex gap-4 text-sm" style={{ color: theme.ink }}><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "text"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "text" }))} />Text Box</label><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "file"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "file" }))} />File Uploader</label></div></div>
-                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Label *</label><Input value={customDraft.label} placeholder="Example: Current Kebele Letter Available?" onChange={(e) => setCustomDraft((c) => ({ ...c, label: e.target.value }))} /></div>
+                      <div className="space-y-2"><p className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Select Control Type</p><div className="flex gap-4 text-sm" style={{ color: theme.ink }}><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "text"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "text" }))} />Text Box</label><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "yesno"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "yesno" }))} />Yes/No Question</label><label className="inline-flex items-center gap-2"><input type="radio" checked={customDraft.controlType === "file"} onChange={() => setCustomDraft((c) => ({ ...c, controlType: "file" }))} />File Uploader</label></div></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Label *</label><Input value={customDraft.label} placeholder="Enter field label" className="placeholder:text-slate-400 placeholder:font-normal" onChange={(e) => setCustomDraft((c) => ({ ...c, label: e.target.value }))} /></div>
                       <label className="inline-flex items-center gap-2 text-sm" style={{ color: theme.ink }}><input type="checkbox" checked={customDraft.required} onChange={(e) => setCustomDraft((c) => ({ ...c, required: e.target.checked }))} />Mark this field required</label>
-                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Placeholder Text</label><Input value={customDraft.placeholder} placeholder="Type placeholder text" onChange={(e) => setCustomDraft((c) => ({ ...c, placeholder: e.target.value }))} /></div>
+                      <div className="space-y-1"><label className="text-xs font-medium uppercase tracking-wide" style={{ color: theme.ink }}>Placeholder Text</label><Input value={customDraft.placeholder} placeholder="Type placeholder text" className="placeholder:text-slate-400 placeholder:font-normal" onChange={(e) => setCustomDraft((c) => ({ ...c, placeholder: e.target.value }))} /></div>
                       <div className="flex gap-2">
-                        <Button type="button" variant="outline" className="gap-2" onClick={createCustomField}>
+                        <Button type="button" variant="outline" className="gap-2 transition-colors hover:bg-[#EEF4FA]" onClick={createCustomField}>
                           {customDraft.controlType === "file" ? <Upload className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                           {editingFieldTarget ? "Save Field" : "Add Field"}
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
+                          className="transition-colors hover:bg-[#F4F7FA]"
                           onClick={() => {
                             setEditingFieldTarget(null)
                             setCustomTargetSectionId(null)

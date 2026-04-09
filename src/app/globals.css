@@ -1,5 +1,5 @@
 /* src/app/globals.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -270,6 +270,10 @@
   font-family: var(--font-brand);
   font-weight: 800;
   letter-spacing: -0.03em;
+}
+
+.landing-font {
+  font-family: 'Poppins', var(--font-system);
 }
 
 body.tenant-portal-theme {

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
@@ -143,6 +144,10 @@ function ChatContent() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showHeaderMenu, setShowHeaderMenu] = useState(false)
+  const [blockedContacts, setBlockedContacts] = useState<Set<number>>(new Set())
+  const [showBlockDialog, setShowBlockDialog] = useState(false)
+  const [userToBlock, setUserToBlock] = useState<{id: number, name: string} | null>(null)
+  const headerMenuRef = useRef<HTMLDivElement>(null)
   const [messagingMode, setMessagingMode] = useState<"chat" | "email">("chat")
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
   const [unitFilter, setUnitFilter] = useState("all")
@@ -446,6 +451,36 @@ function ChatContent() {
 
     loadMessages()
   }, [activeConversationId, currentUserId])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (headerMenuRef.current && !headerMenuRef.current.contains(event.target as Node)) {
+        setShowHeaderMenu(false)
+      }
+    }
+    if (showHeaderMenu) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showHeaderMenu])
+
+  const handleBlockUser = (userId: number, userName: string) => {
+    setUserToBlock({ id: userId, name: userName })
+    setShowBlockDialog(true)
+    setShowHeaderMenu(false)
+  }
+
+  const confirmBlockUser = () => {
+    if (userToBlock) {
+      setBlockedContacts((prev) => new Set([...prev, userToBlock.id]))
+      setActiveConversationId(null)
+      setMessages([])
+      setUserToBlock(null)
+    }
+    setShowBlockDialog(false)
+  }
 
   const handleHistoryClick = (conversationId: number) => {
     setActiveConversationId(conversationId)
@@ -782,23 +817,23 @@ function ChatContent() {
                         key={item.conversationId}
                         type="button"
                         onClick={() => handleHistoryClick(item.conversationId)}
-                        className={`w-full border-b border-[#EEF2F8] px-2 py-1 text-left ${
+                        className={`w-full border-b border-[#EEF2F8] px-3 py-3 text-left ${
                           isActive ? "bg-[#EEF4FB]" : "hover:bg-[#F8FBFF]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <InitialCircle fullName={item.fullName} />
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-start justify-between gap-2">
                               <p className="truncate text-[12px] font-semibold text-[#202938]">{item.fullName}</p>
                               <span className="shrink-0 text-[10px] text-[#8392a4]">{formatHistoryTime(item.lastSentAt)}</span>
                               {item.unreadCount > 0 ? (
-                                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2F80ED] px-1 text-[9px] text-white">
+                                <span className="shrink-0 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2F80ED] px-1 text-[9px] text-white">
                                   {item.unreadCount}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="truncate text-[11px] leading-tight text-[#6C7D90]">
+                            <p className="truncate text-[11px] leading-snug text-[#6C7D90] mt-1">
                               {item.lastPreview || `${item.unitNumber || item.buildingName}`}
                             </p>
                           </div>
@@ -811,22 +846,19 @@ function ChatContent() {
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col bg-[#FDFDFE]">
-              <div className="h-[74px] border-b border-[#E3E8F0] bg-white px-5 flex items-center justify-between">
+              <div className="relative h-[74px] border-b border-[#E3E8F0] bg-white px-5 flex items-center justify-between py-2">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex flex-col items-center">
-                    <InitialCircle fullName={activeHistoryItem?.fullName || "Unknown"} size="lg" />
-                    <span className="mt-0.5 text-[10px] font-semibold text-[#6C7D90]">{activeHistoryItem?.unitNumber || "Unit -"}</span>
-                  </div>
-                  <div className="min-w-0 self-center">
-                    <p className="truncate text-base font-semibold text-[#203247]">
-                      {activeHistoryItem?.fullName || "Select a conversation"}
-                    </p>
-                    {activeHistoryItem?.buildingName ? (
-                      <p className="truncate text-xs text-[#6C7D90]">{activeHistoryItem.buildingName}</p>
-                    ) : null}
-                  </div>
+                  <InitialCircle fullName={activeHistoryItem?.fullName || "Unknown"} size="lg" />
+                  <p className="truncate text-sm font-medium text-[#4E647C]">
+                    {activeHistoryItem?.unitNumber ? `Unit ${activeHistoryItem.unitNumber}` : activeHistoryItem?.buildingName || ""}
+                  </p>
                 </div>
-                <div className="relative">
+                <div className="pointer-events-none absolute inset-x-20 top-1/2 -translate-y-1/2 text-center">
+                  <p className="truncate text-base font-semibold text-[#203247] md:text-lg">
+                    {activeHistoryItem?.fullName || "Select a conversation"}
+                  </p>
+                </div>
+                <div className="relative" ref={headerMenuRef}>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-[#5F6F82] hover:text-[#0F4C81]" onClick={() => setShowHeaderMenu((x) => !x)}>
                     <MoreVertical className="h-4 w-4" />
                   </Button>
@@ -834,11 +866,26 @@ function ChatContent() {
                     <div className="absolute right-0 top-10 z-30 w-44 rounded-md border border-[#D2DCE8] bg-white p-1 shadow-lg">
                       <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => alert("Profile preview coming soon")}>View Profile</button>
                       <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => setMessages([])}>Clear Messages</button>
-                      <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-[#30465f] hover:bg-[#F3F7FC]" onClick={() => setActiveConversationId(null)}>Close Conversation</button>
+                      <button type="button" className="w-full rounded px-3 py-2 text-left text-sm text-red-500 hover:bg-red-50" onClick={() => activeHistoryItem && handleBlockUser(activeHistoryItem.conversationId, activeHistoryItem.fullName)}>Block User</button>
                     </div>
                   )}
                 </div>
               </div>
+
+              <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Block User</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to block <span className="font-semibold text-foreground">{userToBlock?.name}</span>? This will end the conversation and prevent further contact.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => setShowBlockDialog(false)}>Cancel</Button>
+                    <Button variant="destructive" onClick={confirmBlockUser}>Block User</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               {messagingMode === "chat" ? (
                 <>

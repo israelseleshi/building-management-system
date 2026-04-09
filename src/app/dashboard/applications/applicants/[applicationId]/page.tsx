@@ -18,24 +18,23 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Edit,
   Download,
   MessageSquare,
 } from "lucide-react"
 
 const theme = {
-  primary: "#3498DB",
-  success: "#4DB6A1",
-  warning: "#F5A24E",
-  danger: "#E15949",
-  neutral: "#B7C6D1",
-  background: "#E9EDF3",
+  primary: "#2563EB",
+  success: "#10B981",
+  warning: "#D97706",
+  danger: "#DC2626",
+  neutral: "#9CA3AF",
+  background: "#F5F7FA",
   card: "#FFFFFF",
-  ink: "#1F3549",
-  muted: "#7B8C9D",
-  line: "#D9E1E8",
-  tableHead: "#F5F8FB",
-  accent: "#3096DA",
+  ink: "#111827",
+  muted: "#6B7280",
+  line: "#E5E7EB",
+  tableHead: "#F9FAFB",
+  accent: "#4F46E5",
 }
 
 interface ApplicationDetail {
@@ -111,20 +110,20 @@ function ApplicationDetailContent() {
 
   const getStatusBadge = (status: ApplicationDetail["status"]) => {
     const styles = {
-      "For Review": { bg: "#E8F2FF", color: theme.primary },
-      "Approved": { bg: "#EAF7F1", color: theme.success },
-      "Pending": { bg: "#FFF2E3", color: theme.warning },
-      "Rejected": { bg: "#FDECEA", color: theme.danger },
-      "Lease/Term Created": { bg: "#EEF2F6", color: theme.muted },
+      "For Review": { bg: "#EFF6FF", color: "#1D4ED8" },
+      "Approved": { bg: "#ECFDF5", color: "#059669" },
+      "Pending": { bg: "#FFFBEB", color: "#D97706" },
+      "Rejected": { bg: "#FEF2F2", color: "#DC2626" },
+      "Lease/Term Created": { bg: "#F3F4F6", color: "#6B7280" },
     }
     return styles[status]
   }
 
   const getIdVerificationBadge = (status: ApplicationDetail["idVerification"]) => {
     const styles = {
-      "Verified": { bg: "#EAF7F1", color: theme.success },
-      "Pending": { bg: "#FFF2E3", color: theme.warning },
-      "Not Submitted": { bg: "#F1F3F5", color: theme.muted },
+      "Verified": { bg: "#ECFDF5", color: "#059669" },
+      "Pending": { bg: "#FFFBEB", color: "#D97706" },
+      "Not Submitted": { bg: "#F3F4F6", color: "#6B7280" },
     }
     return styles[status]
   }
@@ -147,7 +146,7 @@ function ApplicationDetailContent() {
                 variant="ghost"
                 size="sm"
                 onClick={() => router.push("/dashboard/applications/applicants")}
-                className="gap-2"
+                className="gap-2 rounded-lg border border-transparent px-3 py-2 text-sm hover:border-[#E5E7EB] hover:bg-white"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back
@@ -165,7 +164,8 @@ function ApplicationDetailContent() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 rounded-lg border px-4 py-2 font-medium shadow-none"
+                style={{ borderColor: "#D1D5DB", backgroundColor: "#fff", color: theme.ink }}
               >
                 <Download className="h-4 w-4" />
                 Download
@@ -173,15 +173,16 @@ function ApplicationDetailContent() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 rounded-lg border px-4 py-2 font-medium shadow-none"
+                style={{ borderColor: "#D1D5DB", backgroundColor: "#fff", color: theme.ink }}
               >
                 <MessageSquare className="h-4 w-4" />
                 Message
               </Button>
               <Button
                 size="sm"
-                className="gap-2"
-                style={{ backgroundColor: theme.success, color: "#fff" }}
+                className="gap-2 rounded-lg px-4 py-2 font-medium shadow-none hover:opacity-95"
+                style={{ backgroundColor: "#10B981", color: "#fff" }}
               >
                 <CheckCircle className="h-4 w-4" />
                 Approve
@@ -190,151 +191,151 @@ function ApplicationDetailContent() {
           </div>
         </header>
 
-        <main className="flex-1 p-6" style={{ background: "linear-gradient(180deg, #E9EDF3 0%, #E6EBF2 42%, #E3E8EF 100%)" }}>
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <Card style={{ backgroundColor: theme.card, borderColor: theme.line }}>
-                  <CardHeader className="pb-4">
+        <main className="flex-1 p-6" style={{ backgroundColor: theme.background }}>
+          <div className="mx-auto max-w-6xl space-y-5">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              <div className="space-y-5 lg:col-span-2">
+                <Card className="rounded-xl border shadow-none" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
+                  <CardHeader className="pb-0">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-semibold" style={{ color: theme.ink }}>
+                      <CardTitle className="text-[18px] font-semibold" style={{ color: theme.ink }}>
                         Applicant Information
                       </CardTitle>
                       <Badge
-                        className="px-3 py-1 text-xs font-medium"
+                        className="rounded-full px-2.5 py-1 text-[12px] font-medium"
                         style={getStatusBadge(application.status)}
                       >
                         {application.status}
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-5 pt-4">
                     <div className="flex items-center gap-4">
                       <div className="h-16 w-16 rounded-full flex items-center justify-center text-white text-xl font-semibold" style={{ backgroundColor: theme.primary }}>
                         {application.applicantName.split(" ").map(n => n[0]).join("")}
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold" style={{ color: theme.ink }}>
+                        <h3 className="text-[18px] font-semibold" style={{ color: theme.ink }}>
                           {application.applicantName}
                         </h3>
-                        <p className="text-sm" style={{ color: theme.muted }}>
+                        <p className="text-[13px]" style={{ color: theme.muted }}>
                           Applied on {application.appliedDate}
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t" style={{ borderColor: theme.line }}>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#E8F2FF" }}>
-                          <Phone className="h-5 w-5" style={{ color: theme.primary }} />
+                    <div className="grid grid-cols-1 gap-4 border-t pt-5 md:grid-cols-2" style={{ borderColor: theme.line }}>
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#EEF2FF" }}>
+                          <Phone className="h-5 w-5" style={{ color: "#4F46E5" }} />
                         </div>
                         <div>
-                          <p className="text-xs" style={{ color: theme.muted }}>Phone</p>
-                          <p className="text-sm font-medium" style={{ color: theme.ink }}>{application.phone}</p>
+                          <p className="text-[13px]" style={{ color: theme.muted }}>Phone</p>
+                          <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.phone}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#E8F2FF" }}>
-                          <Mail className="h-5 w-5" style={{ color: theme.primary }} />
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#EEF2FF" }}>
+                          <Mail className="h-5 w-5" style={{ color: "#4F46E5" }} />
                         </div>
                         <div>
-                          <p className="text-xs" style={{ color: theme.muted }}>Email</p>
-                          <p className="text-sm font-medium" style={{ color: theme.ink }}>{application.email}</p>
+                          <p className="text-[13px]" style={{ color: theme.muted }}>Email</p>
+                          <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.email}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#E8F2FF" }}>
-                          <Building2 className="h-5 w-5" style={{ color: theme.primary }} />
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#EEF2FF" }}>
+                          <Building2 className="h-5 w-5" style={{ color: "#4F46E5" }} />
                         </div>
                         <div>
-                          <p className="text-xs" style={{ color: theme.muted }}>Unit Applied</p>
-                          <p className="text-sm font-medium" style={{ color: theme.ink }}>{application.unit}</p>
+                          <p className="text-[13px]" style={{ color: theme.muted }}>Unit Applied</p>
+                          <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.unit}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#E8F2FF" }}>
-                          <MapPin className="h-5 w-5" style={{ color: theme.primary }} />
+                      <div className="flex items-start gap-3">
+                        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#EEF2FF" }}>
+                          <MapPin className="h-5 w-5" style={{ color: "#4F46E5" }} />
                         </div>
                         <div>
-                          <p className="text-xs" style={{ color: theme.muted }}>Location</p>
-                          <p className="text-sm font-medium" style={{ color: theme.ink }}>{application.kebele}, {application.subCity}</p>
+                          <p className="text-[13px]" style={{ color: theme.muted }}>Location</p>
+                          <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.kebele}, {application.subCity}</p>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card style={{ backgroundColor: theme.card, borderColor: theme.line }}>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold" style={{ color: theme.ink }}>
+                <Card className="rounded-xl border shadow-none" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[18px] font-semibold" style={{ color: theme.ink }}>
                       Employment & Income
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-6">
+                  <CardContent className="pt-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <p className="text-xs mb-1" style={{ color: theme.muted }}>Employment Status</p>
-                        <p className="text-sm font-medium" style={{ color: theme.ink }}>{application.employment}</p>
+                        <p className="mb-1 text-[13px]" style={{ color: theme.muted }}>Employment Status</p>
+                        <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.employment}</p>
                       </div>
                       <div>
-                        <p className="text-xs mb-1" style={{ color: theme.muted }}>Monthly Income (ETB)</p>
-                        <p className="text-sm font-medium" style={{ color: theme.ink }}>{application.monthlyIncome}</p>
+                        <p className="mb-1 text-[13px]" style={{ color: theme.muted }}>Monthly Income (ETB)</p>
+                        <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.monthlyIncome}</p>
                       </div>
                       {application.employer && (
                         <div>
-                          <p className="text-xs mb-1" style={{ color: theme.muted }}>Employer</p>
-                          <p className="text-sm font-medium" style={{ color: theme.ink }}>{application.employer}</p>
+                          <p className="mb-1 text-[13px]" style={{ color: theme.muted }}>Employer</p>
+                          <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.employer}</p>
                         </div>
                       )}
                       {application.tinNumber && (
                         <div>
-                          <p className="text-xs mb-1" style={{ color: theme.muted }}>TIN Number</p>
-                          <p className="text-sm font-medium" style={{ color: theme.ink }}>{application.tinNumber}</p>
+                          <p className="mb-1 text-[13px]" style={{ color: theme.muted }}>TIN Number</p>
+                          <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.tinNumber}</p>
                         </div>
                       )}
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card style={{ backgroundColor: theme.card, borderColor: theme.line }}>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold" style={{ color: theme.ink }}>
+                <Card className="rounded-xl border shadow-none" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[18px] font-semibold" style={{ color: theme.ink }}>
                       Emergency Contact
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-sm" style={{ color: theme.ink }}>{application.emergencyContact || "Not provided"}</p>
+                  <CardContent className="pt-4">
+                    <p className="text-[15px] font-medium" style={{ color: theme.ink }}>{application.emergencyContact || "Not provided"}</p>
                   </CardContent>
                 </Card>
               </div>
 
-              <div className="space-y-6">
-                <Card style={{ backgroundColor: theme.card, borderColor: theme.line }}>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold" style={{ color: theme.ink }}>
+              <div className="space-y-5">
+                <Card className="rounded-xl border shadow-none" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[18px] font-semibold" style={{ color: theme.ink }}>
                       Verification Status
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#F8FAFC" }}>
+                  <CardContent className="space-y-3 pt-4">
+                    <div className="flex items-center justify-between rounded-lg border p-3" style={{ backgroundColor: "#F9FAFB", borderColor: theme.line }}>
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5" style={{ color: theme.primary }} />
-                        <span className="text-sm" style={{ color: theme.ink }}>ID Verification</span>
+                        <FileText className="h-5 w-5" style={{ color: "#4F46E5" }} />
+                        <span className="text-[15px] font-medium" style={{ color: theme.ink }}>ID Verification</span>
                       </div>
                       <Badge
-                        className="px-2 py-0.5 text-xs font-medium"
+                        className="rounded-full px-2.5 py-0.5 text-[12px] font-medium"
                         style={getIdVerificationBadge(application.idVerification)}
                       >
                         {application.idVerification}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "#F8FAFC" }}>
+                    <div className="flex items-center justify-between rounded-lg border p-3" style={{ backgroundColor: "#F9FAFB", borderColor: theme.line }}>
                       <div className="flex items-center gap-3">
-                        <User className="h-5 w-5" style={{ color: theme.primary }} />
-                        <span className="text-sm" style={{ color: theme.ink }}>Background Check</span>
+                        <User className="h-5 w-5" style={{ color: "#4F46E5" }} />
+                        <span className="text-[15px] font-medium" style={{ color: theme.ink }}>Background Check</span>
                       </div>
                       <Badge
-                        className="px-2 py-0.5 text-xs font-medium"
+                        className="rounded-full px-2.5 py-0.5 text-[12px] font-medium"
                         style={getIdVerificationBadge(application.idVerification)}
                       >
                         Pending
@@ -343,56 +344,56 @@ function ApplicationDetailContent() {
                   </CardContent>
                 </Card>
 
-                <Card style={{ backgroundColor: theme.card, borderColor: theme.line }}>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold" style={{ color: theme.ink }}>
+                <Card className="rounded-xl border shadow-none" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[18px] font-semibold" style={{ color: theme.ink }}>
                       Documents
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: theme.line }}>
+                  <CardContent className="space-y-0 pt-4">
+                    <div className="flex items-center justify-between border-b py-3" style={{ borderColor: theme.line }}>
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5" style={{ color: theme.muted }} />
+                        <FileText className="h-5 w-5" style={{ color: "#9CA3AF" }} />
                         <div>
-                          <p className="text-sm" style={{ color: theme.ink }}>ID Document</p>
-                          <p className="text-xs" style={{ color: theme.muted }}>kebele_id.pdf</p>
+                          <p className="text-[15px] font-medium" style={{ color: theme.ink }}>ID Document</p>
+                          <p className="text-[13px]" style={{ color: theme.muted }}>kebele_id.pdf</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="rounded-lg border border-transparent hover:border-[#E5E7EB] hover:bg-[#F9FAFB]">
                         <Download className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: theme.line }}>
+                    <div className="flex items-center justify-between py-3">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5" style={{ color: theme.muted }} />
+                        <FileText className="h-5 w-5" style={{ color: "#9CA3AF" }} />
                         <div>
-                          <p className="text-sm" style={{ color: theme.ink }}>Income Proof</p>
-                          <p className="text-xs" style={{ color: theme.muted }}>salary_slip.pdf</p>
+                          <p className="text-[15px] font-medium" style={{ color: theme.ink }}>Income Proof</p>
+                          <p className="text-[13px]" style={{ color: theme.muted }}>salary_slip.pdf</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="rounded-lg border border-transparent hover:border-[#E5E7EB] hover:bg-[#F9FAFB]">
                         <Download className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card style={{ backgroundColor: theme.card, borderColor: theme.line }}>
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-base font-semibold" style={{ color: theme.ink }}>
+                <Card className="rounded-xl border shadow-none" style={{ backgroundColor: theme.card, borderColor: theme.line }}>
+                  <CardHeader className="pb-0">
+                    <CardTitle className="text-[18px] font-semibold" style={{ color: theme.ink }}>
                       Actions
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button className="w-full gap-2" style={{ backgroundColor: theme.success, color: "#fff" }}>
+                  <CardContent className="space-y-3 pt-4">
+                    <Button className="w-full gap-2 rounded-lg border border-transparent py-2.5 font-medium shadow-none hover:opacity-95" style={{ backgroundColor: "#10B981", color: "#fff" }}>
                       <CheckCircle className="h-4 w-4" />
                       Approve Application
                     </Button>
-                    <Button variant="outline" className="w-full gap-2" style={{ borderColor: theme.danger, color: theme.danger }}>
+                    <Button variant="outline" className="w-full gap-2 rounded-lg py-2.5 font-medium shadow-none" style={{ borderColor: "#D1D5DB", color: theme.ink }}>
                       <XCircle className="h-4 w-4" />
                       Reject Application
                     </Button>
-                    <Button variant="outline" className="w-full gap-2">
+                    <Button variant="outline" className="w-full gap-2 rounded-lg py-2.5 font-medium shadow-none" style={{ borderColor: "#D1D5DB", color: theme.ink }}>
                       <Clock className="h-4 w-4" />
                       Request More Info
                     </Button>

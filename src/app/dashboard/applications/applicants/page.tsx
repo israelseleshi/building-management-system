@@ -294,7 +294,7 @@ function ApplicantsContent() {
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <div className="text-[1.05rem] font-semibold uppercase tracking-[0.08em] text-[#1F3549]">Applicant&apos;s</div>
+              <div className="truncate text-[0.8rem] font-medium uppercase tracking-[0.08em] text-[#1F3549]">Applicants</div>
             </div>
             <button
               type="button"
@@ -375,12 +375,12 @@ function ApplicantsContent() {
 
               <div className={`flex min-w-0 flex-1 flex-col transition-all duration-500 ${sendContentMotionClass}`}>
                 <div className="grid min-h-0 flex-1 grid-cols-[200px_minmax(0,1fr)_250px]">
-                  <aside className="border-r p-3" style={{ borderColor: theme.line, backgroundColor: "#0A2A43" }}>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Share Method</div>
+                  <aside className="border-r p-4" style={{ borderColor: theme.line, backgroundColor: "#0A2A43" }}>
+                    <div className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Share Method</div>
                     <button
                       type="button"
                       onClick={() => setShareMethod("email")}
-                      className={`mb-1 flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm ${shareMethod === "email" ? "text-white" : "text-white/75 hover:text-white"}`}
+                      className={`mb-2 flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm ${shareMethod === "email" ? "text-white" : "text-white/75 hover:text-white"}`}
                       style={{ backgroundColor: shareMethod === "email" ? "#113B5E" : "transparent" }}
                     >
                       Via Email / SMS
@@ -389,7 +389,7 @@ function ApplicantsContent() {
                     <button
                       type="button"
                       onClick={() => setShareMethod("url")}
-                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm ${shareMethod === "url" ? "text-white" : "text-white/75 hover:text-white"}`}
+                      className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm ${shareMethod === "url" ? "text-white" : "text-white/75 hover:text-white"}`}
                       style={{ backgroundColor: shareMethod === "url" ? "#113B5E" : "transparent" }}
                     >
                       Via URL
