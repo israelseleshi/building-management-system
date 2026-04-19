@@ -138,29 +138,29 @@ export function DashboardSidebar({
 
   const isApplicationsPage = !isTenantDashboard
 
-  const sidebarBg = isTenantDashboard ? "bg-[#EEF1F8]" : "bg-[#0A2A43]"
-  const sidebarBorderColor = isTenantDashboard ? "border-[#D8DEE9]" : "border-white/10"
+  const sidebarBg = isTenantDashboard ? "bg-white" : "bg-[#0A2A43]"
+  const sidebarBorderColor = isTenantDashboard ? "border-[#E9EDF3]" : "border-white/10"
 
-  // Active item highlight — warm neutral to match the sandy background
+  // Active item highlight — light blue for white sidebar
   const activeHighlightClass = isTenantDashboard
-    ? "bg-white text-[#223042] border border-[#CFD7E5]"
+    ? "bg-[#E8F2FF] text-[#1F3549]"
     : "bg-[#113B5E] text-white"
   
   // Highlight class to connect separated icon & label with a pseudo-element behind them
   const connectedHighlightClass = isTenantDashboard
-    ? "bg-white text-[#223042] before:bg-white"
+    ? "bg-[#E8F2FF] text-[#1F3549] before:bg-[#E8F2FF]"
     : "bg-[#113B5E] text-white before:bg-[#113B5E]"
     
   // Hover style for non-active items
-  const sidebarHoverBg = isTenantDashboard ? "hover:bg-white" : "hover:bg-[#113B5E]"
-  const sidebarHoverText = isTenantDashboard ? "hover:text-[#223042]" : "hover:text-white"
-  const hoverClass = isTenantDashboard ? "hover:bg-white hover:text-[#223042]" : "hover:bg-[#113B5E] hover:text-white"
+  const sidebarHoverBg = isTenantDashboard ? "hover:bg-[#F5F9FF]" : "hover:bg-[#113B5E]"
+  const sidebarHoverText = isTenantDashboard ? "hover:text-[#1F3549]" : "hover:text-white"
+  const hoverClass = isTenantDashboard ? "hover:bg-[#F5F9FF] hover:text-[#1F3549]" : "hover:bg-[#113B5E] hover:text-white"
   const sidebarBaseTextClass = isTenantDashboard ? "text-[#4E5D70]" : "text-white/70"
   const groupTitleTextClass = isTenantDashboard
-    ? "text-[1.02rem] font-semibold tracking-[0.01em]"
+    ? "text-[1.02rem] font-semibold tracking-[0.01em] text-[#1F3549]"
     : "text-[0.74rem] font-medium uppercase tracking-[0.03em]"
   const subItemTextClass = isTenantDashboard
-    ? "text-[0.96rem] font-medium tracking-[0.01em]"
+    ? "text-[0.96rem] font-medium tracking-[0.01em] text-[#4E5D70]"
     : "text-[0.74rem] font-medium"
 
   const isPanelOpen = activePanelGroup !== null

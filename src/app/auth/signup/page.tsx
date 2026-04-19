@@ -1,5 +1,4 @@
 import { SignUpForm } from "@/features/auth/ui/SignUpForm"
-import { Header } from "@/components/home/Header"
 import Link from "next/link"
 import { Sparkles, Globe } from "lucide-react"
 
@@ -9,10 +8,8 @@ const BROKEN_WHITE = "#fafaf8"
 export default function SignUpPage() {
   return (
     <div style={{ backgroundColor: BROKEN_WHITE }} className="min-h-screen flex flex-col">
-      <Header currentPage="home" />
-
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:flex-row w-full pt-[80px]">
+      <div className="flex-1 flex flex-col lg:flex-row w-full">
         
         {/* Left side - Ethiopian Building Image */}
         <div className="relative hidden lg:flex lg:w-[45%] items-center justify-center bg-[#1F3549] overflow-hidden rounded-tr-[3rem]">
@@ -70,23 +67,32 @@ export default function SignUpPage() {
           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#1F3549]/[0.02] rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
           <div className="w-full max-w-md bg-white rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(31,53,73,0.1)] border border-[#1F3549]/5 p-8 sm:p-10 relative z-10">
+            {/* Logo at top */}
+            <div className="mb-6 flex justify-center">
+              <div className="inline-flex items-center gap-2">
+                <div className="w-10 h-10 rounded-xl bg-[#1F3549] flex items-center justify-center">
+                  <span className="text-white font-bold text-lg tracking-tight">BMS</span>
+                </div>
+              </div>
+            </div>
+
             <div className="mb-8 text-center">
-              <h2 className="text-3xl font-extrabold tracking-tight mb-2" style={{ color: NAVY }}>
+              <h2 className="text-2xl font-bold tracking-tight mb-2" style={{ color: NAVY }}>
                 Create Account
               </h2>
-              <p className="text-[#1F3549]/60 text-sm font-medium">
-                Start managing your properties today.
+              <p className="text-sm font-medium" style={{ color: NAVY, opacity: 0.6 }}>
+                Start managing your properties today
               </p>
             </div>
 
             <SignUpForm />
 
             <div className="mt-8 text-center border-t border-[#1F3549]/5 pt-6">
-              <p className="text-sm font-medium text-[#1F3549]/60">
+              <p className="text-sm" style={{ color: NAVY, opacity: 0.6 }}>
                 Already have an account?{" "}
                 <Link
                   href="/auth/signin"
-                  className="font-bold hover:underline transition-all"
+                  className="font-bold transition-all"
                   style={{ color: NAVY }}
                 >
                   Sign in
