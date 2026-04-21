@@ -23,6 +23,7 @@ import {
   BadgeDollarSign,
   ScrollText,
   UserCheck,
+  ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
@@ -31,6 +32,7 @@ type PageKey = "home" | "listings" | "about" | "services" | "contact"
 
 interface HeaderProps {
   currentPage?: PageKey
+  forceLightTheme?: boolean
 }
 
 type ServicesFeature = {
@@ -80,17 +82,19 @@ const servicesSections: ServicesSection[] = [
   },
 ]
 
-export function Header({ currentPage = "home" }: HeaderProps) {
+export function Header({ currentPage = "home", forceLightTheme = false }: HeaderProps) {
   const router = useRouter()
   const t = useTranslations("Tenant")
   const [hasScrolled, setHasScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [openDesktopMenu, setOpenDesktopMenu] = useState<"services" | null>(null)
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false)
   const desktopMenuRef = useRef<HTMLElement | null>(null)
-  const textColor = hasScrolled ? "#1F3549" : "#FFFFFF"
+  const isLightMode = hasScrolled || forceLightTheme
+  const textColor = isLightMode ? "#1F3549" : "#FFFFFF"
+  const showFullWhiteHeader = forceLightTheme && !hasScrolled && (isHeaderHovered || openDesktopMenu !== null)
 
   const navLinks = [
-    { label: t("nav.home"), href: "/home", page: "home" },
     { label: t("nav.services"), href: "/home/services", page: "services" },
     { label: t("nav.listings"), href: "/home/listings", page: "listings" },
     { label: t("nav.about"), href: "/home/about", page: "about" },
@@ -151,16 +155,24 @@ export function Header({ currentPage = "home" }: HeaderProps) {
   return (
     <header
       ref={desktopMenuRef}
+      onMouseEnter={() => setIsHeaderHovered(true)}
+      onMouseLeave={() => setIsHeaderHovered(false)}
       className={cn(
         "fixed inset-x-0 z-50 transition-all duration-300",
-        hasScrolled ? "top-0 border-b border-[#1F3549]/10 bg-white/95 backdrop-blur-md" : "top-3 bg-transparent",
+        hasScrolled
+          ? "top-0 border-b border-[#1F3549]/10 bg-white/95 backdrop-blur-md"
+          : forceLightTheme
+            ? showFullWhiteHeader
+              ? "top-0 border-b border-[#1F3549]/10 bg-white/95 backdrop-blur-md"
+              : "top-0 bg-transparent"
+            : "top-3 bg-transparent",
       )}
       style={{
-        boxShadow: hasScrolled ? "0 1px 0 rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.1)" : "none",
+        boxShadow: hasScrolled || showFullWhiteHeader ? "0 1px 0 rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.1)" : "none",
       }}
     >
       <style>{`
-        .nav-fill-btn {
+.nav-fill-btn {
           position: relative;
           overflow: hidden;
           z-index: 0;
@@ -173,19 +185,44 @@ export function Header({ currentPage = "home" }: HeaderProps) {
           transform: scaleX(0);
           transform-origin: left;
           transition: transform 0.2s ease;
-          z-index: -1;
+          z-index: 0;
+          pointer-events: none;
         }
+        .nav-fill-btn span, .nav-fill-btn { position: relative; z-index: 1; }
         .nav-fill-btn:hover::before { transform: scaleX(1); }
         .nav-fill-btn--light::before { background: #1F3549; }
-        .nav-fill-btn--accent::before { background: #2db79f; }
+        .nav-fill-btn--accent::before { background: #5d8dd9; }
         .nav-fill-btn:hover { color: #ffffff !important; }
+        .nav-fill-btn:hover span { color: #ffffff !important; }
+        .nav-fill-btn svg { transition: color 0.2s ease; }
+        .nav-fill-btn:hover svg { color: #ffffff !important; }
+        .nav-link-underline {
+          position: absolute;
+          left: 0.75rem;
+          right: 0.75rem;
+          bottom: 0;
+          height: 1px;
+          border-radius: 999px;
+          background-color: currentColor;
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 0.22s ease;
+          opacity: 0.95;
+        }
+        .nav-link:hover .nav-link-underline,
+        .nav-link:focus-visible .nav-link-underline,
+        .nav-link--active .nav-link-underline {
+          transform: scaleX(1);
+        }
       `}</style>
 
-      <nav className="mx-auto flex w-full max-w-[1260px] items-center justify-between px-4 py-3 lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-8 lg:px-8 lg:py-4">
+      <nav
+        className="mx-auto flex w-full max-w-[1260px] items-center justify-between px-5 py-3 lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-8 lg:pl-12 lg:pr-8 lg:py-4"
+      >
         <div className="flex items-center">
           <button
             onClick={handleLogoClick}
-            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 duration-100 hover:bg-white/10"
+            className="relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 duration-100"
             style={{ display: "flex", alignItems: "center" }}
           >
             <Landmark className="size-8" style={{ color: textColor }} />
@@ -207,21 +244,24 @@ export function Header({ currentPage = "home" }: HeaderProps) {
                   <button
                     type="button"
                     onClick={() => setOpenDesktopMenu(isServicesMenuOpen ? null : "services")}
-                    className="relative flex items-center gap-1 px-3 py-2 text-[1rem] font-medium transition-all duration-200 hover:-translate-y-0.5"
+                    className={cn(
+                      "nav-link relative flex items-center gap-1 px-3 py-2 text-[1rem] font-medium transition-all duration-200",
+                      (isActive || isServicesMenuOpen) && "nav-link--active",
+                    )}
                     style={{
-                      color: isActive || isServicesMenuOpen ? textColor : hasScrolled ? "#4b5563" : "rgba(255,255,255,0.9)",
+                      color:
+                        isActive || isServicesMenuOpen
+                          ? textColor
+                          : isLightMode
+                            ? "#4b5563"
+                            : "rgba(255,255,255,0.9)",
                     }}
                   >
                     <span>{link.label}</span>
                     <ChevronDown
                       className={cn("size-4 transition-transform duration-200", isServicesMenuOpen && "rotate-180")}
                     />
-                    {(isActive || isServicesMenuOpen) && (
-                      <span
-                        className="absolute inset-x-3 bottom-0 h-0.5 rounded-full"
-                        style={{ backgroundColor: hasScrolled ? "#1F3549" : "#FFFFFF" }}
-                      />
-                    )}
+                    <span className="nav-link-underline" />
                   </button>
 
                 </div>
@@ -232,59 +272,54 @@ export function Header({ currentPage = "home" }: HeaderProps) {
               <a
                 key={link.label}
                 href={link.href}
-                className="relative px-3 py-2 text-[1rem] font-medium transition-all duration-200 hover:-translate-y-0.5"
+                className={cn("nav-link relative px-3 py-2 text-[1rem] font-medium transition-all duration-200", isActive && "nav-link--active")}
                 style={{
-                  color: isActive ? textColor : hasScrolled ? "#4b5563" : "rgba(255,255,255,0.9)",
+                  color: isActive ? textColor : isLightMode ? "#4b5563" : "rgba(255,255,255,0.9)",
                   backgroundColor: "transparent",
                 }}
               >
                 {link.label}
-                {isActive && (
-                  <span
-                    className="absolute inset-x-3 bottom-0 h-0.5 rounded-full"
-                    style={{ backgroundColor: hasScrolled ? "#1F3549" : "#FFFFFF" }}
-                  />
-                )}
+                <span className="nav-link-underline" />
               </a>
             )
           })}
         </div>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <LanguageToggle inverse={!hasScrolled} className="nav-fill-btn nav-fill-btn--light" />
+          <LanguageToggle inverse={!isLightMode} className="nav-fill-btn nav-fill-btn--light" />
           <Button
             onClick={handleSignIn}
             size="sm"
-            variant={hasScrolled ? "outline" : "ghost"}
+            variant={isLightMode ? "outline" : "ghost"}
             className={cn(
-              "nav-fill-btn nav-fill-btn--light h-10 px-6 text-[0.98rem] font-medium",
-              hasScrolled
-                ? "border-[#1F3549]/20 text-[#1F3549] hover:bg-transparent"
-                : "border border-white/45 text-white hover:bg-transparent",
+              "nav-fill-btn nav-fill-btn--light h-10 px-6 text-[0.98rem] font-medium transition-colors hover:text-white",
+              isLightMode
+                ? "border-[#1F3549]/20 text-[#1F3549] hover:bg-[#1F3549]"
+                : "border border-white/45 text-white hover:bg-white/10",
             )}
-            style={{ backgroundColor: hasScrolled ? "white" : "rgba(255,255,255,0.06)" }}
+            style={{ backgroundColor: isLightMode ? "white" : "rgba(255,255,255,0.06)" }}
           >
-            Login
+            <span>Login</span>
           </Button>
           <Button
             onClick={handleRegisterAsOwner}
             size="sm"
-            className="nav-fill-btn nav-fill-btn--accent h-10 px-6 text-[0.98rem] font-semibold border border-transparent"
-            style={{ backgroundColor: "#42d3bb", color: "#FFFFFF" }}
+            className="nav-fill-btn nav-fill-btn--accent h-10 px-6 text-[0.98rem] font-semibold border border-transparent transition-colors hover:text-white"
+            style={{ backgroundColor: "#78a8f0", color: "#FFFFFF" }}
           >
-            {t("auth.registerOwner")}
+            <span>{t("auth.registerOwner")}</span>
           </Button>
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
-          <LanguageToggle inverse={!hasScrolled} className="nav-fill-btn nav-fill-btn--light" />
+          <LanguageToggle inverse={!isLightMode} className="nav-fill-btn nav-fill-btn--light" />
           <Button
             size="icon"
-            variant={hasScrolled ? "outline" : "ghost"}
+            variant={isLightMode ? "outline" : "ghost"}
             onClick={() => setIsMobileMenuOpen(true)}
             className={cn(
               "lg:hidden h-10 w-10",
-              hasScrolled ? "border-[#1F3549]/20 text-[#1F3549]" : "border border-white/35 text-white hover:bg-white/15",
+              isLightMode ? "border-[#1F3549]/20 text-[#1F3549]" : "border border-white/35 text-white hover:bg-white/15",
             )}
           >
             <Menu className="size-4" />
@@ -293,29 +328,31 @@ export function Header({ currentPage = "home" }: HeaderProps) {
       </nav>
 
       {openDesktopMenu === "services" && (
-        <div className="absolute inset-x-0 top-full hidden border-t border-[#dde4ef] bg-white pb-10 pt-8 lg:block">
-          <div className="mx-auto grid w-full max-w-[1700px] grid-cols-4 gap-10 px-10">
+        <div className="absolute inset-x-0 top-full hidden border-t border-[#dde4ef] bg-white pb-14 pt-10 lg:block">
+          <div className="mx-auto grid w-full max-w-[1400px] grid-cols-4 gap-12 px-14">
             {servicesSections.map((section) => (
               <div key={section.title}>
-                <h3 className="mb-4 text-[1.05rem] font-semibold tracking-tight text-[#112544]">{section.title}</h3>
-                <div className="grid gap-2">
+                <h3 className="mb-6 text-[1.1rem] font-bold text-[#1F3549]">
+                  {section.title}
+                </h3>
+                <ul className="space-y-5">
                   {section.items.map((item) => (
-                    <button
-                      key={item.title}
-                      type="button"
-                      onClick={() => {
-                        router.push(item.href)
-                        setOpenDesktopMenu(null)
-                      }}
-                      className="flex items-center gap-3 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-[#f5f8fd]"
-                    >
-                      <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-[#dce7f5] bg-[#eaf0fb] text-[#1f6fff]">
-                        <item.icon className="size-5" />
-                      </span>
-                      <span className="text-[0.95rem] font-medium leading-tight text-[#16335e]">{item.title}</span>
-                    </button>
+                    <li key={item.title}>
+                      <a
+                        href={item.href}
+                        onClick={() => setOpenDesktopMenu(null)}
+                        className="group flex items-center gap-4 py-1 transition-all duration-200"
+                      >
+                        <div className="flex size-11 items-center justify-center rounded-xl bg-[#e9f1ff] text-[#5d8dd9] transition-all group-hover:bg-[#5d8dd9] group-hover:text-white">
+                          <item.icon className="size-5" />
+                        </div>
+                        <span className="text-[1.05rem] font-semibold text-[#1F3549] group-hover:text-[#5d8dd9]">
+                          {item.title}
+                        </span>
+                      </a>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             ))}
           </div>

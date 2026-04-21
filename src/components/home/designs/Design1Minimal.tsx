@@ -1,6 +1,6 @@
-"use client"
+﻿"use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { useLocale } from "next-intl"
@@ -35,7 +35,7 @@ import { Button } from "@/components/ui/button"
 
 const NAVY = "#1F3549"
 const NAVY_DARK = "#152A3D"
-const ACCENT = "#42D3BB"
+const ACCENT = "#78a8f0"
 const HERO_BLUE = "#33479a"
 
 const copy = {
@@ -70,7 +70,7 @@ const copy = {
     finalTitle: "Ready to simplify property operations?",
     finalDesc:
       "Save time across leasing, payments, and maintenance.\nBook a live demo to see how BMS fits your workflow.",
-    finalCta: "Schedule a Demo",
+    finalCta: "Register as Owner",
   },
   am: {
     heroTitleTop: "Property Management",
@@ -103,7 +103,7 @@ const copy = {
     finalTitle: "Ready to simplify property operations?",
     finalDesc:
       "Save time across leasing, payments, and maintenance.\nBook a live demo to see how BMS fits your workflow.",
-    finalCta: "Schedule a Demo",
+    finalCta: "Register as Owner",
   },
 }
 
@@ -152,16 +152,16 @@ const propertyTypes = [
 ]
 
 const faqTabs = [
-  { id: "general", label: "General" },
-  { id: "product", label: "Product" },
-  { id: "support", label: "Support" },
+  { id: "basic", label: "BASICS" },
+  { id: "features", label: "FEATURES" },
+  { id: "support", label: "SUPPORT" },
 ] as const
 
 type FaqTab = (typeof faqTabs)[number]["id"]
 type FaqItem = { id: string; q: string; a: string }
 
 const faqByTab: Record<FaqTab, FaqItem[]> = {
-  general: [
+  basic: [
     {
       id: "g1",
       q: "What is a property management software?",
@@ -193,7 +193,7 @@ const faqByTab: Record<FaqTab, FaqItem[]> = {
       a: "Yes. BMS applies role-based access and clear permission boundaries so users only see what they should. Activity history and structured records also make audits and accountability much easier for teams.",
     },
   ],
-  product: [
+  features: [
     {
       id: "p1",
       q: "Does BMS support both owners and tenants?",
@@ -258,6 +258,19 @@ const faqByTab: Record<FaqTab, FaqItem[]> = {
     },
   ],
 }
+
+const demoQuestions = [
+  "What changes when every unit balance is visible in one live dashboard?",
+  "How much faster do teams resolve issues with one shared operations view?",
+  "What would collections look like with fully structured payment workflows?",
+  "How much follow-up time is saved when leases and billing stay connected?",
+  "What happens to reporting speed when records are centralized by default?",
+  "How quickly can new staff onboard with guided property workflows?",
+  "What improves when maintenance, documents, and finance move in one system?",
+  "How much risk is reduced with tracked approvals and activity history?",
+  "What growth decisions become easier with clean portfolio analytics?",
+  "How many manual tools can operations teams replace with one platform?",
+]
 
 function HeroDashboardRecreation() {
   return (
@@ -339,23 +352,456 @@ function HeroDashboardRecreation() {
   )
 }
 
+function OwnerPortalIllustration() {
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: "560px",
+        aspectRatio: "1.62 / 1",
+        borderRadius: "30px",
+        overflow: "hidden",
+        border: "1px solid #d8e4f4",
+        background:
+          "radial-gradient(circle at 18% 92%, rgba(180, 204, 239, 0.62) 0 18%, transparent 18%), radial-gradient(circle at 74% 20%, rgba(200, 220, 247, 0.7) 0 22%, transparent 22%), linear-gradient(135deg, #dbe8fa 0%, #cfe0f7 52%, #dce8f8 100%)",
+        boxShadow: "0 20px 46px rgba(32, 59, 103, 0.12)",
+      }}
+    >
+      <div style={{ position: "absolute", inset: "0 auto auto 16%", width: "44%", height: "100%", background: "rgba(255,255,255,0.13)", transform: "skewX(-24deg)" }} />
+      <div style={{ position: "absolute", inset: "0 auto auto 63%", width: "18%", height: "100%", background: "rgba(255,255,255,0.15)", transform: "skewX(-24deg)" }} />
+
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: "80%",
+          height: "71%",
+          borderRadius: "26px",
+          transform: "translate(-50%, -50%)",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.97), rgba(247,250,255,0.96))",
+          border: "1px solid #d8e4f4",
+          boxShadow: "0 20px 48px rgba(34, 58, 97, 0.16)",
+          padding: "8px",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ borderRadius: "16px", border: "1px solid #cfe0f6", padding: "8px", minHeight: "100%", background: "linear-gradient(180deg, #fbfdff, #f4f8fd)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", marginBottom: "8px", paddingBottom: "6px", borderBottom: "1px solid #d9e6f7" }}>
+            <div style={{ fontSize: "0.62rem", fontWeight: 700, color: "#233b63", letterSpacing: "0.01em" }}>Get started with BMS</div>
+            <div style={{ width: "54px", height: "28px", borderRadius: "8px", background: "linear-gradient(135deg, #eaf3ff, #dceaff)", border: "1px solid #d3e2f4", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <Rocket style={{ width: 14, height: 14, color: "#2f58a8" }} />
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1.02fr 1fr", gap: "8px" }}>
+            <div style={{ borderRadius: "12px", background: "transparent", minHeight: "76px" }} />
+
+            <div style={{ borderRadius: "12px", border: "1px solid #e0e8f3", background: "#ffffff", minHeight: "76px", padding: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid #eef4fb" }}>
+                <span style={{ fontSize: "0.55rem", color: "#2a4468", fontWeight: 700 }}>Recent Tenant Transactions</span>
+                <span style={{ fontSize: "0.5rem", color: "#7a92b1" }}>Updated now</span>
+              </div>
+              {[
+                ["Rent payment received", "Sunset Villas, Unit 4B", "ETB 18,500"],
+                ["Late fee posted", "Bole Offices, Suite 2A", "ETB 1,200"],
+                ["Charge reversed", "Lideta Apartments, 4C", "ETB 3,000"],
+              ].map(([label, source, amount], idx) => (
+                <div key={label} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "6px", padding: "4px 0", borderTop: idx === 0 ? "none" : "1px solid #eff4fa", color: "#395275", fontSize: "0.52rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ width: "12px", height: "12px", borderRadius: "50%", background: idx === 0 ? "#d9e7ff" : "#edf4ff", border: "1px solid #d7e4f6", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#4f7be8", fontSize: "0.46rem", flexShrink: 0 }}>
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <div>{label}</div>
+                      <div style={{ marginTop: "1px", color: "#859ab6", fontSize: "0.5rem" }}>{source}</div>
+                    </div>
+                  </div>
+                  <div style={{ color: idx === 2 ? "#da6262" : "#263f67", fontWeight: 700, whiteSpace: "nowrap", fontSize: "0.54rem" }}>
+                    {idx === 2 ? `-${amount}` : amount}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginTop: "8px", display: "grid", gridTemplateColumns: "0.88fr 1.12fr", gap: "8px" }}>
+            <div style={{ borderRadius: "12px", border: "1px solid #e0e8f3", background: "#ffffff", minHeight: "56px", padding: "8px" }}>
+              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#263f67", marginBottom: "3px" }}>27 March</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#365073", fontSize: "0.52rem" }}>
+                <span style={{ width: "2px", height: "16px", borderRadius: "999px", background: "#4f87ff" }} />
+                <span>Inspection for Sunset Villas, Unit 3B</span>
+              </div>
+            </div>
+            <div style={{ borderRadius: "12px", border: "1px solid #e0e8f3", background: "#ffffff", minHeight: "56px", padding: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <span style={{ fontSize: "0.52rem", color: "#7a90ad" }}>Transaction Summary</span>
+                <span style={{ fontSize: "0.52rem", color: "#4f87ff" }}>This week</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "6px" }}>
+                {[
+                  ["26", "Payments"],
+                  ["8", "Charges"],
+                  ["3", "Refunds"],
+                  ["94%", "Matched"],
+                ].map(([value, label]) => (
+                  <div key={value + label} style={{ borderRadius: "8px", border: "1px solid #edf3fa", background: "#fbfdff", padding: "6px" }}>
+                    <div style={{ fontSize: "0.56rem", color: "#243d64", fontWeight: 700 }}>{value}</div>
+                    <div style={{ marginTop: "2px", fontSize: "0.46rem", color: "#7f93b0" }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          left: "4.5%",
+          top: "33%",
+          width: "42%",
+          maxHeight: "42%",
+          borderRadius: "20px",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.95))",
+          border: "1px solid #dbe7f6",
+          boxShadow: "0 16px 34px rgba(34, 58, 97, 0.16)",
+          padding: "12px 12px 10px",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
+          <span style={{ fontSize: "0.58rem", color: "#253e66", fontWeight: 700 }}>Outstanding Balances</span>
+          <span style={{ fontSize: "0.5rem", color: "#8aa0bc" }}>Monthly</span>
+        </div>
+        <div style={{ display: "grid", gap: "4px", marginBottom: "7px" }}>
+          {[
+            ["Sunset Villas - Unit 3B", "12 days overdue", "ETB 52,000"],
+            ["Bole Offices - Suite 2A", "7 days overdue", "ETB 18,750"],
+          ].map(([unit, due, amount], idx) => (
+            <div key={unit} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "6px", alignItems: "center", padding: "4px 0", borderTop: idx === 0 ? "none" : "1px solid #eef3f8" }}>
+              <div>
+                <div style={{ fontSize: "0.53rem", color: "#243d64", fontWeight: 700 }}>{unit}</div>
+                <div style={{ marginTop: "1px", fontSize: "0.48rem", color: "#899cb5" }}>{due}</div>
+              </div>
+              <div style={{ fontSize: "0.56rem", color: "#243d64", fontWeight: 700, whiteSpace: "nowrap" }}>
+                {amount}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ borderTop: "1px solid #e8eef7", paddingTop: "6px" }}>
+          <div style={{ fontSize: "0.52rem", color: "#2d456b", fontWeight: 700, marginBottom: "5px" }}>Applicants</div>
+          <div style={{ borderRadius: "10px", border: "1px solid #e1eaf7", background: "#ffffff", padding: "6px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "6px", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: "0.54rem", fontWeight: 700, color: "#203a62" }}>á‹˜áˆ‹áˆˆáˆ áˆ°á‹©áˆœ</div>
+                <div style={{ fontSize: "0.47rem", color: "#7f94af", marginTop: "1px" }}>Application #APL-2841 â€¢ 2BR â€¢ Kazanchis</div>
+              </div>
+              <span style={{ fontSize: "0.46rem", color: "#23784f", background: "#e7f8f0", border: "1px solid #cdeedc", borderRadius: "999px", padding: "2px 6px" }}>Verified</span>
+            </div>
+            <div style={{ marginTop: "4px", fontSize: "0.46rem", color: "#5f7391" }}>Submitted docs: ID, bank statement, guarantor letter</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LeaseWorkflowIllustration() {
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: "560px",
+        aspectRatio: "1.62 / 1",
+        borderRadius: "30px",
+        overflow: "hidden",
+        border: "1px solid #e4e1dc",
+        background:
+          "radial-gradient(circle at 74% 18%, rgba(224, 224, 229, 0.75) 0 14%, transparent 14%), radial-gradient(circle at 48% 64%, rgba(230, 230, 235, 0.7) 0 20%, transparent 20%), linear-gradient(135deg, #f1efeb 0%, #ece9e4 48%, #f4f2ef 100%)",
+        boxShadow: "0 20px 46px rgba(76, 76, 76, 0.08)",
+      }}
+    >
+      <div style={{ position: "absolute", inset: "0 auto auto 16%", width: "16%", height: "100%", background: "rgba(255,255,255,0.16)" }} />
+      <div style={{ position: "absolute", inset: "0 auto auto 32%", width: "22%", height: "100%", background: "rgba(255,255,255,0.14)" }} />
+
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: "80%",
+          height: "71%",
+          borderRadius: "26px",
+          transform: "translate(-50%, -50%)",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.97), rgba(249,248,246,0.96))",
+          border: "1px solid #e4e2df",
+          boxShadow: "0 20px 46px rgba(96, 96, 96, 0.11)",
+          padding: "8px",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "6px", borderBottom: "1px solid #e8e5e1", marginBottom: "7px" }}>
+          <div style={{ fontSize: "0.64rem", fontWeight: 700, color: "#263c66", letterSpacing: "0.01em" }}>Lease Overview</div>
+          <div style={{ fontSize: "0.5rem", color: "#8390a3" }}>Unit Group A</div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "6px", marginTop: "54px" }}>
+          {[
+            ["Outstanding Balance", "Birr 24,500"],
+            ["Upcoming Charges", "Birr 18,750"],
+            ["Fixed Term", "1/1/2026 - 12/31/2026"],
+            ["Linked Units", "12 Units"],
+          ].map(([label, value]) => (
+            <div key={label} style={{ borderRadius: "9px", border: "1px solid #ece8e3", background: "#fcfbf9", padding: "7px 7px 6px" }}>
+              <div style={{ fontSize: "0.48rem", color: "#8890a3", marginBottom: "3px" }}>{label}</div>
+              <div style={{ fontSize: label === "Fixed Term" ? "0.54rem" : "0.68rem", color: "#2a416b", fontWeight: 700 }}>{value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: "8px", borderRadius: "10px", border: "1px solid #ebe6e1", background: "#fcfbf9", padding: "8px" }}>
+          <div style={{ fontSize: "0.6rem", color: "#2a416b", fontWeight: 700, marginBottom: "5px" }}>Lease termination</div>
+          <div style={{ display: "grid", gap: "4px" }}>
+            {[
+              ["Sunset Villas - 3B", "Notice served â€¢ 30 days left", "In review"],
+              ["Lideta Apartments - 4C", "Exit inspection scheduled", "Scheduled"],
+              ["Bole Offices - 2A", "Deposit settlement pending", "Pending"],
+            ].map(([unit, detail, status]) => (
+              <div key={unit} style={{ borderRadius: "8px", border: "1px solid #ebe8e4", background: "#ffffff", padding: "6px", display: "grid", gridTemplateColumns: "1fr auto", gap: "6px", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: "0.5rem", color: "#324a72", fontWeight: 700 }}>{unit}</div>
+                  <div style={{ marginTop: "1px", fontSize: "0.45rem", color: "#72809a" }}>{detail}</div>
+                </div>
+                <span style={{ fontSize: "0.44rem", color: "#486281", background: "#f3f6fb", border: "1px solid #e0e8f3", borderRadius: "999px", padding: "2px 6px", whiteSpace: "nowrap" }}>{status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          left: "9%",
+          right: "6%",
+          top: "33.5%",
+          borderRadius: "18px",
+          background: "rgba(255,255,255,0.55)",
+          border: "1px solid rgba(231,226,220,0.7)",
+          boxShadow: "0 12px 26px rgba(96, 96, 96, 0.08)",
+          padding: "10px 11px",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: "8%",
+          right: "5%",
+          top: "32%",
+          maxHeight: "24%",
+          borderRadius: "18px",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(251,250,248,0.95))",
+          border: "1px solid #e7e2dc",
+          boxShadow: "0 18px 36px rgba(96, 96, 96, 0.12)",
+          padding: "8px",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ fontSize: "0.58rem", color: "#2a416b", fontWeight: 700, marginBottom: "6px", paddingBottom: "4px", borderBottom: "1px solid #ece8e2" }}>Quick Actions</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "7px" }}>
+          {[
+            ["Post Charge", "#fff3e7", "#ef8a23"],
+            ["Receive Payment", "#e8faf1", "#18b06f"],
+            ["Extend access to portal", "#e9f1ff", "#4f87ff"],
+          ].map(([label, bg, fg], idx) => (
+            <div key={label} style={{ borderRadius: "8px", border: "1px solid #ece8e2", background: "#ffffff", padding: "7px 6px", display: "flex", alignItems: "center", gap: "6px", position: "relative" }}>
+              <span style={{ width: "16px", height: "16px", borderRadius: "4px", background: bg, color: fg, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.54rem", flexShrink: 0 }}>
+                {idx === 0 ? "P" : idx === 1 ? "$" : "[]"}
+              </span>
+              <span style={{ color: "#35517a", fontSize: "0.48rem", fontWeight: 600 }}>{label}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ position: "absolute", left: "58%", top: "44px", width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: "10px solid #2f3e8e", transform: "rotate(-44deg)" }} />
+      </div>
+    </div>
+  )
+}
+
+function MaintenanceSnapshotCard() {
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: "560px",
+        aspectRatio: "1.62 / 1",
+        borderRadius: "30px",
+        overflow: "hidden",
+        border: "1px solid #eedeea",
+        background:
+          "radial-gradient(circle at 62% 20%, rgba(232, 209, 227, 0.38) 0 22%, transparent 22%), radial-gradient(circle at 34% 82%, rgba(236, 217, 232, 0.4) 0 30%, transparent 30%), linear-gradient(135deg, #f6edf4 0%, #f2e9f1 54%, #f7eef5 100%)",
+        boxShadow: "0 20px 46px rgba(110, 82, 106, 0.12)",
+      }}
+    >
+      <div style={{ position: "absolute", left: "50%", top: "52%", transform: "translate(-50%, -50%)", width: "90%", height: "82%", borderRadius: "18px", border: "1px solid #e7dce6", background: "linear-gradient(180deg, #ffffff, #fbf8fb)", padding: "10px", overflow: "hidden", boxShadow: "0 12px 28px rgba(0,0,0,0.04)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "8px", borderBottom: "1.5px solid #efe4ee" }}>
+          <span style={{ fontSize: "0.68rem", color: "#2e4368", fontWeight: 800, letterSpacing: "-0.01em" }}>Tenant requests</span>
+          <span style={{ fontSize: "0.55rem", color: "#8793aa", fontWeight: 600 }}>Work orders</span>
+        </div>
+
+        <div
+          style={{
+            marginTop: "12px",
+            width: "100%",
+            borderRadius: "12px",
+            border: "1.5px solid #e8e3eb",
+            background: "linear-gradient(180deg, rgba(255,255,255,1), rgba(248,245,250,0.98))",
+            boxShadow: "0 8px 18px rgba(88, 64, 85, 0.08)",
+            padding: "8px",
+          }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px" }}>
+            {[
+              ["All requests", "250"],
+              ["Captured", "170"],
+              ["AI resolved", "68%"],
+              ["Created", "32%"],
+            ].map(([label, value]) => (
+              <div key={label} style={{ borderRadius: "8px", background: "#ffffff", border: "1px solid #ece7f0", padding: "6px 5px", textAlign: "center" }}>
+                <div style={{ fontSize: "0.48rem", color: "#8690a5", lineHeight: 1.1, fontWeight: 600 }}>{label}</div>
+                <div style={{ marginTop: "4px", fontSize: "0.78rem", color: "#253b63", fontWeight: 800 }}>{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginTop: "12px", display: "grid", gap: "6px" }}>
+          {[
+            ["Smell of gas from stove", "High", "Completed"],
+            ["Bathroom door knob stuck", "Medium", "In Progress"],
+            ["Change fridge light bulb", "Medium", "In Progress"],
+            ["Broken microwave", "Low", "Pending"],
+          ].map(([task, priority, stage], idx) => (
+            <div key={task} style={{ display: "grid", gridTemplateColumns: "1.6fr 0.6fr 0.8fr", alignItems: "center", gap: "8px", borderTop: idx === 0 ? "none" : "1px solid #f0e8f0", paddingTop: idx === 0 ? 0 : "6px" }}>
+              <span style={{ fontSize: "0.55rem", color: "#314a72", fontWeight: 700 }}>{task}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <div style={{ width: "4px", height: "4px", borderRadius: "50%", backgroundColor: priority === "High" ? "#bf546f" : priority === "Medium" ? "#c37a2d" : "#6d83a1" }} />
+                <span style={{ fontSize: "0.52rem", color: priority === "High" ? "#bf546f" : priority === "Medium" ? "#c37a2d" : "#6d83a1", fontWeight: 600 }}>{priority}</span>
+              </div>
+              <span style={{ fontSize: "0.52rem", color: stage === "Completed" ? "#238859" : stage === "In Progress" ? "#d08327" : "#8b95a7", fontWeight: 700, textAlign: "right" }}>{stage}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+function ApplicantsForUnitsCard() {
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: "560px",
+        aspectRatio: "1.62 / 1",
+        borderRadius: "30px",
+        overflow: "hidden",
+        border: "1px solid #d9e3a7",
+        background:
+          "radial-gradient(circle at 72% 24%, rgba(232, 244, 173, 0.48) 0 20%, transparent 20%), radial-gradient(circle at 36% 84%, rgba(228, 241, 162, 0.45) 0 32%, transparent 32%), linear-gradient(135deg, #e5f391 0%, #dded86 52%, #e9f5a8 100%)",
+        boxShadow: "0 20px 46px rgba(92, 118, 44, 0.14)",
+      }}
+    >
+      <div style={{ position: "absolute", inset: "0 auto auto 16%", width: "20%", height: "100%", background: "rgba(255,255,255,0.24)", transform: "skewX(-12deg)" }} />
+      <div style={{ position: "absolute", inset: "0 auto auto 60%", width: "12%", height: "100%", background: "rgba(255,255,255,0.18)", transform: "skewX(-12deg)" }} />
+
+      <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: "92%", height: "85%", display: "grid", gap: "10px", alignContent: "center" }}>
+        {[
+          ["Fayda Report", "Fyda identity report", ""],
+          ["Credit Report", "Applicant's credit report", ""],
+          ["Income Verification", "Automatically verify income", ""],
+        ].map(([title, subtitle, icon], idx) => (
+          <div
+            key={title}
+            style={{
+              marginLeft: idx === 0 ? "2%" : idx === 1 ? "10%" : "18%",
+              borderRadius: "14px",
+              border: "2px solid #dde7b3",
+              background: "linear-gradient(180deg, rgba(255,255,255,1), rgba(251,255,241,0.98))",
+              boxShadow: "0 10px 22px rgba(99, 126, 52, 0.12)",
+              padding: "10px 14px",
+              display: "grid",
+              gridTemplateColumns: "auto 1fr auto",
+              gap: "12px",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "36px", height: "36px", borderRadius: "10px", backgroundColor: "#eaf0fb", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem" }}>
+              {icon}
+            </div>
+            <div>
+              <div style={{ fontSize: "0.72rem", color: "#16335e", fontWeight: 800 }}>{title}</div>
+              <div style={{ marginTop: "2px", fontSize: "0.58rem", color: "#4b5563" }}>{subtitle}</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 8px", borderRadius: "6px", border: "1px solid #dce7f5", fontSize: "0.52rem", fontWeight: 800, color: "#16335e" }}>
+              {idx === 1 ? "Approve or Reject" : "Show Report"} <ChevronRight style={{ width: 10, height: 10 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function Design1Minimal() {
   const router = useRouter()
   const locale = useLocale() as "en" | "am"
   const t = copy[locale]
   const [portalView, setPortalView] = useState<"owner" | "tenant">("owner")
-  const [faqTab, setFaqTab] = useState<FaqTab>("general")
+  const [faqTab, setFaqTab] = useState<FaqTab>("basic")
   const [openFaq, setOpenFaq] = useState("")
   const [demoEmail, setDemoEmail] = useState("")
+  const [questionIndex, setQuestionIndex] = useState(0)
+  const [typedQuestion, setTypedQuestion] = useState("")
+  const [isDeletingQuestion, setIsDeletingQuestion] = useState(false)
   const faqItems = faqByTab[faqTab]
   const leftFaqItems = faqItems.filter((_, idx) => idx % 2 === 0)
   const rightFaqItems = faqItems.filter((_, idx) => idx % 2 === 1)
 
+  useEffect(() => {
+    const full = demoQuestions[questionIndex] ?? ""
+    const next = isDeletingQuestion
+      ? full.slice(0, Math.max(0, typedQuestion.length - 1))
+      : full.slice(0, typedQuestion.length + 1)
+
+    const doneTyping = !isDeletingQuestion && next === full
+    const doneDeleting = isDeletingQuestion && next.length === 0
+
+    const delay = doneTyping ? 3200 : isDeletingQuestion ? 28 : 42
+    const timer = window.setTimeout(() => {
+      setTypedQuestion(next)
+      if (doneTyping) setIsDeletingQuestion(true)
+      if (doneDeleting) {
+        setIsDeletingQuestion(false)
+        setQuestionIndex((prev) => (prev + 1) % demoQuestions.length)
+      }
+    }, delay)
+
+    return () => window.clearTimeout(timer)
+  }, [isDeletingQuestion, questionIndex, typedQuestion])
+
   const handleScheduleDemo = () => {
     const trimmed = demoEmail.trim()
     const target = trimmed
-      ? `/home/contact?email=${encodeURIComponent(trimmed)}`
-      : "/home/contact"
+      ? `/home/register?email=${encodeURIComponent(trimmed)}`
+      : "/home/register"
     router.push(target)
   }
 
@@ -380,10 +826,10 @@ export function Design1Minimal() {
         minHeight: "100vh",
         color: NAVY_DARK,
         background:
-          "radial-gradient(circle at 12% 10%, rgba(122, 87, 255, 0.18), transparent 38%), radial-gradient(circle at 88% 18%, rgba(77, 121, 255, 0.2), transparent 35%), linear-gradient(180deg, #eff4ff 0%, #f8fbff 26%, #ffffff 100%)",
+          "radial-gradient(circle at 12% 10%, rgba(183, 203, 230, 0.4), transparent 38%), radial-gradient(circle at 88% 18%, rgba(174, 196, 224, 0.35), transparent 35%), linear-gradient(180deg, #d8e4f5 0%, #eaf1fb 26%, #ffffff 100%)",
       }}
     >
-      <Header currentPage="home" />
+      <Header currentPage="home" forceLightTheme />
 
       <main>
         <section
@@ -392,11 +838,11 @@ export function Design1Minimal() {
             position: "relative",
             overflow: "hidden",
             background:
-              "radial-gradient(circle at 18% 38%, rgba(84,107,205,0.22) 0 18%, transparent 18%), radial-gradient(circle at 74% 52%, rgba(56,80,178,0.24) 0 19%, transparent 19%), linear-gradient(135deg, #33479a 0%, #364a9f 45%, #304493 100%)",
+              "radial-gradient(circle at 18% 38%, rgba(190, 209, 234, 0.4) 0 18%, transparent 18%), radial-gradient(circle at 74% 52%, rgba(179, 201, 229, 0.36) 0 19%, transparent 19%), linear-gradient(135deg, #d7e4f5 0%, #dce8f7 45%, #d3e0f2 100%)",
           }}
         >
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 16% 14%, rgba(255,255,255,0.16), transparent 35%), radial-gradient(circle at 80% 26%, rgba(255,255,255,0.09), transparent 30%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", left: 0, bottom: 0, width: "44%", height: "45%", backgroundColor: "#f2f4f7", clipPath: "polygon(0 26%, 100% 100%, 0% 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 16% 14%, rgba(255,255,255,0.28), transparent 35%), radial-gradient(circle at 80% 26%, rgba(255,255,255,0.2), transparent 30%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", left: 0, bottom: 0, width: "44%", height: "45%", backgroundColor: "#e7effa", clipPath: "polygon(0 26%, 100% 100%, 0% 100%)" }} />
           <style>{`
             .hero-visual-wrap { min-height: 530px; }
             .hero-desktop-shell {
@@ -408,12 +854,12 @@ export function Design1Minimal() {
               box-shadow: 0 26px 60px rgba(21, 42, 61, 0.28);
               background-color: #0f4264;
             }
-            .hero-fill-btn {
+.hero-fill-btn {
               position: relative;
               overflow: hidden;
-              border: 1px solid rgba(255,255,255,0.44);
-              color: #ffffff !important;
-              background: rgba(255,255,255,0.14) !important;
+              border: 1px solid #b7c5d5;
+              color: #1f3f69 !important;
+              background: #ffffff !important;
               transition: color 0.2s ease;
             }
             .hero-fill-btn::before {
@@ -424,14 +870,17 @@ export function Design1Minimal() {
               transform-origin: left;
               transition: transform 0.2s ease;
               z-index: 0;
+              pointer-events: none;
             }
             .hero-fill-btn > * { position: relative; z-index: 1; }
             .hero-fill-btn .hero-btn-label,
             .hero-fill-btn .hero-btn-icon { color: inherit !important; transition: color 0.2s ease; }
-            .hero-fill-btn--primary::before { background: #42D3BB; }
-            .hero-fill-btn--secondary::before { background: #1F3549; }
+            .hero-fill-btn--primary::before { background: #5d8dd9; }
+            .hero-fill-btn--secondary::before { background: #5d8dd9; }
             .hero-fill-btn:hover::before { transform: scaleX(1); }
-            .hero-fill-btn:hover { color: white !important; }
+.hero-fill-btn:hover { color: #ffffff !important; }
+            .hero-fill-btn:hover .hero-btn-label,
+            .hero-fill-btn:hover .hero-btn-icon { color: #ffffff !important; }
             .hero-property-card {
               display: flex;
               align-items: center;
@@ -477,17 +926,17 @@ export function Design1Minimal() {
 
           <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", zIndex: 1 }}>
             <div style={{ display: "grid", gap: "2rem", alignItems: "center", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))" }}>
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} style={{ marginTop: "-4.9rem" }}>
-                <h1 style={{ fontSize: "clamp(1.8rem, 4.3vw, 3.45rem)", lineHeight: 1.08, letterSpacing: "-0.02em", color: "white", marginBottom: "0.8rem" }}>
-                  <span style={{ display: "block", fontWeight: 200, color: "rgba(255,255,255,0.98)" }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }} style={{ marginTop: "-8.7rem" }}>
+                <h1 style={{ fontSize: "clamp(1.8rem, 4.3vw, 3.45rem)", lineHeight: 1.08, letterSpacing: "-0.02em", color: "#182c43", marginBottom: "0.8rem" }}>
+                  <span style={{ display: "block", fontWeight: 200, color: "#223a54" }}>
                     {t.heroTitleTop} {t.heroTitleOutline}
                   </span>
-                  <span style={{ display: "block", color: "rgba(255,255,255,0.98)" }}>
+                  <span style={{ display: "block", color: "#1b3552" }}>
                     <span style={{ fontWeight: 800 }}>Built for </span>
                     <span style={{ fontWeight: 800 }}>You</span>
                   </span>
                 </h1>
-                <p style={{ fontSize: "clamp(0.92rem, 1.1vw, 1.03rem)", color: "rgba(255,255,255,0.94)", lineHeight: 1.58, maxWidth: "560px", marginBottom: "0.95rem" }}>
+                <p style={{ fontSize: "clamp(0.92rem, 1.1vw, 1.03rem)", color: "#314962", lineHeight: 1.58, maxWidth: "560px", marginBottom: "0.95rem" }}>
                   {t.heroSubtitle}
                 </p>
                 <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "0.55rem" }}>
@@ -575,6 +1024,156 @@ export function Design1Minimal() {
           </div>
         </section>
 
+        <section style={{ padding: "0.4rem 1rem 3rem" }}>
+          <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+            <style>{`
+              .learn-link {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: #3d87ff;
+                font-weight: 700;
+                text-decoration: none;
+                transition: transform 0.18s ease, color 0.18s ease;
+              }
+              .learn-link .learn-arrow { transition: transform 0.18s ease; }
+              .learn-link:hover { transform: translateY(-1px); color: #1f6fff; }
+              .learn-link:hover .learn-arrow { transform: translateX(4px); }
+            `}</style>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(480px,1fr))", gap: "1.8rem", alignItems: "start" }}>
+              <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                <OwnerPortalIllustration />
+                <div style={{ paddingTop: "1.15rem", maxWidth: "560px", width: "100%" }}>
+                  <h3 style={{ margin: 0, fontSize: "clamp(1.35rem, 2.6vw, 1.9rem)", lineHeight: 1.12, letterSpacing: "-0.03em", color: "#1f2e68", fontWeight: 700 }}>
+                    Stay on top of outstanding balances and tenant transactions
+                  </h3>
+                  <p style={{ margin: "0.8rem 0 0", fontSize: "clamp(0.95rem, 1.45vw, 1.03rem)", lineHeight: 1.55, color: "#2f4375" }}>
+                    One connected financial view for your team to track unpaid rent, recent tenant activity, and the exact records operations run on.
+                  </p>
+                  <div style={{ display: "grid", gap: "0.7rem", marginTop: "1.15rem" }}>
+                    {[
+                      "Monitor overdue balances across units in real time",
+                      "Review recent tenant transactions without switching screens",
+                      "Keep collections, tenant activity, and finance visibility connected",
+                    ].map((item) => (
+                      <div key={item} style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#2e416f", fontSize: "clamp(0.92rem, 1.3vw, 1rem)" }}>
+                        <span style={{ width: "24px", height: "24px", borderRadius: "50%", border: "2px solid #3d87ff", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#3d87ff", fontSize: "0.8rem", flexShrink: 0 }}>
+                          +
+                        </span>
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: "1.25rem", marginBottom: "4rem", fontSize: "clamp(0.98rem, 1.35vw, 1.05rem)" }}>
+                    <a className="learn-link" href="/home/services/reporting-analytics">
+                      <span>Learn about balances and reporting</span>
+                      <span className="learn-arrow">{"->"}</span>
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.06 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                <LeaseWorkflowIllustration />
+                <div style={{ paddingTop: "1.15rem", maxWidth: "560px", width: "100%" }}>
+                  <h3 style={{ margin: 0, fontSize: "clamp(1.35rem, 2.6vw, 1.9rem)", lineHeight: 1.12, letterSpacing: "-0.03em", color: "#1f2e68", fontWeight: 700 }}>
+                    Get paid on time with automatic rent collection.
+                  </h3>
+                  <p style={{ margin: "0.8rem 0 0", fontSize: "clamp(0.95rem, 1.45vw, 1.03rem)", lineHeight: 1.55, color: "#2f4375" }}>
+                    Automate collection across your portfolio so upcoming charges, lease payment methods, and owner actions stay clear and on time.
+                  </p>
+                  <div style={{ display: "grid", gap: "0.7rem", marginTop: "1.15rem" }}>
+                    {[
+                      "Collect rent with clear payment actions and charge controls",
+                      "Keep lease balances, terms, and linked units visible in one place",
+                      "Reduce follow-up work with structured rent collection workflows",
+                    ].map((item) => (
+                      <div key={item} style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#2e416f", fontSize: "clamp(0.92rem, 1.3vw, 1rem)" }}>
+                        <span style={{ width: "24px", height: "24px", borderRadius: "50%", border: "2px solid #3d87ff", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#3d87ff", fontSize: "0.8rem", flexShrink: 0 }}>
+                          +
+                        </span>
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: "1.25rem", marginBottom: "4rem", fontSize: "clamp(0.98rem, 1.35vw, 1.05rem)" }}>
+                    <a className="learn-link" href="/home/services/property-management">
+                      <span>Learn about rent collection</span>
+                      <span className="learn-arrow">{"->"}</span>
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(480px,1fr))", gap: "1.8rem", alignItems: "start", marginTop: "2rem" }}>
+              <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                <MaintenanceSnapshotCard />
+                <div style={{ paddingTop: "1.15rem", maxWidth: "560px", width: "100%" }}>
+                  <h3 style={{ margin: 0, fontSize: "clamp(1.35rem, 2.6vw, 1.9rem)", lineHeight: 1.12, letterSpacing: "-0.03em", color: "#1f2e68", fontWeight: 700 }}>
+                    Manage work orders with clear KPI visibility
+                  </h3>
+                  <p style={{ margin: "0.8rem 0 0", fontSize: "clamp(0.95rem, 1.45vw, 1.03rem)", lineHeight: 1.55, color: "#2f4375" }}>
+                    Track tenant requests with KPI cards, priority queues, and live work-order status in one compact panel.
+                  </p>
+                  <div style={{ display: "grid", gap: "0.7rem", marginTop: "1.15rem" }}>
+                    {[
+                      "View all open work orders and status at a glance",
+                      "Prioritize urgent issues with clear KPI distribution",
+                      "Reduce maintenance delays with structured tracking",
+                    ].map((item) => (
+                      <div key={item} style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#2e416f", fontSize: "clamp(0.92rem, 1.3vw, 1rem)" }}>
+                        <span style={{ width: "24px", height: "24px", borderRadius: "50%", border: "2px solid #3d87ff", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#3d87ff", fontSize: "0.8rem", flexShrink: 0 }}>
+                          +
+                        </span>
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: "1.8rem", fontSize: "clamp(0.98rem, 1.35vw, 1.05rem)" }}>
+                    <a className="learn-link" href="/home/services/maintenance-management">
+                      <span>Learn about maintenance management</span>
+                      <span className="learn-arrow">{"->"}</span>
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.06 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                <ApplicantsForUnitsCard />
+                <div style={{ paddingTop: "1.15rem", maxWidth: "560px", width: "100%" }}>
+                  <h3 style={{ margin: 0, fontSize: "clamp(1.35rem, 2.6vw, 1.9rem)", lineHeight: 1.12, letterSpacing: "-0.03em", color: "#1f2e68", fontWeight: 700 }}>
+                    Screen applicants before assigning units
+                  </h3>
+                  <p style={{ margin: "0.8rem 0 0", fontSize: "clamp(0.95rem, 1.45vw, 1.03rem)", lineHeight: 1.55, color: "#2f4375" }}>
+                    Review applicant profile quality, verify required documents, and confirm affordability before lease placement.
+                  </p>
+                  <div style={{ display: "grid", gap: "0.7rem", marginTop: "1.15rem" }}>
+                    {[
+                      "Run document verification before final unit assignment",
+                      "Check affordability signals before lease approval",
+                      "Keep applicant review decisions consistent across teams",
+                    ].map((item) => (
+                      <div key={item} style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#2e416f", fontSize: "clamp(0.92rem, 1.3vw, 1rem)" }}>
+                        <span style={{ width: "24px", height: "24px", borderRadius: "50%", border: "2px solid #3d87ff", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#3d87ff", fontSize: "0.8rem", flexShrink: 0 }}>
+                          +
+                        </span>
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: "1.8rem", fontSize: "clamp(0.98rem, 1.35vw, 1.05rem)" }}>
+                    <a className="learn-link" href="/home/services/tenant-experience">
+                      <span>Learn about tenant management</span>
+                      <span className="learn-arrow">{"->"}</span>
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
         <section style={{ padding: "2rem 1rem 3rem", background: "linear-gradient(180deg, #ffffff, #f8fbff)" }}>
           <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
             <h2 style={{ fontSize: "clamp(1.55rem, 3.8vw, 2.35rem)", color: NAVY_DARK, marginBottom: "0.5rem" }}>
@@ -600,7 +1199,7 @@ export function Design1Minimal() {
               <div style={{ display: "grid", gap: "0.55rem" }}>
                 {["Attendance for commercial operations", "Localized workflows and bilingual UX", "Integrated notices, documents, and reports"].map((item) => (
                   <div key={item} style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem", color: "white" }}>
-                    <CheckCircle2 style={{ width: 16, height: 16, color: "#42D3BB" }} />
+                    <CheckCircle2 style={{ width: 16, height: 16, color: ACCENT }} />
                     <span style={{ color: "rgba(255,255,255,0.94)" }}>{item}</span>
                   </div>
                 ))}
@@ -657,12 +1256,13 @@ export function Design1Minimal() {
           </div>
         </section>
 
-        <section style={{ padding: "1.7rem 1rem 3.2rem", background: "#f5f7fb" }}>
+        <section style={{ padding: "4.7rem 1rem 3.2rem", background: "#f5f7fb" }}>
           <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-            <h2 style={{ textAlign: "center", fontSize: "clamp(1.65rem, 3.4vw, 2.55rem)", fontWeight: 500, letterSpacing: "-0.01em", color: "#1f2b3a", marginBottom: "0.95rem" }}>
-              Your questions, answered
+            <h2 style={{ textAlign: "center", fontSize: "clamp(1.65rem, 3.4vw, 2.55rem)", fontWeight: 600, letterSpacing: "-0.01em", color: "#1f2b3a", marginBottom: "1.05rem" }}>
+              Frequently Asked Questions
             </h2>
-            <div style={{ display: "flex", justifyContent: "center", gap: "0.95rem", marginBottom: "1.65rem", flexWrap: "wrap" }}>
+            <div style={{ borderBottom: "2px dashed #d7dce4", margin: "2.5rem 0" }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: "clamp(1.2rem, 5vw, 3.8rem)", marginBottom: "-2px", flexWrap: "wrap" }}>
               {faqTabs.map((tab) => {
                 const active = faqTab === tab.id
                 return (
@@ -673,20 +1273,23 @@ export function Design1Minimal() {
                       setOpenFaq("")
                     }}
                     style={{
-                      border: "1px solid #d5dce8",
-                      backgroundColor: active ? HERO_BLUE : "#eceff3",
-                      color: active ? "white" : "#7f8a9c",
-                      borderRadius: "10px",
-                      minWidth: "104px",
-                      height: "48px",
-                      fontSize: "0.9rem",
-                      fontWeight: 500,
+                      border: "none",
+                      borderBottom: active ? "4px solid #78a8f0" : "4px solid transparent",
+                      backgroundColor: "transparent",
+                      color: active ? "#78a8f0" : "#a4acb8",
+                      borderRadius: 0,
+                      minWidth: "120px",
+                      height: "52px",
+                      fontSize: "1rem",
+                      letterSpacing: "0.08em",
+                      fontWeight: 700,
                     }}
                   >
                     {tab.label}
                   </button>
                 )
               })}
+            </div>
             </div>
             <div className="faq-columns" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", alignItems: "start" }}>
               {[leftFaqItems, rightFaqItems].map((columnItems, colIdx) => (
@@ -714,63 +1317,151 @@ export function Design1Minimal() {
 
         <section
           style={{
-            padding: "5rem 1rem 5.6rem",
-            background:
-              "radial-gradient(circle at 18% 38%, rgba(84,107,205,0.22) 0 18%, transparent 18%), radial-gradient(circle at 74% 52%, rgba(56,80,178,0.24) 0 19%, transparent 19%), linear-gradient(135deg, #33479a 0%, #364a9f 45%, #304493 100%)",
-            color: "white",
-            borderTop: "1px solid rgba(255,255,255,0.2)",
+            padding: "4.25rem 1rem 0",
+            background: "#ffffff",
           }}
         >
-          <div style={{ maxWidth: "980px", margin: "0 auto", textAlign: "center" }}>
-            <h2 style={{ fontSize: "clamp(2rem, 4.3vw, 3.1rem)", marginBottom: "0.9rem", fontWeight: 500, letterSpacing: "-0.01em" }}>
-              {t.finalTitle}
-            </h2>
-            <p style={{ margin: "0 auto 1.8rem", color: "rgba(245,248,255,0.95)", maxWidth: "720px", lineHeight: 1.45, fontSize: "clamp(1.06rem, 1.6vw, 1.38rem)", whiteSpace: "pre-line" }}>
-              {t.finalDesc}
-            </p>
+<style>{`
+            .cta-form-grid {
+              display: grid;
+              grid-template-columns: 1.7fr 1fr;
+              border-radius: 12px;
+              overflow: hidden;
+              width: 100%;
+            }
+            .cta-fill-btn {
+              position: relative;
+              overflow: hidden;
+            }
+            .cta-fill-btn::before {
+              content: "";
+              position: absolute;
+              inset: 0;
+              background: #5d8dd9;
+              transform: scaleX(0);
+              transform-origin: left;
+              transition: transform 0.25s ease;
+              z-index: 0;
+              pointer-events: none;
+            }
+            .cta-fill-btn:hover::before {
+              transform: scaleX(1);
+            }
+            .cta-fill-btn span, .cta-fill-btn {
+              position: relative;
+              z-index: 1;
+            }
+            .cta-fill-btn:hover span {
+              color: #ffffff !important;
+            }
+            @media (max-width: 720px) {
+              .cta-form-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          `}</style>
+          <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+            <div
+              style={{
+                position: "relative",
+                overflow: "hidden",
+                borderRadius: "42px",
+                border: "1px solid #cfe0fb",
+                background:
+                  "radial-gradient(circle at 22% 20%, rgba(255,255,255,0.35), transparent 46%), radial-gradient(circle at 75% 38%, rgba(255,255,255,0.22), transparent 45%), linear-gradient(135deg, #2c7df2 0%, #256ce8 42%, #1b55d8 100%)",
+                boxShadow: "0 26px 70px rgba(16, 44, 92, 0.22)",
+                padding: "clamp(2.1rem, 4vw, 3.2rem)",
+              }}
+            >
+              <div style={{ position: "absolute", inset: "-20% auto auto -14%", width: "54%", height: "160%", background: "rgba(255,255,255,0.12)", transform: "skewX(-18deg)" }} />
+              <div style={{ position: "absolute", inset: "-10% auto auto 52%", width: "22%", height: "140%", background: "rgba(255,255,255,0.1)", transform: "skewX(-18deg)" }} />
 
-            <div style={{ margin: "0 auto", maxWidth: "710px", display: "grid", gridTemplateColumns: "1.45fr 0.9fr", borderRadius: "8px", overflow: "hidden", boxShadow: "0 10px 24px rgba(16,30,76,0.28)" }}>
-              <div style={{ background: "#ffffff", color: "#98A0A8", display: "flex", alignItems: "center", gap: "0.75rem", padding: "1.05rem 1.2rem", fontSize: "1.1rem", textAlign: "left" }}>
-                <Mail style={{ width: 27, height: 27, color: "#a6adb6", flexShrink: 0 }} />
-                <input
-                  type="email"
-                  value={demoEmail}
-                  onChange={(e) => setDemoEmail(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleScheduleDemo()
-                  }}
-                  placeholder="Your Email"
+              <div style={{ position: "relative", maxWidth: "980px", margin: "0 auto", textAlign: "center" }}>
+                <p style={{ margin: "0 auto 1.7rem", color: "rgba(245,248,255,0.95)", maxWidth: "820px", lineHeight: 1.45, fontSize: "clamp(1.04rem, 1.55vw, 1.24rem)", whiteSpace: "pre-line" }}>
+                  {t.finalDesc}
+                </p>
+
+                <div
                   style={{
-                    width: "100%",
-                    border: "none",
-                    outline: "none",
-                    color: "#6b7280",
-                    fontSize: "1.1rem",
-                    background: "transparent",
+                    margin: "0 auto",
+                    maxWidth: "860px",
+                    borderRadius: "30px",
+                    background:
+                      "radial-gradient(circle at 70% -10%, rgba(63, 95, 128, 0.28) 0 44%, transparent 44%), linear-gradient(180deg, #223f5c 0%, #1f3851 56%, #1a334a 100%)",
+                    boxShadow: "0 18px 44px rgba(12, 26, 43, 0.34)",
+                    padding: "clamp(1.4rem, 2.6vw, 2rem)",
+                    border: "1px solid rgba(255,255,255,0.14)",
                   }}
-                  aria-label="Your Email"
-                />
+                >
+                  <div style={{ textAlign: "left", fontSize: "clamp(1.22rem, 2vw, 1.65rem)", lineHeight: 1.22, color: "rgba(255,255,255,0.96)", fontWeight: 500 }}>
+                    <span>{typedQuestion || t.finalTitle}</span>
+                    <span style={{ display: "inline-block", marginLeft: 6, opacity: 0.9 }}>|</span>
+                  </div>
+
+                  <div
+                    className="cta-form-grid"
+                    style={{
+                      marginTop: "1.2rem",
+                      boxShadow: "0 10px 24px rgba(6, 12, 30, 0.24)",
+                      maxWidth: "700px",
+                      marginInline: "auto",
+                    }}
+                  >
+                    <div style={{ background: "#ffffff", color: "#98A0A8", display: "flex", alignItems: "center", gap: "0.75rem", padding: "0 1.2rem", height: "56px", fontSize: "1.05rem", textAlign: "left", flex: 1 }}>
+                      <Mail style={{ width: 24, height: 24, color: "#a6adb6", flexShrink: 0 }} />
+                      <input
+                        type="email"
+                        value={demoEmail}
+                        onChange={(e) => setDemoEmail(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleScheduleDemo()
+                        }}
+                        placeholder="Your Email"
+                        style={{
+                          flex: 1,
+                          height: "100%",
+                          border: "none",
+                          outline: "none",
+                          color: "#6b7280",
+                          fontSize: "1.05rem",
+                          background: "transparent",
+                        }}
+                        aria-label="Your Email"
+                      />
+                    </div>
+                    <button
+                      onClick={() => router.push("/home/register")}
+                      className="cta-fill-btn"
+                      style={{
+                        height: "56px",
+                        paddingInline: "2.4rem",
+                        borderRadius: "0",
+                        backgroundColor: "#78a8f0",
+                        color: "#FFFFFF",
+                        fontSize: "1.1rem",
+                        fontWeight: 700,
+                        border: "none",
+                        cursor: "pointer",
+                        overflow: "hidden",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}
+                    >
+                      <span>Register as Owner</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-              <button
-                onClick={handleScheduleDemo}
-                style={{
-                  border: "none",
-                  cursor: "pointer",
-                  backgroundColor: "#42d3bb",
-                  color: "white",
-                  fontSize: "1.15rem",
-                  fontWeight: 500,
-                  padding: "1rem 1.25rem",
-                }}
-              >
-                {t.finalCta}
-              </button>
             </div>
           </div>
         </section>
+
+        <div style={{ height: "6.5rem", background: "#ffffff" }} />
       </main>
 
       <Footer />
     </div>
   )
 }
+

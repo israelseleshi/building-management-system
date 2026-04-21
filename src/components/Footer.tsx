@@ -31,7 +31,7 @@ const propertyTypeLinks = [
 ]
 
 const resourceLinks = ["Case Studies", "Blog", "Definitions", "Support & Security"]
-const companyLinks = ["About Us", "Awards", "Affiliate Program", "Careers", "Contact"]
+const companyLinks = ["About Us", "Careers", "Contact"]
 
 export function Footer() {
   return (
