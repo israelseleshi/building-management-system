@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { useLocale } from "next-intl"
@@ -1174,18 +1174,175 @@ export function Design1Minimal() {
           </div>
         </section>
 
-        <section style={{ padding: "2rem 1rem 3rem", background: "linear-gradient(180deg, #ffffff, #f8fbff)" }}>
+        <section style={{ padding: "4rem 1rem", background: "#ffffff", overflow: "hidden" }}>
           <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-            <h2 style={{ fontSize: "clamp(1.55rem, 3.8vw, 2.35rem)", color: NAVY_DARK, marginBottom: "0.5rem" }}>
-              {t.workflowTitle}
-            </h2>
-            <p style={{ color: "#5f6f85", marginBottom: "1.25rem" }}>{t.workflowDesc}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "0.75rem" }}>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              whileInView={{ opacity: 1, y: 0 }} 
+              viewport={{ once: true }} 
+              style={{ textAlign: "center", marginBottom: "3rem" }}
+            >
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                <div style={{ height: "2px", width: "24px", background: "linear-gradient(90deg, transparent, " + HERO_BLUE + ")" }} />
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: HERO_BLUE, letterSpacing: "0.15em", textTransform: "uppercase" }}>Process Flow</span>
+                <div style={{ height: "2px", width: "24px", background: "linear-gradient(90deg, " + HERO_BLUE + ", transparent)" }} />
+              </div>
+              <h2 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)", color: NAVY_DARK, marginBottom: "0.75rem", fontWeight: 800 }}>
+                BMS <span style={{ color: HERO_BLUE, position: "relative" }}>
+                  Workflow
+                </span>
+              </h2>
+              <p style={{ color: "#5f6f85", fontSize: "1rem", maxWidth: "600px", margin: "0 auto" }}>{t.workflowDesc}</p>
+            </motion.div>
+
+            <style>{`
+              .workflow-container {
+                display: grid;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 1rem;
+                position: relative;
+                padding: 20px 0;
+              }
+              .workflow-item {
+                position: relative;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              }
+              .workflow-circle {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: #f0f7ff;
+                border: 2px solid #e0eaff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1rem;
+                position: relative;
+                z-index: 2;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                color: ${HERO_BLUE};
+              }
+              .workflow-item:hover .workflow-circle {
+                transform: scale(1.1);
+                background: #78a8f0;
+                border-color: #78a8f0;
+                color: #ffffff;
+                box-shadow: 0 8px 20px rgba(120, 168, 240, 0.3);
+              }
+              .workflow-line {
+                position: absolute;
+                top: 30px;
+                left: calc(50% + 30px);
+                right: calc(-50% + 30px);
+                height: 2px;
+                background: #e0eaff;
+                z-index: 1;
+              }
+              .workflow-pulse-dot {
+                position: absolute;
+                top: -3px;
+                left: 0;
+                width: 8px;
+                height: 8px;
+                background: #78a8f0;
+                border-radius: 50%;
+                box-shadow: 0 0 12px #78a8f0;
+                animation: flowPulseTotal 12s infinite linear;
+              }
+              @keyframes flowPulseTotal {
+                0% { left: 0%; opacity: 0; }
+                2% { opacity: 1; }
+                98% { opacity: 1; }
+                100% { left: 600%; opacity: 0; }
+              }
+              .step-spark {
+                position: absolute;
+                inset: -4px;
+                border-radius: 50%;
+                border: 2px solid #78a8f0;
+                opacity: 0;
+                pointer-events: none;
+              }
+              .workflow-item:nth-child(1) .step-spark { animation: sparkAnim 12s infinite linear 0s; }
+              .workflow-item:nth-child(2) .step-spark { animation: sparkAnim 12s infinite linear 2s; }
+              .workflow-item:nth-child(3) .step-spark { animation: sparkAnim 12s infinite linear 4s; }
+              .workflow-item:nth-child(4) .step-spark { animation: sparkAnim 12s infinite linear 6s; }
+              .workflow-item:nth-child(5) .step-spark { animation: sparkAnim 12s infinite linear 8s; }
+              .workflow-item:nth-child(6) .step-spark { animation: sparkAnim 12s infinite linear 10s; }
+
+              @keyframes sparkAnim {
+                0%, 0.5% { opacity: 0; transform: scale(1); }
+                1% { opacity: 1; transform: scale(1.2); }
+                2%, 100% { opacity: 0; transform: scale(1.4); }
+              }
+
+              .workflow-content {
+                transition: transform 0.3s ease;
+              }
+              .workflow-item:hover .workflow-content {
+                transform: translateY(-4px);
+              }
+              @media (max-width: 1200px) {
+                .workflow-container { grid-template-columns: repeat(3, 1fr); gap: 3rem; }
+                .workflow-line:nth-child(3n) { display: none; }
+              }
+              @media (max-width: 768px) {
+                .workflow-container { grid-template-columns: 1fr; gap: 3rem; }
+                .workflow-line { 
+                  top: calc(100% + 0.5rem); 
+                  left: 50%; 
+                  right: auto; 
+                  width: 2px; 
+                  height: 2rem; 
+                  transform: translateX(-50%);
+                }
+                .workflow-pulse-dot { display: none; }
+              }
+            `}</style>
+
+            <div className="workflow-container">
               {workflow.map((step, idx) => (
-                <motion.div key={step} whileHover={{ y: -4 }} style={{ borderRadius: "12px", border: "1px solid #dbe4f2", backgroundColor: "white", padding: "0.9rem" }}>
-                  <div style={{ color: ACCENT, fontWeight: 700, marginBottom: "0.4rem" }}>0{idx + 1}</div>
-                  <div style={{ color: NAVY_DARK, fontSize: "0.93rem" }}>{step}</div>
-                </motion.div>
+                <div key={step} className="workflow-item">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="workflow-circle"
+                  >
+                    <div className="step-spark" />
+                    <span style={{ fontSize: "1.1rem", fontWeight: 800 }}>0{idx + 1}</span>
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="workflow-content"
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 + 0.1 }}
+                  >
+                    <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: NAVY_DARK, marginBottom: "0.4rem" }}>
+                      {step}
+                    </h3>
+                    <p style={{ fontSize: "0.82rem", color: "#5f6f85", lineHeight: 1.4, padding: "0 5px" }}>
+                      {idx === 0 && "Publish units to our marketplace with high-quality media."}
+                      {idx === 1 && "Securely screen applicants and manage digital signings."}
+                      {idx === 2 && "Create leases and assign tenants with automated records."}
+                      {idx === 3 && "Automate monthly rent invoices and track collections."}
+                      {idx === 4 && "Capture and resolve work orders with clear status updates."}
+                      {idx === 5 && "Review monthly reports and portfolio performance trends."}
+                    </p>
+                  </motion.div>
+
+                  {idx < workflow.length - 1 && (
+                    <div className="workflow-line">
+                      {idx === 0 && <div className="workflow-pulse-dot" />}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
