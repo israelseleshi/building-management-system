@@ -79,6 +79,10 @@ export function DashboardSidebar({
     : generatedGroups
 
   const groups = translatedGroups
+  const tenantFlatItems = React.useMemo(
+    () => groups.flatMap((group) => group.items),
+    [groups]
+  )
   const router = useRouter()
 
   const [activePanelGroup, setActivePanelGroup] = useState<number | null>(null)
@@ -156,6 +160,12 @@ export function DashboardSidebar({
   const sidebarHoverText = isTenantDashboard ? "hover:text-[#1F3549]" : "hover:text-white"
   const hoverClass = isTenantDashboard ? "hover:bg-[#F5F9FF] hover:text-[#1F3549]" : "hover:bg-[#113B5E] hover:text-white"
   const sidebarBaseTextClass = isTenantDashboard ? "text-[#4E5D70]" : "text-white/70"
+  const tenantUnifiedItemClass =
+    "flex w-full items-center gap-3 rounded-md px-3 py-3 text-[0.95rem] font-medium transition-all duration-200 min-h-[46px]"
+  const tenantUnifiedActiveClass =
+    "border-l-4 border-[#6EAFF8] bg-[#ECF5FF] text-[#1F3549] font-semibold shadow-[inset_0_0_0_1px_rgba(110,175,248,0.25)]"
+  const tenantUnifiedInactiveClass =
+    "border-l-4 border-transparent text-[#4E5D70] hover:bg-[#F5F9FF] hover:text-[#1F3549]"
   const groupTitleTextClass = isTenantDashboard
     ? "text-[1.02rem] font-semibold tracking-[0.01em] text-[#1F3549]"
     : "text-[0.74rem] font-medium uppercase tracking-[0.03em]"
@@ -304,6 +314,32 @@ export function DashboardSidebar({
                   </button>
                 )
               })}
+            </div>
+          </nav>
+        ) : isTenantDashboard ? (
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-5">
+            <div className="space-y-1">
+              {tenantFlatItems.map((item, itemIndex) => (
+                <button
+                  key={`${item.path}-${itemIndex}`}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`${tenantUnifiedItemClass} ${
+                    item.active ? tenantUnifiedActiveClass : tenantUnifiedInactiveClass
+                  }`}
+                  title={item.name}
+                >
+                  <span
+                    className={`shrink-0 transition-colors ${
+                      item.active ? "text-[#4C8FE2]" : "text-[#5D6D81]"
+                    }`}
+                  >
+                    {React.cloneElement(item.icon as React.ReactElement<any>, {
+                      className: "w-5 h-5",
+                    })}
+                  </span>
+                  <span className="truncate text-left">{item.name}</span>
+                </button>
+              ))}
             </div>
           </nav>
         ) : (

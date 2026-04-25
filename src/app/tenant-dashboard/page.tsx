@@ -17,9 +17,12 @@ import {
   FileText,
   Wrench,
   CreditCard,
-  Bell
+  Bell,
+  Megaphone,
+  CircleDollarSign,
+  Home,
+  MapPin
 } from "lucide-react"
-import NoticeBoard from "@/components/dashboard/NoticeBoard"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { usePathname } from "next/navigation"
 
@@ -276,13 +279,118 @@ function DashboardContent() {
           )}
 
           {activeTab === "dashboard" && (
-            <div className="p-8">
-              <Heading level={2} className="text-2xl font-bold text-foreground mb-6">
+            <div className="space-y-4 p-4 sm:space-y-5 sm:p-6 lg:p-8">
+              <Heading level={2} className="text-2xl font-bold text-foreground">
                 {t("dashboard.welcome")}
               </Heading>
-              <div className="bg-card rounded-lg border border-border p-6">
-                <h3 className="font-semibold mb-4">{t("dashboard.noticeBoard")}</h3>
-                <NoticeBoard />
+
+              <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 shadow-[0_8px_24px_rgba(20,54,94,0.06)] sm:p-6">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="border-l-4 border-[#7DB5FF] pl-4 sm:pl-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B7F98]">
+                      Payable Now
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-[#6B7F98]">
+                      Suggested Payment
+                    </p>
+                    <h3 className="text-[2rem] font-bold leading-none text-[#1F3549] sm:text-[2.3rem]">
+                      $500.00
+                    </h3>
+                    <p className="mt-2 text-sm text-[#647992]">Due Nov 1, 2026</p>
+                    <p className="mt-1 text-sm font-semibold text-[#365676]">Total Outstanding $1,000.00</p>
+                  </div>
+
+                  <div className="w-full lg:w-auto">
+                    <Button
+                      className="h-11 w-full rounded-lg px-6 font-semibold text-white lg:w-auto"
+                      style={{ backgroundColor: "#5EA3F5" }}
+                    >
+                      Make Payment
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-5 border-t border-[#E8EEF6] pt-4">
+                  <div className="hidden grid-cols-4 text-xs font-semibold uppercase tracking-[0.05em] text-[#7A8EA7] sm:grid">
+                    <span>Your Breakdown</span>
+                    <span>Amount</span>
+                    <span>Due Date</span>
+                    <span>Status</span>
+                  </div>
+                  <div className="mt-3 rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3 sm:p-4">
+                    <div className="grid gap-2 sm:grid-cols-4 sm:items-center">
+                      <div className="font-semibold text-[#1F3549]">Rent</div>
+                      <div className="text-[#35597D]">$1,000.00</div>
+                      <div className="text-[#35597D]">Nov 1, 2026</div>
+                      <div>
+                        <span className="inline-flex rounded-md bg-[#FFE8E6] px-2 py-1 text-xs font-semibold text-[#CC4A3D]">
+                          OVERDUE
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div className="rounded-xl border border-[#E6ECF5] bg-white p-5 shadow-[0_8px_24px_rgba(20,54,94,0.05)]">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.06em] text-[#6F829A]">Open Requests</h3>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D4E5FF] bg-[#EFF6FF]">
+                      <Wrench className="h-5 w-5 text-[#4C8FE2]" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-semibold text-[#1F3549]">How can we help you?</p>
+                  <p className="mt-1 text-sm text-[#6E7F95]">Your open requests will display here.</p>
+                  <Button
+                    className="mt-5 h-10 w-full rounded-lg font-semibold text-white sm:w-auto sm:px-6"
+                    style={{ backgroundColor: "#5EA3F5" }}
+                  >
+                    Create Request
+                  </Button>
+                </div>
+
+                <div className="rounded-xl border border-[#E6ECF5] bg-white p-5 shadow-[0_8px_24px_rgba(20,54,94,0.05)]">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.06em] text-[#6F829A]">New Announcements</h3>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D4E5FF] bg-[#EFF6FF]">
+                      <Megaphone className="h-5 w-5 text-[#4C8FE2]" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-semibold text-[#1F3549]">You&apos;re all caught up!</p>
+                  <p className="mt-1 text-sm text-[#6E7F95]">New announcements will display here.</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[#E6ECF5] bg-white p-5 shadow-[0_8px_24px_rgba(20,54,94,0.05)]">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.06em] text-[#6F829A]">Lease Information</h3>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3">
+                    <div className="text-xs uppercase tracking-[0.05em] text-[#7A8EA7]">Account Number</div>
+                    <div className="mt-1 font-semibold text-[#1F3549]">01704701</div>
+                  </div>
+                  <div className="rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3">
+                    <div className="text-xs uppercase tracking-[0.05em] text-[#7A8EA7]">Property</div>
+                    <div className="mt-1 flex items-center gap-1 font-semibold text-[#1F3549]">
+                      <Home className="h-4 w-4 text-[#4C8FE2]" />
+                      Park Place Apartments
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3">
+                    <div className="text-xs uppercase tracking-[0.05em] text-[#7A8EA7]">Address</div>
+                    <div className="mt-1 flex items-center gap-1 text-[#365676]">
+                      <MapPin className="h-4 w-4 text-[#4C8FE2]" />
+                      123 Testing Street
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3">
+                    <div className="text-xs uppercase tracking-[0.05em] text-[#7A8EA7]">Outstanding</div>
+                    <div className="mt-1 flex items-center gap-1 font-semibold text-[#C84A3B]">
+                      <CircleDollarSign className="h-4 w-4" />
+                      $1,000.00
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
