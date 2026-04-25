@@ -279,9 +279,9 @@ function DashboardContent() {
 
           {activeTab === "dashboard" && (
             <div className="space-y-4 p-4 sm:space-y-5 sm:p-6 lg:p-8">
-              <Heading level={2} className="text-2xl font-bold text-foreground">
-                {t("dashboard.welcome")}
-              </Heading>
+              <p className="text-base font-medium text-[#5E6F84] sm:text-lg">
+                Hello, Sarah!
+              </p>
 
               <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 shadow-[0_8px_24px_rgba(20,54,94,0.06)]">
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">

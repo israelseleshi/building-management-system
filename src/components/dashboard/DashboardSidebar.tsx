@@ -161,7 +161,7 @@ export function DashboardSidebar({
   const hoverClass = isTenantDashboard ? "hover:bg-[#F5F9FF] hover:text-[#1F3549]" : "hover:bg-[#113B5E] hover:text-white"
   const sidebarBaseTextClass = isTenantDashboard ? "text-[#4E5D70]" : "text-white/70"
   const tenantUnifiedItemClass =
-    "flex w-full items-center gap-3 rounded-md px-3 py-3 text-[0.95rem] font-medium transition-all duration-200 min-h-[46px]"
+    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-[0.88rem] font-medium transition-all duration-200 min-h-[40px]"
   const tenantUnifiedActiveClass =
     "border-l-4 border-[#6EAFF8] bg-[#ECF5FF] text-[#1F3549] font-semibold shadow-[inset_0_0_0_1px_rgba(110,175,248,0.25)]"
   const tenantUnifiedInactiveClass =
@@ -218,7 +218,7 @@ export function DashboardSidebar({
   return (
     <aside
       className={`border-r ${sidebarBorderColor} ${sidebarBg} transition-all duration-300 ease-in-out sticky top-0 h-screen flex flex-col select-none relative z-30 ${
-        isSidebarCollapsed ? "w-[68px]" : isTenantDashboard ? "w-[272px]" : "w-[180px]"
+        isSidebarCollapsed ? "w-[60px]" : isTenantDashboard ? "w-[220px]" : "w-[180px]"
       }`}
       style={{ boxShadow: "0 0 12px rgba(0, 0, 0, 0.05)" }}
     >
@@ -237,7 +237,7 @@ export function DashboardSidebar({
 
         {/* Brand header */}
         <div
-          className={`px-4 py-6 flex items-center gap-2 border-b ${sidebarBorderColor} ${
+          className={`px-3 py-4 flex items-center gap-2 border-b ${sidebarBorderColor} ${
             isSidebarCollapsed ? "justify-center px-1" : "justify-start"
           }`}
         >
@@ -254,16 +254,16 @@ export function DashboardSidebar({
             {!isSidebarCollapsed && (
               <div className="min-w-0">
                 <div
-                  className={`brand-logo truncate ${isTenantDashboard ? "text-[1.9rem]" : "text-[1.6rem]"} leading-none ${
+                  className={`brand-logo truncate ${isTenantDashboard ? "text-[1.45rem]" : "text-[1.6rem]"} leading-none ${
                     isApplicationsPage ? "text-white" : "text-[#2A3A4E]"
                   }`}
                 >
                   {isTenantDashboard ? "BMS" : appBrandName}
                 </div>
                 {isTenantDashboard && (
-                  <div className="mt-1 text-[0.64rem] font-semibold uppercase tracking-[0.1em] text-[#617086]">
-                    Tenant Portal
-                  </div>
+                <div className="mt-1 text-[0.58rem] font-semibold uppercase tracking-[0.1em] text-[#617086]">
+                  Tenant Portal
+                </div>
                 )}
               </div>
             )}
@@ -548,7 +548,7 @@ export function DashboardSidebar({
       {/* ── Collapsed mode flyout panel ── */}
       {isSidebarCollapsed && (
         <div
-          className={`absolute top-0 left-[68px] h-screen ${isTenantDashboard ? "w-[272px]" : "w-[200px]"} ${sidebarBg} border-r ${sidebarBorderColor} flex flex-col z-30 transition-all duration-300 ease-out ${
+          className={`absolute top-0 left-[60px] h-screen ${isTenantDashboard ? "w-[220px]" : "w-[200px]"} ${sidebarBg} border-r ${sidebarBorderColor} flex flex-col z-30 transition-all duration-300 ease-out ${
             isPanelOpen
               ? "translate-x-0 opacity-100 shadow-[8px_0_20px_-4px_rgba(0,0,0,0.12)]"
               : "-translate-x-3 opacity-0 pointer-events-none"

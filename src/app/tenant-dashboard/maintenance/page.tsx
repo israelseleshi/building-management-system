@@ -18,9 +18,7 @@ import {
   FileText,
   DollarSign,
   ChevronRight,
-  ArrowLeft,
   Upload,
-  Flame,
   Lightbulb,
   Droplets,
   Snowflake,
@@ -138,8 +136,6 @@ function TenantMaintenanceContent() {
     description: "",
     category: "general" as Category,
     priority: "normal" as Priority,
-    allowEntry: "yes",
-    markUrgent: false,
     attachments: [] as string[],
   })
   const navItems = [
@@ -170,7 +166,7 @@ function TenantMaintenanceContent() {
       subject: newRequest.subject,
       description: newRequest.description,
       category: newRequest.category,
-      priority: newRequest.markUrgent ? "urgent" : newRequest.priority,
+      priority: newRequest.priority,
       status: "pending",
       unit: "Unit B-204",
       created_at: nowIso,
@@ -185,8 +181,6 @@ function TenantMaintenanceContent() {
       description: "",
       category: "general",
       priority: "normal",
-      allowEntry: "yes",
-      markUrgent: false,
       attachments: [],
     })
   }
@@ -258,11 +252,11 @@ function TenantMaintenanceContent() {
           )}
 
           {showNewRequestForm && (
-            <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_320px]">
+            <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_300px]">
               <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
-                <div className="flex items-center gap-2 border-b border-[#E8EEF6] pb-3">
-                  <ArrowLeft className="w-4 h-4 text-[#6B7F98]" />
-                  <h3 className="text-lg font-semibold text-[#1F3549]">Raise a New Maintenance Request</h3>
+                <div className="border-b border-[#E8EEF6] pb-3">
+                  <p className="text-xl font-semibold text-[#1F3549]">Create request</p>
+                  <p className="mt-1 text-sm font-medium text-[#6B7F98]">Request maintenance detail</p>
                 </div>
 
                 <div className="mt-4 space-y-4">
@@ -273,13 +267,6 @@ function TenantMaintenanceContent() {
                         <Wrench className="w-4 h-4 text-[#4C8FE2]" />
                         Maintenance request
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => router.push("/tenant-dashboard/requests")}
-                        className="text-xs font-semibold text-[#4C8FE2]"
-                      >
-                        Change
-                      </button>
                     </div>
                   </div>
 
@@ -318,39 +305,7 @@ function TenantMaintenanceContent() {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-semibold text-[#4E5D70] mb-1">Do you grant maintenance personnel permission to enter if necessary?</label>
-                        <div className="flex items-center gap-5 text-sm text-[#3F546E]">
-                          <label className="inline-flex items-center gap-2">
-                            <input
-                              type="radio"
-                              name="entry-permission"
-                              checked={newRequest.allowEntry === "yes"}
-                              onChange={() => setNewRequest((prev) => ({ ...prev, allowEntry: "yes" }))}
-                            />
-                            Yes
-                          </label>
-                          <label className="inline-flex items-center gap-2">
-                            <input
-                              type="radio"
-                              name="entry-permission"
-                              checked={newRequest.allowEntry === "no"}
-                              onChange={() => setNewRequest((prev) => ({ ...prev, allowEntry: "no" }))}
-                            />
-                            No
-                          </label>
-                        </div>
-                      </div>
-
-                      <label className="inline-flex items-center gap-2 text-sm text-[#3F546E]">
-                        <input
-                          type="checkbox"
-                          checked={newRequest.markUrgent}
-                          onChange={(e) => setNewRequest((prev) => ({ ...prev, markUrgent: e.target.checked }))}
-                        />
-                        <Flame className="w-4 h-4 text-[#E36B2C]" />
-                        Mark as urgent
-                      </label>
+                      <div />
                     </div>
 
                     <div className="space-y-4">
