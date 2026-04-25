@@ -4,7 +4,7 @@ import { useState } from "react"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import {
   Home,
@@ -118,6 +118,8 @@ function TenantLeaveContent() {
     other_reason: ""
   })
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isEmbedded = searchParams.get("embed") === "1"
   const t = useTranslations("Tenant")
 
   const navItems = [
@@ -234,26 +236,30 @@ function TenantLeaveContent() {
   const isTemporaryFormValid = newRequest.start_date && newRequest.end_date && newRequest.reason && (newRequest.reason !== "other" || newRequest.other_reason)
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <DashboardSidebar
-        navItems={navItems}
-        isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={toggleSidebar}
-        onLogout={handleLogout}
-        onNavigate={handleSidebarNavigation}
-      />
-
-      <div className="flex-1 flex flex-col">
-        <DashboardHeader
-          title="Leave Requests"
-          subtitle={pendingCount > 0 ? `${pendingCount} pending request${pendingCount > 1 ? "s" : ""}` : "Manage your property departure requests"}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+    <div className={`min-h-screen bg-background ${isEmbedded ? "" : "flex"}`}>
+      {!isEmbedded && (
+        <DashboardSidebar
+          navItems={navItems}
+          isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={toggleSidebar}
-          searchPlaceholder="Search requests..."
+          onLogout={handleLogout}
+          onNavigate={handleSidebarNavigation}
         />
+      )}
 
-        <div className="flex-1 p-8">
+      <div className={isEmbedded ? "" : "flex-1 flex flex-col"}>
+        {!isEmbedded && (
+          <DashboardHeader
+            title="Leave Requests"
+            subtitle={pendingCount > 0 ? `${pendingCount} pending request${pendingCount > 1 ? "s" : ""}` : "Manage your property departure requests"}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onToggleSidebar={toggleSidebar}
+            searchPlaceholder="Search requests..."
+          />
+        )}
+
+        <div className={`flex-1 ${isEmbedded ? "p-4 sm:p-6" : "p-8"}`}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
               <div className="flex items-center gap-3">

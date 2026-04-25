@@ -22,10 +22,10 @@ import {
   Calendar,
   ShieldCheck,
   ClipboardList,
-  Send,
   FileInput,
   Wrench,
   PlaneTakeoff,
+  ClipboardPlus,
 } from "lucide-react"
 
 export interface NavItemBase {
@@ -147,20 +147,12 @@ const tenantGroups: NavGroupBase[] = [
     defaultOpen: true,
   },
   {
-    title: "Properties",
-    icon: <Building className="w-5 h-5" />,
-    items: [
-      { icon: <Grid className="w-5 h-5" />, name: "Listings", path: "/tenant-dashboard/listings" },
-    ],
-  },
-  {
     title: "Management",
     icon: <Grid className="w-5 h-5" />,
     items: [
       { icon: <Calendar className="w-5 h-5" />, name: "My Rents", path: "/tenant-dashboard/leases" },
-      { icon: <Wrench className="w-5 h-5" />, name: "Maintenance", path: "/tenant-dashboard/maintenance" },
       { icon: <FileText className="w-5 h-5" />, name: "Documents", path: "/tenant-dashboard/documents" },
-      { icon: <Send className="w-5 h-5" />, name: "Leave Requests", path: "/tenant-dashboard/leave" },
+      { icon: <Wrench className="w-5 h-5" />, name: "Requests", path: "/tenant-dashboard/requests" },
     ],
   },
   {

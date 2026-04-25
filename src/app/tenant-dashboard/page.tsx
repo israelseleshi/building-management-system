@@ -19,7 +19,6 @@ import {
   CreditCard,
   Bell,
   Megaphone,
-  CircleDollarSign,
   Home,
   MapPin
 } from "lucide-react"
@@ -284,25 +283,25 @@ function DashboardContent() {
                 {t("dashboard.welcome")}
               </Heading>
 
-              <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 shadow-[0_8px_24px_rgba(20,54,94,0.06)] sm:p-6">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                  <div className="border-l-4 border-[#7DB5FF] pl-4 sm:pl-5">
+              <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 shadow-[0_8px_24px_rgba(20,54,94,0.06)]">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
+                  <div className="border-l-4 border-[#7DB5FF] pl-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B7F98]">
                       Payable Now
                     </p>
-                    <p className="mt-2 text-sm font-medium text-[#6B7F98]">
-                      Suggested Payment
+                    <p className="mt-1 text-sm font-medium text-[#6B7F98]">
+                      Outstanding Payment
                     </p>
-                    <h3 className="text-[2rem] font-bold leading-none text-[#1F3549] sm:text-[2.3rem]">
-                      $500.00
+                    <h3 className="mt-1 text-[1.35rem] font-bold leading-tight text-[#1F3549] sm:text-[1.5rem]">
+                      ETB 65,000
                     </h3>
-                    <p className="mt-2 text-sm text-[#647992]">Due Nov 1, 2026</p>
-                    <p className="mt-1 text-sm font-semibold text-[#365676]">Total Outstanding $1,000.00</p>
+                    <p className="mt-1 text-sm font-semibold text-[#365676]">Total Outstanding ETB 130,000</p>
                   </div>
 
-                  <div className="w-full lg:w-auto">
+                  <div className="space-y-2 lg:text-right">
+                    <p className="text-sm text-[#647992]">Due Nov 1, 2026</p>
                     <Button
-                      className="h-11 w-full rounded-lg px-6 font-semibold text-white lg:w-auto"
+                      className="h-10 w-full rounded-lg px-5 font-semibold text-white lg:w-auto"
                       style={{ backgroundColor: "#5EA3F5" }}
                     >
                       Make Payment
@@ -310,7 +309,7 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                <div className="mt-5 border-t border-[#E8EEF6] pt-4">
+                <div className="mt-4 border-t border-[#E8EEF6] pt-3">
                   <div className="hidden grid-cols-4 text-xs font-semibold uppercase tracking-[0.05em] text-[#7A8EA7] sm:grid">
                     <span>Your Breakdown</span>
                     <span>Amount</span>
@@ -320,7 +319,7 @@ function DashboardContent() {
                   <div className="mt-3 rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3 sm:p-4">
                     <div className="grid gap-2 sm:grid-cols-4 sm:items-center">
                       <div className="font-semibold text-[#1F3549]">Rent</div>
-                      <div className="text-[#35597D]">$1,000.00</div>
+                      <div className="text-[#35597D]">ETB 130,000</div>
                       <div className="text-[#35597D]">Nov 1, 2026</div>
                       <div>
                         <span className="inline-flex rounded-md bg-[#FFE8E6] px-2 py-1 text-xs font-semibold text-[#CC4A3D]">
@@ -343,6 +342,7 @@ function DashboardContent() {
                   <p className="text-lg font-semibold text-[#1F3549]">How can we help you?</p>
                   <p className="mt-1 text-sm text-[#6E7F95]">Your open requests will display here.</p>
                   <Button
+                    onClick={() => router.push("/tenant-dashboard/requests")}
                     className="mt-5 h-10 w-full rounded-lg font-semibold text-white sm:w-auto sm:px-6"
                     style={{ backgroundColor: "#5EA3F5" }}
                   >
@@ -373,21 +373,20 @@ function DashboardContent() {
                     <div className="text-xs uppercase tracking-[0.05em] text-[#7A8EA7]">Property</div>
                     <div className="mt-1 flex items-center gap-1 font-semibold text-[#1F3549]">
                       <Home className="h-4 w-4 text-[#4C8FE2]" />
-                      Park Place Apartments
+                      Rayuma Building
                     </div>
                   </div>
                   <div className="rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3">
                     <div className="text-xs uppercase tracking-[0.05em] text-[#7A8EA7]">Address</div>
                     <div className="mt-1 flex items-center gap-1 text-[#365676]">
                       <MapPin className="h-4 w-4 text-[#4C8FE2]" />
-                      123 Testing Street
+                      Bole, Addis Ababa
                     </div>
                   </div>
                   <div className="rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3">
-                    <div className="text-xs uppercase tracking-[0.05em] text-[#7A8EA7]">Outstanding</div>
-                    <div className="mt-1 flex items-center gap-1 font-semibold text-[#C84A3B]">
-                      <CircleDollarSign className="h-4 w-4" />
-                      $1,000.00
+                    <div className="text-xs uppercase tracking-[0.05em] text-[#7A8EA7]">Unit</div>
+                    <div className="mt-1 font-semibold text-[#1F3549]">
+                      Unit B-204
                     </div>
                   </div>
                 </div>
