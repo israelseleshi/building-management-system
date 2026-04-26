@@ -23,7 +23,6 @@ import {
   BadgeDollarSign,
   ScrollText,
   UserCheck,
-  ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent } from "@/components/ui/sheet"

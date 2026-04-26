@@ -281,7 +281,7 @@ function CalendarContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => typeof window !== "undefined" && localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true")
   const [view, setView] = useState<View>("month")
   const [focus, setFocus] = useState(new Date())
-  const [selectedDate, setSelectedDate] = useState(startDay(new Date()))
+  const [, setSelectedDate] = useState(startDay(new Date()))
   const [events, setEvents] = useState<CalendarEvent[]>(initialEvents)
   const [searchQuery, setSearchQuery] = useState("")
   const [openEditor, setOpenEditor] = useState(false)

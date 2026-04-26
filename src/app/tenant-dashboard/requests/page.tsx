@@ -5,7 +5,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { useRouter } from "next/navigation"
-import { Wrench, PlaneTakeoff, ArrowLeft } from "lucide-react"
+import { Wrench, PlaneTakeoff, ChevronLeft } from "lucide-react"
 
 type RequestType = "maintenance" | "leave"
 
@@ -67,10 +67,10 @@ function TenantRequestsContent() {
               <div className="mb-3">
                 <button
                   onClick={() => setRequestType(null)}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-[#31587F] hover:text-[#1F3549]"
+                  className="inline-flex items-center gap-1.5 text-[15px] font-bold text-[#76A7E5] hover:text-[#4C8FE2] transition-colors"
                 >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back to request types
+                  <ChevronLeft className="h-4 w-4" strokeWidth={3} />
+                  Request types
                 </button>
               </div>
               <iframe
@@ -107,6 +107,22 @@ function TenantRequestsContent() {
                   <p className="mt-1 text-sm text-[#6B7F98]">Submit permanent move-out or temporary leave requests.</p>
                 </button>
               </div>
+
+              <div className="mt-8 text-center">
+                <h4 className="text-lg font-semibold text-[#425A73]">Is this an emergency?</h4>
+                <p className="mt-1 text-sm text-[#6B7F98]">
+                  Police: <span className="font-semibold">991</span> |
+                  Ambulance/Medical: <span className="font-semibold">907</span> or <span className="font-semibold">8035</span> |
+                  Fire: <span className="font-semibold">939</span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!requestType && (
+            <div className="mx-auto mt-8 max-w-5xl px-1 text-xs text-[#8A99AA]">
+              <p>Privacy Policy | Terms of Service</p>
+              <p className="mt-1">&copy; 2025-2026 Powered by Smart BMS - Online Building Management System - All rights reserved</p>
             </div>
           )}
         </div>

@@ -19,12 +19,7 @@ import {
   DollarSign,
   ChevronRight,
   Upload,
-  Lightbulb,
-  Droplets,
-  Snowflake,
-  Building2,
-  CookingPot,
-  Cable,
+  X,
 } from "lucide-react"
 
 type RequestStatus = "pending" | "in_progress" | "completed" | "cancelled"
@@ -100,16 +95,14 @@ const statusConfig: Record<RequestStatus, { label: string; color: string; bg: st
   cancelled: { label: "Cancelled", color: "text-gray-700", bg: "bg-gray-100", icon: <XCircle className="w-4 h-4" /> },
 }
 
-const categoryConfig: Record<Category, { label: string; color: string; icon: React.ReactNode }> = {
-  plumbing: { label: "Plumbing", color: "text-blue-600", icon: <Droplets className="w-4 h-4" /> },
-  electrical: { label: "Electrical", color: "text-yellow-600", icon: <Lightbulb className="w-4 h-4" /> },
-  hvac: { label: "A/C", color: "text-cyan-600", icon: <Snowflake className="w-4 h-4" /> },
-  structural: { label: "Structural", color: "text-purple-600", icon: <Building2 className="w-4 h-4" /> },
-  appliances: { label: "Appliance", color: "text-pink-600", icon: <CookingPot className="w-4 h-4" /> },
-  general: { label: "General", color: "text-gray-600", icon: <Cable className="w-4 h-4" /> },
+const categoryConfig: Record<Category, { label: string; color: string }> = {
+  plumbing: { label: "Plumbing", color: "text-blue-600" },
+  electrical: { label: "Electrical", color: "text-yellow-600" },
+  hvac: { label: "A/C", color: "text-cyan-600" },
+  structural: { label: "Structural", color: "text-purple-600" },
+  appliances: { label: "Appliance", color: "text-pink-600" },
+  general: { label: "General", color: "text-gray-600" },
 }
-
-const categoryGridOrder: Category[] = ["electrical", "plumbing", "hvac", "general", "structural", "appliances"]
 
 export default function TenantMaintenancePage() {
   return (
@@ -173,7 +166,6 @@ function TenantMaintenanceContent() {
       updated_at: nowIso,
       notes: [{ text: "Request submitted", author: "Tenant", timestamp: nowIso }],
     }
-
     setRequests((prev) => [request, ...prev])
     setShowNewRequestForm(false)
     setNewRequest({
@@ -225,7 +217,7 @@ function TenantMaintenanceContent() {
           />
         )}
 
-        <div className={`flex-1 ${isEmbedded ? "p-0" : "p-6 lg:p-8"}`}>
+        <div className={`flex-1 overflow-x-hidden ${isEmbedded ? "bg-[#F3F5FA] p-2 sm:p-3" : "bg-[#F3F5FA] p-6 lg:p-8"}`}>
           {!isCreateMode && (
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-5">
               <div className="flex flex-wrap gap-2">
@@ -252,129 +244,153 @@ function TenantMaintenanceContent() {
           )}
 
           {showNewRequestForm && (
-            <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_300px]">
-              <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
-                <div className="border-b border-[#E8EEF6] pb-3">
-                  <p className="text-xl font-semibold text-[#1F3549]">Create request</p>
-                  <p className="mt-1 text-sm font-medium text-[#6B7F98]">Request maintenance detail</p>
-                </div>
-
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-[#4E5D70] mb-1">Type</label>
-                    <div className="flex items-center justify-between rounded-lg border border-[#DCE6F3] bg-[#FDFEFF] px-3 py-2">
-                      <span className="inline-flex items-center gap-2 text-sm text-[#2F4F73]">
-                        <Wrench className="w-4 h-4 text-[#4C8FE2]" />
-                        Maintenance request
-                      </span>
-                    </div>
+            <div className="flex h-[calc(100vh-180px)] gap-5 overflow-hidden rounded-xl bg-[#F3F5FA] p-1">
+              {/* Form Section */}
+              <div className="w-full max-w-[650px] overflow-y-auto overflow-x-hidden pr-1 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 sm:p-6 shadow-[0_4px_12px_rgba(0,0,0,0.03)]">
+                  <div className="mb-6 border-b border-[#E8EEF6] pb-3">
+                    <p className="text-xl font-semibold text-[#1F3549]">Request details</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {categoryGridOrder.map((categoryKey) => {
-                      const config = categoryConfig[categoryKey]
-                      const active = newRequest.category === categoryKey
-                      return (
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-[#4E5D70] mb-1 text-[13px]">Type</label>
+                      <div className="flex items-center justify-between rounded-lg border border-[#DCE6F3] bg-[#FDFEFF] px-3 py-2 text-sm text-[#2F4F73]">
+                        <div className="flex items-center">
+                          <Wrench className="w-4 h-4 text-[#4C8FE2] mr-2" />
+                          Maintenance request
+                        </div>
                         <button
-                          key={categoryKey}
-                          type="button"
-                          onClick={() => setNewRequest((prev) => ({ ...prev, category: categoryKey }))}
-                          className={`rounded-lg border px-3 py-3 text-left transition ${
-                            active
-                              ? "border-[#84B8FA] bg-[#F1F7FF]"
-                              : "border-[#DDE7F4] bg-white hover:border-[#B8D5FA]"
-                          }`}
+                          onClick={() => {
+                            if (typeof window !== "undefined" && window.top !== window.self) {
+                              window.parent.location.href = "/tenant-dashboard/requests"
+                              return
+                            }
+                            router.push("/tenant-dashboard/requests")
+                          }}
+                          className="text-[#2E7D6A] font-semibold text-xs hover:underline"
                         >
-                          <div className="mb-1 text-[#4C8FE2]">{config.icon}</div>
-                          <div className="text-sm font-medium text-[#1F3549]">{config.label}</div>
+                          Change
                         </button>
-                      )
-                    })}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-[#4E5D70] mb-1">Subject</label>
-                        <input
-                          type="text"
-                          value={newRequest.subject}
-                          onChange={(e) => setNewRequest((prev) => ({ ...prev, subject: e.target.value }))}
-                          className="w-full rounded-lg border border-[#DCE6F3] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#5EA3F5]"
-                          placeholder="Enter request subject"
-                        />
-                      </div>
-
-                      <div />
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-[#4E5D70] mb-1">Upload Image</label>
-                        <label className="block cursor-pointer rounded-lg border border-dashed border-[#A5C9F5] bg-[#FAFCFF] px-4 py-8 text-center text-sm text-[#6A7E97]">
-                          <Upload className="mx-auto mb-2 h-5 w-5 text-[#4C8FE2]" />
-                          Drop files here or browse
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (!file) return
-                              setNewRequest((prev) => ({ ...prev, attachments: [file.name] }))
-                            }}
-                          />
-                        </label>
-                        {newRequest.attachments.length > 0 && (
-                          <p className="mt-1 text-xs text-[#5F738C]">Selected: {newRequest.attachments[0]}</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-[#4E5D70] mb-1">Description</label>
-                        <textarea
-                          value={newRequest.description}
-                          onChange={(e) => setNewRequest((prev) => ({ ...prev, description: e.target.value }))}
-                          className="h-[180px] w-full rounded-lg border border-[#DCE6F3] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#5EA3F5]"
-                          placeholder="Describe the issue"
-                        />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex justify-end gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowNewRequestForm(false)}
-                      className="rounded-lg border border-[#D8E3F2] px-4 py-2 text-sm font-medium text-[#35597D]"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSubmitRequest}
-                      disabled={!newRequest.subject || !newRequest.description}
-                      className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                      style={{ backgroundColor: "#5EA3F5" }}
-                    >
-                      Submit Request
-                    </button>
+                    <div>
+                      <label className="block text-sm font-semibold text-[#4E5D70] mb-1 text-[13px]">Category</label>
+                      <select
+                        value={newRequest.category}
+                        onChange={(e) => setNewRequest({ ...newRequest, category: e.target.value as Category })}
+                        className="w-full rounded-lg border border-[#DCE6F3] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#5EA3F5] appearance-none"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7F98'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
+                      >
+                        <option value="general">General</option>
+                        <option value="electrical">Electrical</option>
+                        <option value="plumbing">Plumbing</option>
+                        <option value="hvac">A/C</option>
+                        <option value="structural">Structural</option>
+                        <option value="appliances">Appliance</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-[#1F3549] text-[13px]">Subject<span className="text-red-500 ml-0.5">*</span></label>
+                      <input
+                        type="text"
+                        placeholder="What is the issue?"
+                        className="w-full rounded-lg border border-[#D8E3F2] bg-white p-2.5 text-sm transition-all focus:border-[#5EA3F5] focus:outline-none focus:ring-4 focus:ring-[#5EA3F5]/10"
+                        value={newRequest.subject}
+                        onChange={(e) => setNewRequest({ ...newRequest, subject: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-[#1F3549] text-[13px]">Description<span className="text-red-500 ml-0.5">*</span></label>
+                      <textarea
+                        rows={5}
+                        maxLength={500}
+                        placeholder="Please describe the issue in detail..."
+                        className="w-full rounded-lg border border-[#D8E3F2] bg-white p-3 text-sm transition-all focus:border-[#5EA3F5] focus:outline-none focus:ring-4 focus:ring-[#5EA3F5]/10 resize-none"
+                        value={newRequest.description}
+                        onChange={(e) => setNewRequest({ ...newRequest, description: e.target.value })}
+                      />
+                      <div className="text-right text-[11px] text-[#A0AEC0]">Characters Remaining: {newRequest.description.length}/500</div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-[#1F3549] text-[13px]">Upload Photo <span className="text-[#A0AEC0] font-normal text-xs ml-1">(Optional)</span></label>
+                      <div className="relative group cursor-pointer">
+                        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#D8E3F2] bg-[#FBFDFF] p-6 transition-all group-hover:border-[#5EA3F5] group-hover:bg-[#F5F9FF]">
+                          <div className="mb-2 rounded-full bg-[#EEF4FF] p-3 text-[#5EA3F5] transition-transform group-hover:scale-110">
+                            <Upload className="h-6 w-6" />
+                          </div>
+                          <p className="text-sm font-medium text-[#1F3549]">
+                            Drop Files Here or <span className="text-[#5EA3F5] hover:underline">Browse</span>.
+                          </p>
+                        </div>
+                        <input type="file" className="absolute inset-0 cursor-pointer opacity-0" />
+                      </div>
+                      <p className="mt-2 text-[12px] text-[#6B7F98] leading-relaxed">
+                        <span className="font-semibold text-[#5D718A]">File format supported:</span> jpg, jpeg, png
+                        <br />
+                        <span className="font-semibold text-[#5D718A]">Maximum file size:</span> 20MB
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-[#E8EEF6]">
+                      <button
+                        type="button"
+                        onClick={() => setShowNewRequestForm(false)}
+                        className="rounded-lg px-6 py-2 text-sm font-bold text-[#6B7F98] hover:bg-[#F8FBFF] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSubmitRequest}
+                        disabled={!newRequest.subject || !newRequest.description}
+                        className="rounded-lg px-8 py-2 text-sm font-bold text-white shadow-lg shadow-[#5EA3F5]/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+                        style={{ backgroundColor: "#5EA3F5" }}
+                      >
+                        Submit Request
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <aside className="rounded-xl border border-[#E6ECF5] bg-white p-4 sm:p-5">
-                <h4 className="text-sm font-semibold uppercase tracking-[0.05em] text-[#6B7F98]">Recent Updates</h4>
-                <div className="mt-3 space-y-3">
+              {/* Updates Section */}
+              <div className="w-[340px] ml-auto overflow-y-auto overflow-x-hidden no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-[#F0F5FF] text-[#5EA3F5]">
+                      <Clock className="w-3.5 h-3.5" />
+                    </div>
+                    <h4 className="text-[13px] font-bold uppercase tracking-wider text-[#1F3549]">Recent Updates ({recentUpdates.length})</h4>
+                  </div>
+                  <button className="text-[11px] font-bold text-[#5EA3F5] hover:underline">Clear</button>
+                </div>
+
+                <div className="space-y-2 overflow-x-hidden">
                   {recentUpdates.map((update, idx) => (
-                    <div key={`${update.requestId}-${idx}`} className="rounded-lg border border-[#E8EEF6] bg-[#FBFDFF] p-3">
-                      <p className="text-sm font-semibold text-[#1F3549]">{update.subject}</p>
-                      <p className="mt-1 text-sm text-[#5D718A]">{update.text}</p>
-                      <p className="mt-1 text-xs text-[#7B8EA6]">{update.author} - {formatDate(update.timestamp)}</p>
+                    <div key={`${update.requestId}-${idx}`} className="relative group rounded-lg border border-[#E8EEF6] bg-white p-3 transition-all hover:border-[#D0DBE6] hover:shadow-sm overflow-x-hidden">
+                      <button className="absolute top-2.5 right-2.5 text-[#A0AEC0] hover:text-[#FF6B6B] opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="flex justify-between items-start mb-1.5">
+                        <p className="text-[13px] font-bold text-[#1F3549] truncate pr-4">{update.subject}</p>
+                        <span className="text-[11px] font-medium text-[#A0AEC0] flex-shrink-0 whitespace-nowrap">{formatDate(update.timestamp)}</span>
+                      </div>
+                      <p className="text-[12px] text-[#5D718A] leading-relaxed line-clamp-2">{update.text}</p>
                     </div>
                   ))}
                 </div>
-              </aside>
+                
+                <div className="flex justify-center mt-5">
+                  <a href="/tenant-dashboard/requests" className="text-xs font-bold text-[#5EA3F5] hover:underline transition-all">
+                    View all
+                  </a>
+                </div>
+              </div>
             </div>
           )}
 

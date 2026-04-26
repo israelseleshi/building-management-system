@@ -144,7 +144,7 @@ function ChatContent() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showHeaderMenu, setShowHeaderMenu] = useState(false)
-  const [blockedContacts, setBlockedContacts] = useState<Set<number>>(new Set())
+  const [, setBlockedContacts] = useState<Set<number>>(new Set())
   const [showBlockDialog, setShowBlockDialog] = useState(false)
   const [userToBlock, setUserToBlock] = useState<{id: number, name: string} | null>(null)
   const headerMenuRef = useRef<HTMLDivElement>(null)

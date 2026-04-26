@@ -278,21 +278,21 @@ function DashboardContent() {
           )}
 
           {activeTab === "dashboard" && (
-            <div className="space-y-4 p-4 sm:space-y-5 sm:p-6 lg:p-8">
-              <p className="text-base font-medium text-[#5E6F84] sm:text-lg">
+            <div className="space-y-3 p-3 sm:space-y-3 sm:p-4 lg:p-5">
+              <p className="text-sm font-semibold text-[#667A92] sm:text-[0.95rem]">
                 Hello, Sarah!
               </p>
 
               <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 shadow-[0_8px_24px_rgba(20,54,94,0.06)]">
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
                   <div className="border-l-4 border-[#7DB5FF] pl-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#6B7F98]">
+                    <span className="inline-flex rounded-full bg-[#EEF5FF] px-3 py-1 text-[0.66rem] font-semibold uppercase tracking-[0.08em] text-[#6F90B8]">
                       Payable Now
-                    </p>
+                    </span>
                     <p className="mt-1 text-sm font-medium text-[#6B7F98]">
                       Outstanding Payment
                     </p>
-                    <h3 className="mt-1 text-[1.35rem] font-bold leading-tight text-[#1F3549] sm:text-[1.5rem]">
+                    <h3 className="mt-1 text-[1.15rem] font-bold leading-tight text-[#1F3549] sm:text-[1.3rem]">
                       ETB 65,000
                     </h3>
                     <p className="mt-1 text-sm font-semibold text-[#365676]">Total Outstanding ETB 130,000</p>
@@ -301,7 +301,7 @@ function DashboardContent() {
                   <div className="space-y-2 lg:text-right">
                     <p className="text-sm text-[#647992]">Due Nov 1, 2026</p>
                     <Button
-                      className="h-10 w-full rounded-lg px-5 font-semibold text-white lg:w-auto"
+                      className="h-10 w-full rounded-full px-6 font-semibold text-white lg:w-auto"
                       style={{ backgroundColor: "#5EA3F5" }}
                     >
                       Make Payment
@@ -332,8 +332,8 @@ function DashboardContent() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-[#E6ECF5] bg-white p-5 shadow-[0_8px_24px_rgba(20,54,94,0.05)]">
-                  <div className="mb-4 flex items-center justify-between">
+                <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 shadow-[0_8px_24px_rgba(20,54,94,0.05)]">
+                  <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-sm font-semibold uppercase tracking-[0.06em] text-[#6F829A]">Open Requests</h3>
                     <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D4E5FF] bg-[#EFF6FF]">
                       <Wrench className="h-5 w-5 text-[#4C8FE2]" />
@@ -343,15 +343,15 @@ function DashboardContent() {
                   <p className="mt-1 text-sm text-[#6E7F95]">Your open requests will display here.</p>
                   <Button
                     onClick={() => router.push("/tenant-dashboard/requests")}
-                    className="mt-5 h-10 w-full rounded-lg font-semibold text-white sm:w-auto sm:px-6"
+                    className="mt-4 h-10 w-full rounded-full font-semibold text-white sm:w-auto sm:px-7"
                     style={{ backgroundColor: "#5EA3F5" }}
                   >
                     Create Request
                   </Button>
                 </div>
 
-                <div className="rounded-xl border border-[#E6ECF5] bg-white p-5 shadow-[0_8px_24px_rgba(20,54,94,0.05)]">
-                  <div className="mb-4 flex items-center justify-between">
+                <div className="rounded-xl border border-[#E6ECF5] bg-white p-4 shadow-[0_8px_24px_rgba(20,54,94,0.05)]">
+                  <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-sm font-semibold uppercase tracking-[0.06em] text-[#6F829A]">New Announcements</h3>
                     <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#D4E5FF] bg-[#EFF6FF]">
                       <Megaphone className="h-5 w-5 text-[#4C8FE2]" />
@@ -359,6 +359,14 @@ function DashboardContent() {
                   </div>
                   <p className="text-lg font-semibold text-[#1F3549]">You&apos;re all caught up!</p>
                   <p className="mt-1 text-sm text-[#6E7F95]">New announcements will display here.</p>
+                  <div className="mt-4">
+                    <button
+                      onClick={() => router.push("/tenant-dashboard/notifications")}
+                      className="text-sm font-semibold text-[#76A7E5] transition hover:text-[#4C8FE2]"
+                    >
+                      View all
+                    </button>
+                  </div>
                 </div>
               </div>
 
