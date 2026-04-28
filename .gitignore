@@ -161,3 +161,7 @@ yarn.lock
 
 # Backend directory (separate repo)
 /BmsBackend
+
+# Graphify outputs
+.graphify_*
+graphify-out/
