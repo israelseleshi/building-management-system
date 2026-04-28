@@ -165,3 +165,26 @@ yarn.lock
 # Graphify outputs
 .graphify_*
 graphify-out/
+
+# Contributor Codebase Analyzer outputs
+.cca/
+
+# Documentation folder
+doc/
+bms_docs/
+CLAUDE.md
+ONBOARDING.md
+each-page-db-connection-summary.md
+frontend-backend-feature-mapping.md
+rest-unconnected-features-plan.md
+
+# Scripts folder
+scripts/
+
+# Root-level scripts and debug files
+check-*
+debug-*
+diagnostic*
+fix-*
+test-*
+*.log

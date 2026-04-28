@@ -11,6 +11,9 @@ export default {
   ],
   theme: {
   	extend: {
+  		transitionTimingFunction: {
+  			'smooth': 'cubic-bezier(0.25, 1, 0.5, 1)'
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

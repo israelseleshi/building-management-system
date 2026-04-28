@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = "https://bmsbackend-dbdm.onrender.com"
+const DEFAULT_API_BASE_URL = "http://49.13.220.159:3000"
 
 const sanitizeBaseUrl = (value?: string) =>
   (value || "")
