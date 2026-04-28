@@ -83,6 +83,7 @@ export function DashboardSidebar({
 
   const [activePanelGroup, setActivePanelGroup] = useState<number | null>(null)
   const [hoveredGroup, setHoveredGroup] = useState<number | null>(null)
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
 
   const handleGroupClick = (index: number) => {
     setActivePanelGroup((current) => {
@@ -117,7 +118,8 @@ export function DashboardSidebar({
     document.cookie = "userRole=; path=/; max-age=0"
   }
 
-  const handleLogoutClick = async () => {
+  const confirmLogout = async () => {
+    setIsLogoutConfirmOpen(false)
     clearClientAuth()
     router.replace("/auth/signin")
     router.refresh()
@@ -126,35 +128,39 @@ export function DashboardSidebar({
       .catch(() => {})
   }
 
+  const handleLogoutClick = () => {
+    setIsLogoutConfirmOpen(true)
+  }
+
   const handleNavigation = (path: string) => {
     router.push(path)
   }
 
   const isApplicationsPage = !isTenantDashboard
 
-  const sidebarBg = isTenantDashboard ? "bg-[#EEF1F8]" : "bg-[#0A2A43]"
-  const sidebarBorderColor = isTenantDashboard ? "border-[#D8DEE9]" : "border-white/10"
+  const sidebarBg = isTenantDashboard ? "bg-white" : "bg-[#0A2A43]"
+  const sidebarBorderColor = isTenantDashboard ? "border-[#E9EDF3]" : "border-white/10"
 
-  // Active item highlight — warm neutral to match the sandy background
+  // Active item highlight — light blue for white sidebar
   const activeHighlightClass = isTenantDashboard
-    ? "bg-white text-[#223042] border border-[#CFD7E5]"
+    ? "bg-[#E8F2FF] text-[#1F3549]"
     : "bg-[#113B5E] text-white"
   
   // Highlight class to connect separated icon & label with a pseudo-element behind them
   const connectedHighlightClass = isTenantDashboard
-    ? "bg-white text-[#223042] before:bg-white"
+    ? "bg-[#E8F2FF] text-[#1F3549] before:bg-[#E8F2FF]"
     : "bg-[#113B5E] text-white before:bg-[#113B5E]"
     
   // Hover style for non-active items
-  const sidebarHoverBg = isTenantDashboard ? "hover:bg-white" : "hover:bg-[#113B5E]"
-  const sidebarHoverText = isTenantDashboard ? "hover:text-[#223042]" : "hover:text-white"
-  const hoverClass = isTenantDashboard ? "hover:bg-white hover:text-[#223042]" : "hover:bg-[#113B5E] hover:text-white"
+  const sidebarHoverBg = isTenantDashboard ? "hover:bg-[#F5F9FF]" : "hover:bg-[#113B5E]"
+  const sidebarHoverText = isTenantDashboard ? "hover:text-[#1F3549]" : "hover:text-white"
+  const hoverClass = isTenantDashboard ? "hover:bg-[#F5F9FF] hover:text-[#1F3549]" : "hover:bg-[#113B5E] hover:text-white"
   const sidebarBaseTextClass = isTenantDashboard ? "text-[#4E5D70]" : "text-white/70"
   const groupTitleTextClass = isTenantDashboard
-    ? "text-[1.02rem] font-semibold tracking-[0.01em]"
+    ? "text-[1.02rem] font-semibold tracking-[0.01em] text-[#1F3549]"
     : "text-[0.74rem] font-medium uppercase tracking-[0.03em]"
   const subItemTextClass = isTenantDashboard
-    ? "text-[0.96rem] font-medium tracking-[0.01em]"
+    ? "text-[0.96rem] font-medium tracking-[0.01em] text-[#4E5D70]"
     : "text-[0.74rem] font-medium"
 
   const isPanelOpen = activePanelGroup !== null
@@ -349,7 +355,7 @@ export function DashboardSidebar({
             </div>
 
             {/* ── Sliding Panel Container ── */}
-            <div className="relative flex-1 min-h-0 overflow-visible">
+            <div className="relative flex-1 min-h-0 overflow-hidden">
               
               {/* Level 1: group title labels (slides out to left) */}
               <div
@@ -554,6 +560,33 @@ export function DashboardSidebar({
               </nav>
             </>
           )}
+        </div>
+      )}
+
+      {isLogoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/20 bg-[#0A2A43] shadow-[0_18px_50px_rgba(5,18,30,0.45)]">
+            <div className="border-b border-white/15 px-5 py-4">
+              <h3 className="text-base font-semibold text-white">Confirm Logout</h3>
+              <p className="mt-1 text-sm text-white/75">Are you sure you want to sign out from the dashboard?</p>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setIsLogoutConfirmOpen(false)}
+                className="h-9 rounded-md border border-white/20 px-4 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmLogout}
+                className="h-9 rounded-md bg-[#E15949] px-4 text-sm font-medium text-white transition-colors hover:bg-[#C84A3B]"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </aside>
