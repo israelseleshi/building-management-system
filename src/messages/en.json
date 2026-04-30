@@ -201,6 +201,82 @@
       "defaultPropertyTitle": "My Home",
       "severityLine": "Severity: {severity}"
     },
+    "maintenance": {
+      "header": {
+        "title": "Maintenance Requests",
+        "subtitle": "Manage your maintenance and repair requests",
+        "activeRequests": "{count} active request",
+        "activeRequests_plural": "{count} active requests",
+        "noActiveRequests": "No active requests"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "pending": "Pending",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "searchPlaceholder": "Search requests...",
+      "newRequest": "New Request",
+      "empty": {
+        "title": "No requests found",
+        "tryAdjusting": "Try adjusting your filters",
+        "submitNew": "Submit a new maintenance request"
+      },
+      "details": {
+        "title": "Request Details",
+        "unit": "Unit",
+        "category": "Category",
+        "priority": "Priority",
+        "created": "Created",
+        "assignedTo": "Assigned To",
+        "scheduled": "Scheduled",
+        "cost": "Cost"
+      },
+      "timeline": {
+        "title": "Activity Timeline"
+      },
+      "status": {
+        "pending": "Pending",
+        "in_progress": "In Progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "priority": {
+        "low": "Low",
+        "normal": "Normal",
+        "high": "High",
+        "urgent": "Urgent"
+      },
+      "category": {
+        "plumbing": "Plumbing",
+        "electrical": "Electrical",
+        "hvac": "HVAC",
+        "structural": "Structural",
+        "appliances": "Appliances",
+        "general": "General"
+      },
+      "form": {
+        "title": "New Maintenance Request",
+        "subtitle": "Submit a new maintenance request",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Brief description of the issue",
+        "categoryLabel": "Category",
+        "priorityLabel": "Priority",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Provide detailed information about the issue...",
+        "cancel": "Cancel",
+        "submit": "Submit Request"
+      },
+      "notes": {
+        "submitted": "Request submitted",
+        "assigned": "Assigned to {name}",
+        "accepted": "Request accepted",
+        "inProgress": "Work in progress",
+        "completed": "Work completed. {note}",
+        "cancelled": "Request cancelled"
+      }
+    },
     "documents": {
       "header": {
         "title": "Documents",

@@ -67,6 +67,14 @@
     "tailwindcss-animated": "^2.0.0",
     "zod": "^4.1.13"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "@parcel/watcher",
+      "sharp",
+      "unrs-resolver"
+    ]
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@testing-library/jest-dom": "^6.9.1",

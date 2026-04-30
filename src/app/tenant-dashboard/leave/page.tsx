@@ -296,26 +296,15 @@ function TenantLeaveContent() {
             </div>
           </div>
 
-          {leaveType === "permanent" && (
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-              <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground">Notice Period Required</h4>
-                  <p className="text-sm text-muted-foreground">Please submit your move-out request at least 30 days in advance.</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowNewRequestModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                New Leave Request
-              </button>
-            </div>
-          )}
+          <div className="flex items-center justify-end mb-6">
+            <button
+              onClick={() => setShowNewRequestModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              New Leave Request
+            </button>
+          </div>
 
           {requests.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -531,7 +520,7 @@ function TenantLeaveContent() {
                   onClick={() => setLeaveType("permanent")}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
                     leaveType === "permanent"
-                      ? "bg-card text-foreground shadow-sm"
+                      ? "bg-blue-600 text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -542,7 +531,7 @@ function TenantLeaveContent() {
                   onClick={() => setLeaveType("temporary")}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
                     leaveType === "temporary"
-                      ? "bg-card text-foreground shadow-sm"
+                      ? "bg-blue-600 text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -563,19 +552,6 @@ function TenantLeaveContent() {
                       className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                     <p className="text-xs text-muted-foreground mt-1">Must be at least 30 days from today</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Notice Period (Days)</label>
-                    <select
-                      value={newRequest.notice_period}
-                      onChange={(e) => setNewRequest({ ...newRequest, notice_period: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="30">30 days (Minimum required)</option>
-                      <option value="45">45 days</option>
-                      <option value="60">60 days</option>
-                      <option value="90">90 days</option>
-                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Reason for Leaving</label>

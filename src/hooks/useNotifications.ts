@@ -3,10 +3,10 @@ import { API_BASE_URL, getAuthToken } from '@/lib/apiClient'
 
 export interface Notification {
   id: string
-  user_id: string
+  user_id?: string
   title: string
   message: string
-  type: 'payment' | 'inquiry' | 'message' | 'maintenance' | 'listing' | 'system'
+  type: 'payment' | 'reminder' | 'maintenance' | 'document' | 'message' | 'system' | 'inquiry' | 'listing'
   related_entity_type?: string
   related_entity_id?: string
   is_read: boolean
@@ -16,6 +16,84 @@ export interface Notification {
   created_at: string
   read_at?: string
 }
+
+const mockNotifications: Notification[] = [
+  {
+    id: "1",
+    title: "Rent Payment Due Soon",
+    message: "Your rent payment for April 2026 is due in 5 days. Please ensure you have sufficient funds.",
+    type: "payment",
+    priority: "high",
+    is_read: false,
+    created_at: "2026-04-01T10:00:00Z"
+  },
+  {
+    id: "2",
+    title: "Payment Received - Thank You",
+    message: "We have received your rent payment of 15,000 ETB for March 2026. Thank you!",
+    type: "payment",
+    priority: "normal",
+    is_read: true,
+    created_at: "2026-03-01T14:30:00Z"
+  },
+  {
+    id: "3",
+    title: "Maintenance Update",
+    message: "Your maintenance request for the bathroom faucet has been completed. Please verify the work.",
+    type: "maintenance",
+    priority: "normal",
+    is_read: false,
+    created_at: "2026-04-03T09:15:00Z",
+    action_url: "/tenant-dashboard/maintenance"
+  },
+  {
+    id: "4",
+    title: "New Lease Document",
+    message: "Your landlord has uploaded a new lease agreement. Please review and sign.",
+    type: "document",
+    priority: "high",
+    is_read: false,
+    created_at: "2026-04-02T11:00:00Z",
+    action_url: "/tenant-dashboard/documents"
+  },
+  {
+    id: "5",
+    title: "Message from Property Management",
+    message: "You have a new message regarding your recent maintenance request.",
+    type: "message",
+    priority: "normal",
+    is_read: true,
+    created_at: "2026-03-28T16:45:00Z",
+    action_url: "/tenant-dashboard/chat"
+  },
+  {
+    id: "6",
+    title: "Scheduled Inspection",
+    message: "A routine property inspection is scheduled for next week. Please ensure access.",
+    type: "reminder",
+    priority: "normal",
+    is_read: false,
+    created_at: "2026-04-04T08:00:00Z"
+  },
+  {
+    id: "7",
+    title: "Building Maintenance Notice",
+    message: "Water supply will be temporarily interrupted on Saturday for maintenance work.",
+    type: "system",
+    priority: "high",
+    is_read: true,
+    created_at: "2026-03-25T12:00:00Z"
+  },
+  {
+    id: "8",
+    title: "Rent Increase Notice",
+    message: "Your landlord has sent information about the upcoming rent adjustment.",
+    type: "system",
+    priority: "urgent",
+    is_read: false,
+    created_at: "2026-04-05T07:30:00Z"
+  }
+]
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -27,8 +105,10 @@ export function useNotifications() {
     try {
       const token = getAuthToken()
       if (!API_BASE_URL || !token) {
-        setNotifications([])
-        setUnreadCount(0)
+        // Use mock data when API is not available
+        setNotifications(mockNotifications)
+        setUnreadCount(mockNotifications.filter(n => !n.is_read).length)
+        setLoading(false)
         return
       }
 
@@ -42,8 +122,10 @@ export function useNotifications() {
 
       if (!response || !response.ok) {
         // Notifications endpoint is not defined in the API spec yet or server is down.
-        setNotifications([])
-        setUnreadCount(0)
+        // Use mock data
+        setNotifications(mockNotifications)
+        setUnreadCount(mockNotifications.filter(n => !n.is_read).length)
+        setLoading(false)
         return
       }
 
@@ -53,6 +135,9 @@ export function useNotifications() {
       setUnreadCount(data.filter((n: Notification) => !n.is_read).length)
     } catch (err) {
       console.error('Error fetching notifications:', err)
+      // Use mock data on error
+      setNotifications(mockNotifications)
+      setUnreadCount(mockNotifications.filter(n => !n.is_read).length)
     } finally {
       setLoading(false)
     }

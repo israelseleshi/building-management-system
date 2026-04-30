@@ -131,6 +131,7 @@ function TenantMaintenanceContent() {
     priority: "normal" as Priority,
     attachments: [] as string[],
   })
+
   const navItems = [
     { icon: <Home className="w-5 h-5" />, name: "Dashboard", path: "/tenant-dashboard", active: false },
     { icon: <DollarSign className="w-5 h-5" />, name: "My Rents", path: "/tenant-dashboard/leases", active: false },
@@ -165,6 +166,7 @@ function TenantMaintenanceContent() {
       created_at: nowIso,
       updated_at: nowIso,
       notes: [{ text: "Request submitted", author: "Tenant", timestamp: nowIso }],
+
     }
     setRequests((prev) => [request, ...prev])
     setShowNewRequestForm(false)
@@ -191,6 +193,35 @@ function TenantMaintenanceContent() {
 
   const pendingCount = requests.filter((r) => r.status === "pending" || r.status === "in_progress").length
 
+  const getStatusConfig = (status: RequestStatus) => {
+    const configs = {
+      pending: { color: "text-yellow-700", bg: "bg-yellow-100", icon: <Clock className="w-4 h-4" /> },
+      in_progress: { color: "text-blue-700", bg: "bg-blue-100", icon: <AlertCircle className="w-4 h-4" /> },
+      completed: { color: "text-green-700", bg: "bg-green-100", icon: <CheckCircle2 className="w-4 h-4" /> },
+      cancelled: { color: "text-gray-700", bg: "bg-gray-100", icon: <XCircle className="w-4 h-4" /> }
+    }
+    return configs[status]
+  }
+
+  const getCategoryConfig = (category: Category) => {
+    const configs: Record<Category, { color: string }> = {
+      plumbing: { color: "text-blue-600" },
+      electrical: { color: "text-yellow-600" },
+      hvac: { color: "text-green-600" },
+      structural: { color: "text-purple-600" },
+      appliances: { color: "text-pink-600" },
+      general: { color: "text-gray-600" }
+    }
+    return configs[category]
+  }
+
+  const getSubtitle = () => {
+    if (pendingCount === 0) {
+      return "No active requests"
+    }
+    return `${pendingCount} active requests`
+  }
+
   return (
     <div className={`min-h-screen bg-background ${isEmbedded ? "" : "flex"}`}>
       {!isEmbedded && (
@@ -209,7 +240,7 @@ function TenantMaintenanceContent() {
         {!isEmbedded && (
           <DashboardHeader
             title="Maintenance Requests"
-            subtitle={pendingCount > 0 ? `${pendingCount} active request${pendingCount > 1 ? "s" : ""}` : "No active requests"}
+            subtitle={getSubtitle()}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             onToggleSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
@@ -405,15 +436,13 @@ function TenantMaintenanceContent() {
           ) : !isCreateMode ? (
             <div className="space-y-4">
               {filteredRequests.map((request) => {
-                const statusInfo = statusConfig[request.status]
-                const categoryInfo = categoryConfig[request.category]
-                const isExpanded = expandedRequest === request.id
+                const statusInfo = getStatusConfig(request.status)
 
                 return (
                   <div key={request.id} className="rounded-xl border border-[#E6ECF5] bg-white overflow-hidden">
                     <div
                       className="p-5 cursor-pointer hover:bg-[#F8FBFF] transition-colors"
-                      onClick={() => setExpandedRequest(isExpanded ? null : request.id)}
+                      onClick={() => setExpandedRequest(expandedRequest === request.id ? null : request.id)}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-start gap-4">
@@ -423,14 +452,14 @@ function TenantMaintenanceContent() {
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-semibold text-[#1F3549]">{request.subject}</h4>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.bg} ${statusInfo.color}`}>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${statusInfo.bg} ${statusInfo.color} flex items-center gap-1.5`}>
                                 {statusInfo.icon}
-                                <span className="ml-1">{statusInfo.label}</span>
+                                <span className="ml-1 font-medium">{statusConfig[request.status].label}</span>
                               </span>
                             </div>
                             <p className="text-sm text-[#5F738C] line-clamp-2">{request.description}</p>
                             <div className="flex items-center gap-4 mt-2 text-xs text-[#7387A0]">
-                              <span className={`font-medium ${categoryInfo.color}`}>{categoryInfo.label}</span>
+                              <span className={`font-medium ${categoryConfig[request.category].color}`}>{categoryConfig[request.category].label}</span>
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 {formatDate(request.created_at)}
@@ -438,18 +467,18 @@ function TenantMaintenanceContent() {
                             </div>
                           </div>
                         </div>
-                        <ChevronRight className={`w-5 h-5 text-[#8CA0B8] transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                        <ChevronRight className={`w-5 h-5 text-[#8CA0B8] transition-transform ${expandedRequest === request.id ? "rotate-90" : ""}`} />
                       </div>
                     </div>
 
-                    {isExpanded && (
+                    {expandedRequest === request.id && (
                       <div className="border-t border-[#E8EEF6] bg-[#FBFDFF] p-5">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           <div>
                             <h5 className="text-sm font-semibold text-[#1F3549] mb-3">Request Details</h5>
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between"><span className="text-[#6B7F98]">Unit</span><span className="font-medium">{request.unit}</span></div>
-                              <div className="flex justify-between"><span className="text-[#6B7F98]">Category</span><span className={`font-medium ${categoryInfo.color}`}>{categoryInfo.label}</span></div>
+                              <div className="flex justify-between"><span className="text-[#6B7F98]">Category</span><span className={`font-medium ${getCategoryConfig(request.category).color}`}>{statusConfig[request.status].label}</span></div>
                               <div className="flex justify-between"><span className="text-[#6B7F98]">Priority</span><span className="font-medium capitalize">{request.priority}</span></div>
                               <div className="flex justify-between"><span className="text-[#6B7F98]">Created</span><span className="font-medium">{formatDate(request.created_at)}</span></div>
                             </div>
@@ -479,8 +508,7 @@ function TenantMaintenanceContent() {
                 )
               })}
             </div>
-          ) : null}
-        </div>
+          ) : null}        </div>
       </div>
     </div>
   )

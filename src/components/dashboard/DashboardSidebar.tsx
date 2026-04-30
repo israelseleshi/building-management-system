@@ -395,7 +395,7 @@ export function DashboardSidebar({
               
               {/* Level 1: group title labels (slides out to left) */}
               <div
-                className={`absolute inset-0 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+                className={`absolute inset-0 flex flex-col transition-transform duration-300 ease-smooth ${
                   isPanelOpen ? "-translate-x-full" : "translate-x-0"
                 }`}
               >
@@ -439,7 +439,7 @@ export function DashboardSidebar({
 
               {/* Level 2: submenu panel (slides in from right) */}
               <div
-                className={`absolute inset-0 flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] ${
+                className={`absolute inset-0 flex flex-col transition-transform duration-300 ease-smooth ${
                   isPanelOpen ? "translate-x-0" : "translate-x-full"
                 }`}
               >

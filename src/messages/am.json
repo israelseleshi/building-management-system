@@ -201,6 +201,82 @@
       "defaultPropertyTitle": "የእኔ ቤት",
       "severityLine": "ክብደት: {severity}"
     },
+    "maintenance": {
+      "header": {
+        "title": "የጥገና ጥያቄዎች",
+        "subtitle": "የጥገና እና መስተካከያ ጥያቄዎችዎን ያስተዳድሩ",
+        "activeRequests": "{count} ንቁ ጥያቄ",
+        "activeRequests_plural": "{count} ንቁ ጥያቄዎች",
+        "noActiveRequests": "ምንም ንቁ ጥያቄ የለም"
+      },
+      "filters": {
+        "allStatus": "ሁሉም ሁኔታዎች",
+        "pending": "በጥበቃ ላይ",
+        "inProgress": "በሂደት ላይ",
+        "completed": "ተጠናቋል",
+        "cancelled": "ተሰርዟል"
+      },
+      "searchPlaceholder": "ጥያቄዎችን ፈልግ...",
+      "newRequest": "አዲስ ጥያቄ",
+      "empty": {
+        "title": "ምንም ጥያቄ አልተገኘም",
+        "tryAdjusting": "ለማጣራት ያላቸውን ይለውጡ",
+        "submitNew": "አዲስ የጥገና ጥያቄ ያቅርቡ"
+      },
+      "details": {
+        "title": "የጥያቄ ዝርዝር",
+        "unit": "ክፍል",
+        "category": "ምድብ",
+        "priority": "ቅድሚያ",
+        "created": "ተፈጠረ",
+        "assignedTo": "ተመደበ",
+        "scheduled": "ቀጠሮ ተይዟል",
+        "cost": "ዋጋ"
+      },
+      "timeline": {
+        "title": "የተግባር ቀንጠቅጠቅ"
+      },
+      "status": {
+        "pending": "በጥበቃ ላይ",
+        "in_progress": "በሂደት ላይ",
+        "completed": "ተጠናቋል",
+        "cancelled": "ተሰርዟል"
+      },
+      "priority": {
+        "low": "ዝቅተኛ",
+        "normal": "መለስተኛ",
+        "high": "ከፍተኛ",
+        "urgent": "አስቸጋሪ"
+      },
+      "category": {
+        "plumbing": "ፕላምቢንግ",
+        "electrical": "ኤሌክትሪክ",
+        "hvac": "ኤች.ቪ.ኤ.ሲ",
+        "structural": "ሕንፃዊ",
+        "appliances": "አንዶች",
+        "general": "አጠቃላይ"
+      },
+      "form": {
+        "title": "አዲስ የጥገና ጥያቄ",
+        "subtitle": "አዲስ የጥገና ጥያቄ ያቅርቡ",
+        "titleLabel": "ርዕስ",
+        "titlePlaceholder": "የችግሩ አጭር ገለፃ",
+        "categoryLabel": "ምድብ",
+        "priorityLabel": "ቅድሚያ",
+        "descriptionLabel": "ገለፃ",
+        "descriptionPlaceholder": "ስለ ችግሩ ዝርዝር መረጃ ያቅርቡ...",
+        "cancel": "ሰርዝ",
+        "submit": "ጥያቄ ላክ"
+      },
+      "notes": {
+        "submitted": "ጥያቄ ተልኳል",
+        "assigned": "ለ {name} ተመደበ",
+        "accepted": "ጥያቄ ተቀብሏል",
+        "inProgress": "ሥራ በሂደት ላይ",
+        "completed": "ሥራ ተጠናቋል። {note}",
+        "cancelled": "ጥያቄ ተሰርዟል"
+      }
+    },
     "documents": {
       "header": {
         "title": "ሰነዶች",

@@ -290,7 +290,7 @@ function DashboardContent() {
                       Payable Now
                     </span>
                     <p className="mt-1 text-sm font-medium text-[#6B7F98]">
-                      Outstanding Payment
+                      {new Date().toLocaleDateString("en-US", { month: "long" })} Outstanding Payment
                     </p>
                     <h3 className="mt-1 text-[1.15rem] font-bold leading-tight text-[#1F3549] sm:text-[1.3rem]">
                       ETB 65,000
