@@ -1,249 +1,154 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Heading, Text } from "@/components/ui/typography"
-import { Toaster } from "@/components/ui/toaster"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
-import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
+import { getAuthToken, API_BASE_URL } from "@/lib/apiClient"
+import { SectionSettingsModal, type SettingsField } from "@/components/shared/SectionSettingsModal"
 import {
-  LayoutDashboard,
   Building2,
-  PlusCircle,
-  MessageSquare,
-  CreditCard,
-  TrendingUp,
-  Settings,
-  User,
-  Lock,
-  Bell,
-  Shield,
-  Save,
-  Eye,
-  EyeOff,
-  Check,
-  Edit2,
+  Briefcase,
+  DollarSign,
   Users,
-  Upload,
-  ImagePlus,
-  Trash2,
+  Cog,
+  Shield,
+  Receipt,
+  WalletCards,
+  Landmark,
+  FileBadge2,
+  UserRoundCog,
+  ScanSearch,
+  Languages,
+  CalendarClock,
+  ShieldEllipsis,
 } from "lucide-react"
 
-interface SettingsTab {
-  id: string
-  label: string
+type FeatureItem = {
+  title: string
+  description: string
+  subFeatures: string[]
   icon: React.ReactNode
 }
 
-interface NotificationSetting {
-  id: string
-  label: string
-  description: string
-  enabled: boolean
+type FeatureGroup = {
+  key: string
+  title: string
+  icon: React.ReactNode
+  features: FeatureItem[]
 }
+
+const SETTINGS_GROUPS: FeatureGroup[] = [
+  {
+    key: "business",
+    title: "Business",
+    icon: <Briefcase className="h-5 w-5" />,
+    features: [
+      {
+        title: "Building Identity",
+        description: "Motto, logo, building name, and address.",
+        subFeatures: ["Motto", "Logo", "Name", "Address"],
+        icon: <Landmark className="h-5 w-5" />,
+      },
+      {
+        title: "Company Info",
+        description: "TIN, slogan, and legal company name.",
+        subFeatures: ["TIN", "Slogan", "Legal Name"],
+        icon: <FileBadge2 className="h-5 w-5" />,
+      },
+    ],
+  },
+  {
+    key: "finance",
+    title: "Finance",
+    icon: <DollarSign className="h-5 w-5" />,
+    features: [
+      {
+        title: "ETB Payouts",
+        description: "Bank accounts and payout schedule.",
+        subFeatures: ["Bank Accounts", "Payout Schedule"],
+        icon: <WalletCards className="h-5 w-5" />,
+      },
+      {
+        title: "Invoice Rules",
+        description: "VAT, late fees, and grace periods.",
+        subFeatures: ["VAT", "Late Fees", "Grace Periods"],
+        icon: <Receipt className="h-5 w-5" />,
+      },
+    ],
+  },
+  {
+    key: "team",
+    title: "Team",
+    icon: <Users className="h-5 w-5" />,
+    features: [
+      {
+        title: "Staff Roles",
+        description: "Permissions, invites, and access levels.",
+        subFeatures: ["Permissions", "Invites", "Access Levels"],
+        icon: <UserRoundCog className="h-5 w-5" />,
+      },
+      {
+        title: "Attendance",
+        description: "Working hours and geo-fencing radius.",
+        subFeatures: ["Working Hours", "Geo-fencing Radius"],
+        icon: <ScanSearch className="h-5 w-5" />,
+      },
+    ],
+  },
+  {
+    key: "system",
+    title: "System",
+    icon: <Cog className="h-5 w-5" />,
+    features: [
+      {
+        title: "Localization",
+        description: "English/Amharic toggle and date format.",
+        subFeatures: ["English/Amharic toggle", "Date Format"],
+        icon: <Languages className="h-5 w-5" />,
+      },
+      {
+        title: "Calendar Sync",
+        description: "Google integration status.",
+        subFeatures: ["Google Integration status"],
+        icon: <CalendarClock className="h-5 w-5" />,
+      },
+    ],
+  },
+  {
+    key: "safety",
+    title: "Safety",
+    icon: <Shield className="h-5 w-5" />,
+    features: [
+      {
+        title: "Security",
+        description: "Password, 2FA, and login history.",
+        subFeatures: ["Password", "2FA", "Login History"],
+        icon: <ShieldEllipsis className="h-5 w-5" />,
+      },
+    ],
+  },
+]
 
 export default function SettingsPage() {
   return (
     <ProtectedRoute requiredRole="landlord">
-      <SettingsContent />
+      <OwnerSettingsContent />
     </ProtectedRoute>
   )
 }
 
-function SettingsContent() {
+function OwnerSettingsContent() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activeTab, setActiveTab] = useState("profile")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
-  const [editingField, setEditingField] = useState<string | null>(null)
-
-  // Profile state
-  const [profile, setProfile] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    company: "",
-    bio: "",
-  })
-  const [loading, setLoading] = useState(true)
-  const [buildingId, setBuildingId] = useState<string | null>(null)
-  const [buildingName, setBuildingName] = useState("My Building")
-  const [buildingAddress, setBuildingAddress] = useState("Addis Ababa, Ethiopia")
-  const [buildingMotto, setBuildingMotto] = useState("")
-  const [buildingLogo, setBuildingLogo] = useState<string | null>(null)
-  const [isUploadingBranding, setIsUploadingBranding] = useState(false)
-
-  // Fetch profile from database
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = getAuthToken()
-        if (!token) {
-          setLoading(false)
-          return
-        }
-
-        const userRes = await fetch(`${API_BASE_URL}/user/me`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const userPayload = await userRes.json().catch(() => ({}))
-        if (!userRes.ok || userPayload?.success === false) {
-          throw new Error(userPayload?.error || userPayload?.message || "Failed to load user profile")
-        }
-
-        const ownerRes = await fetch(`${API_BASE_URL}/owner/me`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const ownerPayload = await ownerRes.json().catch(() => ({}))
-        if (!ownerRes.ok || ownerPayload?.success === false) {
-          throw new Error(ownerPayload?.error || ownerPayload?.message || "Failed to load owner profile")
-        }
-
-        const user = userPayload?.data?.user || {}
-        const owner = ownerPayload?.data?.owner || {}
-        const fullName = user.full_name || owner.full_name || ""
-        const [firstName, ...rest] = fullName.split(" ")
-        const lastName = rest.join(" ")
-
-        setProfile({
-          firstName: firstName || "",
-          lastName: lastName || "",
-          email: user.email || "",
-          phone: user.phone || owner.phone || "",
-          company: owner.company_name || "",
-          bio: "",
-        })
-
-        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const buildingsPayload = await buildingsRes.json().catch(() => ({}))
-        if (buildingsRes.ok && buildingsPayload?.success !== false) {
-          const buildings = buildingsPayload?.data?.buildings || []
-          if (buildings.length > 0) {
-            const building = buildings[0]
-            const resolvedBuildingId = (building?.building_id ?? building?.id)?.toString?.() || null
-            setBuildingId(resolvedBuildingId)
-            setBuildingName(building?.name || "My Building")
-            setBuildingAddress(building?.address || "Addis Ababa, Ethiopia")
-            setBuildingMotto(building?.motto || building?.tagline || "")
-            setBuildingLogo(building?.logo_url || null)
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching profile:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProfile()
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !buildingId) return
-    const cachedLogo = localStorage.getItem(`bms.buildingLogo.${buildingId}`)
-    const cachedMotto = localStorage.getItem(`bms.buildingMotto.${buildingId}`)
-    if (cachedLogo) {
-      setBuildingLogo(cachedLogo)
-    }
-    if (cachedMotto) {
-      setBuildingMotto(cachedMotto)
-    }
-  }, [buildingId])
-
-  // Password state
-  const [password, setPassword] = useState({
-    current: "",
-    new: "",
-    confirm: "",
-  })
-
-  // Notification state
-  const [notifications, setNotifications] = useState<NotificationSetting[]>([
-    { id: "inquiries", label: "New Property Inquiries", description: "Get notified when tenants inquire about your listed properties", enabled: true },
-    { id: "offers", label: "Lease Offers Received", description: "Receive alerts when tenants submit lease offers for your properties", enabled: true },
-    { id: "messages", label: "Tenant Messages", description: "Get notified for new messages from interested tenants", enabled: true },
-    { id: "payments", label: "Payment Confirmations", description: "Receive payment confirmation notifications for property transactions", enabled: true },
-    { id: "listings", label: "Listing Performance", description: "Get alerts about your property listing views and engagement metrics", enabled: false },
-    { id: "maintenance", label: "Maintenance Requests", description: "Receive notifications when tenants submit maintenance requests", enabled: true },
-  ])
-
-  // Billing state
-  const [billingInfo, setBillingInfo] = useState({
-    cardHolder: "Abebe Kebede",
-    cardNumber: "•••• •••• •••• 4242",
-    expiryDate: "12/25",
-    billingAddress: "Bole Road, Bole Sub-City, Addis Ababa, Ethiopia",
-  })
+  const [selectedFeature, setSelectedFeature] = useState<FeatureItem | null>(null)
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false)
 
   const navItems = [
-    {
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      name: "Dashboard",
-      path: "/dashboard",
-      active: false,
-    },
-    {
-      icon: <Building2 className="w-5 h-5" />,
-      name: "My Listings",
-      path: "/dashboard/listings",
-      active: false,
-    },
-    {
-      icon: <PlusCircle className="w-5 h-5" />,
-      name: "Create Listing",
-      path: "/dashboard/create",
-      active: false,
-    },
-    {
-      icon: <Users className="w-5 h-5" />,
-      name: "Employees",
-      path: "/dashboard/employees",
-      active: false,
-    },
-    {
-      icon: <MessageSquare className="w-5 h-5" />,
-      name: "Chat",
-      path: "/dashboard/chat",
-      active: false,
-    },
-    {
-      icon: <CreditCard className="w-5 h-5" />,
-      name: "Payouts",
-      path: "/dashboard/payouts",
-      active: false,
-    },
-    {
-      icon: <TrendingUp className="w-5 h-5" />,
-      name: "Analytics",
-      path: "/dashboard/analytics",
-      active: false,
-    },
-    {
-      icon: <Settings className="w-5 h-5" />,
-      name: "Settings",
-      path: "/dashboard/settings",
-      active: true,
-    },
-  ]
-
-  const settingsTabs: SettingsTab[] = [
-    { id: "profile", label: "Profile", icon: <User className="w-5 h-5" /> },
-    { id: "security", label: "Security", icon: <Lock className="w-5 h-5" /> },
-    { id: "notifications", label: "Notifications", icon: <Bell className="w-5 h-5" /> },
-    { id: "billing", label: "Billing", icon: <CreditCard className="w-5 h-5" /> },
-    { id: "privacy", label: "Privacy", icon: <Shield className="w-5 h-5" /> },
+    { icon: <Building2 className="w-5 h-5" />, name: "Dashboard", path: "/dashboard", active: false },
+    { icon: <Building2 className="w-5 h-5" />, name: "Settings", path: "/dashboard/settings", active: true },
   ]
 
   const handleLogout = () => {
@@ -263,304 +168,48 @@ function SettingsContent() {
     router.push("/auth/signin")
   }
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed)
-  }
-
-  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
-    if (!isCurrentlyCollapsed) {
-      setIsSidebarCollapsed(true)
-    }
-  }
-
-  const handlePasswordChange = (field: string, value: string) => {
-    setPassword((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleNotificationToggle = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === id ? { ...notif, enabled: !notif.enabled } : notif
-      )
-    )
-  }
-
-  const handleSaveProfile = async () => {
-    try {
-      const token = getAuthToken()
-      if (!token) return
-
-      const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ")
-      const userRes = await fetch(`${API_BASE_URL}/user/me`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          full_name: fullName,
-          phone: profile.phone,
-        }),
-      })
-      const userPayload = await userRes.json().catch(() => ({}))
-      if (!userRes.ok || userPayload?.success === false) {
-        throw new Error(userPayload?.error || userPayload?.message || "Failed to save user profile")
-      }
-
-      const ownerRes = await fetch(`${API_BASE_URL}/owner/me`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          company_name: profile.company,
-          full_name: fullName,
-          phone: profile.phone,
-        }),
-      })
-      const ownerPayload = await ownerRes.json().catch(() => ({}))
-      if (!ownerRes.ok || ownerPayload?.success === false) {
-        throw new Error(ownerPayload?.error || ownerPayload?.message || "Failed to save owner profile")
-      }
-
-      setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 3000)
-    } catch (err) {
-      console.error('Error saving profile:', err)
-      alert('Failed to save profile changes')
-    }
-  }
-
-  const handleChangePassword = async () => {
-    if (password.new !== password.confirm) {
-      alert("Passwords do not match")
-      return
-    }
-    if (!password.current || !password.new) {
-      alert("Please fill in all password fields")
-      return
-    }
-    const token = getAuthToken()
-    if (!token) return
-    const response = await fetch(`${API_BASE_URL}/user/me/password`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        currentPassword: password.current,
-        newPassword: password.new,
-      }),
-    })
-    const payload = await response.json().catch(() => ({}))
-    if (!response.ok || payload?.success === false) {
-      alert(payload?.error || payload?.message || "Failed to change password")
-      return
-    }
-    setSaveSuccess(true)
-    setPassword({ current: "", new: "", confirm: "" })
-    setTimeout(() => setSaveSuccess(false), 3000)
-  }
-
-  const handleFieldEdit = (field: string) => {
-    setEditingField(field)
-  }
-
-  const handleBuildingLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !buildingId) return
-
-    const maxFileSizeBytes = 2 * 1024 * 1024
-    if (!file.type.startsWith("image/")) {
-      alert("Please upload an image file")
-      return
-    }
-    if (file.size > maxFileSizeBytes) {
-      alert("Image must be smaller than 2MB")
-      return
-    }
-
-    setIsUploadingBranding(true)
-    try {
-      const reader = new FileReader()
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(String(reader.result || ""))
-        reader.onerror = () => reject(reader.error)
-        reader.readAsDataURL(file)
-      })
-
-      if (dataUrl) {
-        setBuildingLogo(dataUrl)
-        localStorage.setItem(`bms.buildingLogo.${buildingId}`, dataUrl)
-      }
-    } catch (err) {
-      console.error("Error uploading building logo:", err)
-      alert("Failed to upload image")
-    } finally {
-      setIsUploadingBranding(false)
-      e.target.value = ""
-    }
-  }
-
-  const handleRemoveBuildingLogo = () => {
-    if (!buildingId) return
-    setBuildingLogo(null)
-    localStorage.removeItem(`bms.buildingLogo.${buildingId}`)
-  }
-
-  const handleSaveBuildingMotto = () => {
-    const trimmedMotto = buildingMotto.trim()
-    if (buildingId) {
-      localStorage.setItem(`bms.buildingMotto.${buildingId}`, trimmedMotto)
-    }
-    localStorage.setItem("bms.buildingMotto.current", trimmedMotto)
-    setSaveSuccess(true)
-    setTimeout(() => setSaveSuccess(false), 3000)
-  }
-
-  const handleFieldSave = async (field: string, value: string) => {
-    try {
-      if (field === "bio" || field === "email") {
-        alert("This field is not supported by the current API yet.")
-        return
-      }
-
-      const token = getAuthToken()
-      if (!token) return
-
-      const fullName =
-        field === "firstName" || field === "lastName"
-          ? [
-              field === "firstName" ? value : profile.firstName,
-              field === "lastName" ? value : profile.lastName,
-            ]
-              .filter(Boolean)
-              .join(" ")
-          : [profile.firstName, profile.lastName].filter(Boolean).join(" ")
-
-      if (field === "company") {
-        const ownerRes = await fetch(`${API_BASE_URL}/owner/me`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            company_name: value,
-            full_name: fullName,
-            phone: profile.phone,
-          }),
-        })
-        const ownerPayload = await ownerRes.json().catch(() => ({}))
-        if (!ownerRes.ok || ownerPayload?.success === false) {
-          throw new Error(ownerPayload?.error || ownerPayload?.message || "Failed to save changes")
-        }
-      } else {
-        const userRes = await fetch(`${API_BASE_URL}/user/me`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            full_name: fullName,
-            phone: field === "phone" ? value : profile.phone,
-          }),
-        })
-        const userPayload = await userRes.json().catch(() => ({}))
-        if (!userRes.ok || userPayload?.success === false) {
-          throw new Error(userPayload?.error || userPayload?.message || "Failed to save changes")
-        }
-      }
-
-      setProfile((prev) => ({ ...prev, [field]: value }))
-      setEditingField(null)
-      setSaveSuccess(true)
-      setTimeout(() => setSaveSuccess(false), 3000)
-    } catch (err) {
-      console.error('Error saving field:', err)
-      alert('Failed to save changes')
-    }
-  }
-
-  const renderEditableField = (field: string, label: string, type: string = "text", rows?: number) => {
-    const value = profile[field as keyof typeof profile]
-    const isEditing = editingField === field
-
-    return (
-      <div key={field}>
-        <label className="block text-sm font-medium text-foreground mb-2">{label}</label>
-        <div className="relative">
-          {isEditing ? (
-            <div className="flex gap-2">
-              {rows ? (
-                <textarea
-                  value={value}
-                  onChange={(e) => setProfile((prev) => ({ ...prev, [field]: e.target.value }))}
-                  rows={rows}
-                  className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
-                  autoFocus
-                />
-              ) : (
-                <input
-                  type={type}
-                  value={value}
-                  onChange={(e) => setProfile((prev) => ({ ...prev, [field]: e.target.value }))}
-                  className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  autoFocus
-                />
-              )}
-              <button
-                onClick={() => handleFieldSave(field, value)}
-                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
-                title="Save changes"
-              >
-                <Check className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="w-full px-4 py-2 pr-10 border border-border rounded-lg bg-background text-foreground flex items-center justify-between">
-              <span className={value ? "text-foreground" : "text-muted-foreground"}>
-                {value || `Enter ${label.toLowerCase()}`}
-              </span>
-              <button onClick={() => handleFieldEdit(field)} className="p-1 hover:bg-muted rounded">
-                <Edit2 className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex bg-background">
-        <DashboardSidebar
-          navItems={navItems}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
-          onLogout={handleLogout}
-          onNavigate={handleSidebarNavigation}
-        />
-        <div className="flex-1 transition-all duration-300 ease-in-out">
-          <DashboardHeader
-            title="Settings"
-            subtitle="Manage your account and preferences"
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onToggleSidebar={toggleSidebar}
-          />
-          <main className="p-6">
-            <div className="max-w-5xl mx-auto">
-              <Text className="text-muted-foreground text-sm">Loading settings...</Text>
-            </div>
-          </main>
-        </div>
-      </div>
-    )
+  const featureFields: Record<string, SettingsField[]> = {
+    "Building Identity": [
+      { key: "motto", label: "Motto", placeholder: "Enter building motto" },
+      { key: "logo", label: "Logo URL", placeholder: "Paste logo image URL" },
+      { key: "name", label: "Name", placeholder: "Enter building name" },
+      { key: "address", label: "Address", placeholder: "Enter building address" },
+    ],
+    "Company Info": [
+      { key: "tin", label: "TIN", placeholder: "Enter tax identification number" },
+      { key: "slogan", label: "Slogan", placeholder: "Enter company slogan" },
+      { key: "legalName", label: "Legal Name", placeholder: "Enter legal company name" },
+    ],
+    "ETB Payouts": [
+      { key: "bankAccounts", label: "Bank Accounts", type: "textarea", placeholder: "List payout bank accounts" },
+      { key: "payoutSchedule", label: "Payout Schedule", type: "select", options: ["Daily", "Weekly", "Monthly"] },
+    ],
+    "Invoice Rules": [
+      { key: "vat", label: "VAT (%)", type: "number", placeholder: "15" },
+      { key: "lateFees", label: "Late Fees", placeholder: "Enter late fee policy" },
+      { key: "gracePeriods", label: "Grace Periods (days)", type: "number", placeholder: "5" },
+    ],
+    "Staff Roles": [
+      { key: "permissions", label: "Permissions", type: "textarea", placeholder: "Define permissions" },
+      { key: "invites", label: "Invites", type: "select", options: ["Enabled", "Disabled"] },
+      { key: "accessLevels", label: "Access Levels", type: "select", options: ["Admin", "Manager", "Staff"] },
+    ],
+    Attendance: [
+      { key: "workingHours", label: "Working Hours", placeholder: "e.g. 08:00 - 17:00" },
+      { key: "geoRadius", label: "Geo-fencing Radius (meters)", type: "number", placeholder: "100" },
+    ],
+    Localization: [
+      { key: "language", label: "Language", type: "select", options: ["English", "Amharic"] },
+      { key: "dateFormat", label: "Date Format", type: "select", options: ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"] },
+    ],
+    "Calendar Sync": [
+      { key: "googleStatus", label: "Google Integration Status", type: "select", options: ["Connected", "Disconnected"] },
+    ],
+    Security: [
+      { key: "password", label: "Password", placeholder: "Enter new password" },
+      { key: "twoFactor", label: "2FA", type: "select", options: ["Enabled", "Disabled"] },
+      { key: "loginHistory", label: "Login History", type: "textarea", placeholder: "Recent login activity notes" },
+    ],
   }
 
   return (
@@ -568,397 +217,68 @@ function SettingsContent() {
       <DashboardSidebar
         navItems={navItems}
         isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={toggleSidebar}
+        onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)}
         onLogout={handleLogout}
-        onNavigate={handleSidebarNavigation}
       />
 
       <div className="flex-1 transition-all duration-300 ease-in-out">
         <DashboardHeader
-          title="Settings"
-          subtitle="Manage your account and preferences"
+          title="General Settings"
+          subtitle="Manage your organization settings"
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onToggleSidebar={toggleSidebar}
+          onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)}
         />
 
-        <main className="p-6">
-          <div className="max-w-5xl mx-auto">
-            {/* Tabs Navigation */}
-            <div className="flex justify-start gap-4 border-b border-border overflow-x-auto mb-8">
-              {settingsTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-3 font-medium border-b-2 transition-all flex items-center gap-2 whitespace-nowrap rounded-lg ${
-                    activeTab === tab.id
-                      ? "text-primary border-primary relative overflow-hidden"
-                      : "text-muted-foreground hover:text-foreground border-transparent"
-                  }`}
-                  style={{
-                    ...(activeTab === tab.id && {
-                      background: "rgba(255, 255, 255, 0.1)",
-                      backdropFilter: "blur(8px)",
-                      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.2)"
-                    })
-                  }}
-                >
-                  <span className={activeTab === tab.id ? "text-primary" : "text-muted-foreground"}>
-                    {tab.icon}
-                  </span>
-                  {tab.label}
-                </button>
-              ))}
+        <main className="bg-[#EEF2F6] p-6">
+          <div className="mx-auto max-w-[1500px]">
+            <div className="border-b border-[#D8DEE7] pb-3">
+              <h1 className="text-[2rem] font-bold tracking-tight text-[#1D2D3D]">General Settings</h1>
             </div>
 
-            {/* Success Message */}
-            {saveSuccess && (
-              <div className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg flex items-center gap-3">
-                <Check className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium text-green-800">Changes saved successfully!</span>
-              </div>
-            )}
-
-            {/* Profile Tab */}
-            {activeTab === "profile" && (
-              <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)"
-                }}>
-                <div>
-                  <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                    Profile Information
-                  </Heading>
-                  <Text className="text-sm text-muted-foreground">Update your personal and professional information</Text>
-                </div>
-
-                <div className="rounded-2xl border border-border/70 bg-background/50 p-5">
-                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-border/70 bg-card">
-                        {buildingLogo ? (
-                          <img src={buildingLogo} alt="Building identity" className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                            <ImagePlus className="h-6 w-6" />
-                            <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em]">No Image</span>
-                          </div>
-                        )}
-                        {isUploadingBranding && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-background/70">
-                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <Heading level={4} className="text-lg font-semibold text-foreground">
-                          Building Logo or Photo
-                        </Heading>
-                        <Text className="mb-1 text-sm text-foreground">{buildingName}</Text>
-                        <Text className="text-sm text-muted-foreground">{buildingMotto || buildingAddress}</Text>
-                        <Text className="mt-2 text-xs text-muted-foreground">
-                          Upload any building logo, facade photo, or identity image. This will appear in your overview header circle.
-                        </Text>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted">
-                        <Upload className="h-4 w-4" />
-                        <span>{buildingLogo ? "Change Image" : "Upload Image"}</span>
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={handleBuildingLogoUpload}
-                          disabled={isUploadingBranding}
-                        />
-                      </label>
-                      {buildingLogo && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="gap-2"
-                          onClick={handleRemoveBuildingLogo}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-foreground">Building Motto</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={buildingMotto}
-                        onChange={(e) => setBuildingMotto(e.target.value)}
-                        placeholder="Enter your building motto"
-                        className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                      <Button type="button" onClick={handleSaveBuildingMotto} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Motto
-                      </Button>
-                    </div>
-                    <Text className="mt-2 text-xs text-muted-foreground">
-                      This text replaces the location line in your overview dashboard header.
-                    </Text>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {renderEditableField("firstName", "First Name")}
-                    {renderEditableField("lastName", "Last Name")}
-                  </div>
-
-                  {renderEditableField("email", "Email Address", "email")}
-                  {renderEditableField("phone", "Phone Number", "tel")}
-                  {renderEditableField("company", "Company Name")}
-                  {renderEditableField("bio", "Bio", "text", 4)}
-                </div>
-
-                <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Security Tab */}
-            {activeTab === "security" && (
-              <div className="space-y-6">
-                <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)"
-                }}>
-                  <div>
-                    <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                      Change Password
-                    </Heading>
-                    <Text className="text-sm text-muted-foreground">Update your password to keep your account secure</Text>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Current Password</label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={password.current}
-                          onChange={(e) => handlePasswordChange("current", e.target.value)}
-                          className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        />
-                        <button
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">New Password</label>
-                      <div className="relative">
-                        <input
-                          type={showNewPassword ? "text" : "password"}
-                          value={password.new}
-                          onChange={(e) => handlePasswordChange("new", e.target.value)}
-                          className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        />
-                        <button
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Confirm New Password</label>
-                      <input
-                        type="password"
-                        value={password.confirm}
-                        onChange={(e) => handlePasswordChange("confirm", e.target.value)}
-                        className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4 border-t border-border">
-                    <Button onClick={handleChangePassword} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
-                      <Save className="w-4 h-4 mr-2" />
-                      Update Password
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Notifications Tab */}
-            {activeTab === "notifications" && (
-              <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)"
-                }}>
-                <div>
-                  <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                    Notification Preferences
-                  </Heading>
-                  <Text className="text-sm text-muted-foreground">Choose which notifications you want to receive</Text>
-                </div>
-
-                <div className="space-y-4">
-                  {notifications.map((notif) => (
-                    <div key={notif.id} className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-background/50 transition-colors"
-                      style={{
-                        background: "rgba(125, 139, 111, 0.1)",
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid rgba(125, 139, 111, 0.2)"
-                      }}>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-bold text-foreground">{notif.label}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{notif.description}</p>
-                      </div>
+            <div className="mt-6 space-y-7">
+              {SETTINGS_GROUPS.map((group) => (
+                <section key={group.key}>
+                  <h2 className="mb-4 text-[1.35rem] font-bold text-[#1D2D3D]">{group.title}</h2>
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 md:grid-cols-2">
+                    {group.features.map((feature) => (
                       <button
-                        onClick={() => handleNotificationToggle(notif.id)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ml-4 ${
-                          notif.enabled ? "bg-green-600" : "bg-gray-300"
+                        key={feature.title}
+                        type="button"
+                        onClick={() => {
+                          setSelectedFeature(feature)
+                          setIsSettingsModalOpen(true)
+                        }}
+                        className={`flex min-h-[88px] items-start gap-3.5 rounded-xl border px-4 py-3 text-left transition ${
+                          selectedFeature?.title === feature.title
+                            ? "border-[#BFD2E8] bg-[#F8FBFF]"
+                            : "border-[#E7ECF3] bg-white hover:border-[#CFDAE8] hover:bg-[#FCFDFF]"
                         }`}
                       >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            notif.enabled ? "translate-x-6" : "translate-x-1"
-                          }`}
-                        />
+                        <div className="mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F3F6FA] text-[#2F4C67]">
+                          {feature.icon}
+                        </div>
+                        <div>
+                          <h3 className="text-[1.2rem] leading-tight font-semibold text-[#1E3247]">{feature.title}</h3>
+                          <p className="mt-1 text-[0.95rem] leading-[1.35] text-[#6A7D90]">{feature.description}</p>
+                        </div>
                       </button>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button onClick={handleSaveProfile} style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Preferences
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Billing Tab */}
-            {activeTab === "billing" && (
-              <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)"
-                }}>
-                <div>
-                  <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                    Payment Method
-                  </Heading>
-                  <Text className="text-sm text-muted-foreground">Manage your billing and payment information</Text>
-                </div>
-
-                <div className="p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Card Holder</p>
-                      <p className="font-medium text-foreground mt-1">{billingInfo.cardHolder}</p>
-                      <p className="text-lg font-mono text-foreground mt-3">{billingInfo.cardNumber}</p>
-                      <p className="text-sm text-muted-foreground mt-2">Expires: {billingInfo.expiryDate}</p>
-                    </div>
-                    <button className="text-primary hover:text-primary/80 font-medium text-sm">Edit</button>
+                    ))}
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Billing Address</label>
-                  <textarea
-                    value={billingInfo.billingAddress}
-                    onChange={(e) => setBillingInfo({ ...billingInfo, billingAddress: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4 border-t border-border">
-                  <Button style={{ backgroundColor: "#3096DA", color: "#FFFFFF" }}>
-                    <Save className="w-4 h-4 mr-2" />
-                    Update Billing
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Privacy Tab */}
-            {activeTab === "privacy" && (
-              <div className="rounded-2xl p-8 space-y-6 relative overflow-hidden"
-                style={{
-                  background: "rgba(255, 255, 255, 0.1)",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)"
-                }}>
-                <div>
-                  <Heading level={3} className="text-xl font-bold text-foreground mb-1">
-                    Privacy & Security
-                  </Heading>
-                  <Text className="text-sm text-muted-foreground">Control your privacy settings and data sharing preferences</Text>
-                </div>
-
-                <div className="space-y-4">
-                  {[
-                    { label: "Profile Visibility", description: "Allow other users to see your profile", enabled: true },
-                    { label: "Show Online Status", description: "Let others know when you're online", enabled: true },
-                    { label: "Allow Search Indexing", description: "Allow search engines to index your profile", enabled: false },
-                    { label: "Data Collection", description: "Allow us to collect usage data for improvements", enabled: true },
-                  ].map((setting, idx) => (
-                    <div key={idx} className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-background/50 transition-colors">
-                      <div className="flex-1">
-                        <h3 className="text-sm font-bold text-foreground">{setting.label}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{setting.description}</p>
-                      </div>
-                      <button
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ml-4 ${
-                          setting.enabled ? "bg-green-600" : "bg-gray-300"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            setting.enabled ? "translate-x-6" : "translate-x-1"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                </section>
+              ))}
+            </div>
           </div>
         </main>
       </div>
 
-      <Toaster />
+      <SectionSettingsModal
+        open={isSettingsModalOpen}
+        title={selectedFeature ? `${selectedFeature.title} Settings` : "Settings"}
+        subtitle={selectedFeature?.description}
+        fields={selectedFeature ? featureFields[selectedFeature.title] ?? [] : []}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
     </div>
   )
 }
-

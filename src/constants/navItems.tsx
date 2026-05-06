@@ -25,7 +25,6 @@ import {
   FileInput,
   Wrench,
   PlaneTakeoff,
-  ClipboardPlus,
 } from "lucide-react"
 
 export interface NavItemBase {
@@ -70,12 +69,12 @@ const landlordGroups: NavGroupBase[] = [
     ],
   },
   {
-    title: "Rentals",
+    title: "Leasing",
     icon: <Building className="w-5 h-5" />,
     items: [
       { icon: <Building2 className="w-5 h-5" />, name: "My Units", path: "/dashboard/listings" },
       { icon: <PlusCircle className="w-5 h-5" />, name: "Create Units", path: "/dashboard/create" },
-      { icon: <Calendar className="w-5 h-5" />, name: "Rents", path: "/dashboard/leases" },
+      { icon: <Calendar className="w-5 h-5" />, name: "Leasing", path: "/dashboard/leases" },
       { icon: <PlaneTakeoff className="w-5 h-5" />, name: "Leave Requests", path: "/dashboard/leave" },
     ],
     defaultOpen: true,

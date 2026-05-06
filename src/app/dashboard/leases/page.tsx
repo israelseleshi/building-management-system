@@ -1,453 +1,146 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Text, Heading } from "@/components/ui/typography"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import {
-  LayoutDashboard,
   Building2,
-  PlusCircle,
-  MessageSquare,
-  CreditCard,
-  TrendingUp,
-  Settings,
+  CheckCircle2,
+  CalendarDays,
+  HandCoins,
   Users,
+  Split,
   FileText,
-  Plus,
-  Eye,
-  Edit,
-  Trash2,
   Calendar,
-  DollarSign,
-  Home,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  X,
-  Search,
-  MoreHorizontal,
+  PlusCircle,
 } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
-interface Lease {
-  id: string
-  tenant_id: string
-  property_id: string
-  landlord_id: string
-  monthly_rent: number
-  status: "pending" | "active" | "inactive" | "expired"
-  start_date: string
-  end_date: string
-  is_active: boolean
-  created_at: string
-  tenant_name?: string
-  property_title?: string
-}
+type LeaseType = "fixed" | "month_to_month"
+type StepKey = "term" | "dates" | "rent" | "tenants" | "sharing" | "docs"
 
-interface Tenant {
-  id: string
-  full_name: string
+interface TenantRow {
+  firstName: string
+  lastName: string
   email: string
+  phone: string
 }
 
-interface Property {
-  id: string
-  title: string
-  monthly_rent: number
-  address_line1: string
-}
+const steps: { key: StepKey; label: string; icon: React.ReactNode }[] = [
+  { key: "term", label: "Lease Term", icon: <FileText className="h-3.5 w-3.5" /> },
+  { key: "dates", label: "Lease Dates", icon: <CalendarDays className="h-3.5 w-3.5" /> },
+  { key: "rent", label: "Rent/Additional Fee", icon: <HandCoins className="h-3.5 w-3.5" /> },
+  { key: "tenants", label: "Add Tenants", icon: <Users className="h-3.5 w-3.5" /> },
+  { key: "sharing", label: "Rent/Deposit Sharing", icon: <Split className="h-3.5 w-3.5" /> },
+  { key: "docs", label: "Lease/Documents", icon: <FileText className="h-3.5 w-3.5" /> },
+]
 
-type AnyRecord = Record<string, unknown>
+const dueDays = [
+  "1st",
+  "2nd",
+  "3rd",
+  "4th",
+  "5th",
+  "10th",
+  "15th",
+  "20th",
+  "25th",
+  "30th",
+]
 
-function pickStringField(obj: AnyRecord | null | undefined, keys: string[]): string | null {
-  for (const k of keys) {
-    const v = obj?.[k]
-    if (v === undefined || v === null) continue
-    const s = String(v).trim()
-    if (s) return s
-  }
-  return null
-}
-
-function pickNumberField(obj: AnyRecord | null | undefined, keys: string[], fallback = 0): number {
-  for (const k of keys) {
-    const v = obj?.[k]
-    if (v === undefined || v === null) continue
-    const n = Number(v)
-    if (Number.isFinite(n)) return n
-  }
-  return fallback
-}
-
-function LeasesContent() {
-  const SIDEBAR_COLLAPSED_KEY = "bms.dashboard.sidebarCollapsed"
+function LeasingContent() {
   const router = useRouter()
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false
-    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
-  })
   const [searchQuery, setSearchQuery] = useState("")
-  const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [leases, setLeases] = useState<Lease[]>([])
-  const [tenants, setTenants] = useState<Tenant[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
-  const [loading, setLoading] = useState(true)
-  const [createModalOpen, setCreateModalOpen] = useState(false)
-  const [viewModalOpen, setViewModalOpen] = useState(false)
-  const [editModalOpen, setEditModalOpen] = useState(false)
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [selectedLease, setSelectedLease] = useState<Lease | null>(null)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [currentStepIndex, setCurrentStepIndex] = useState(0)
 
-  const [formData, setFormData] = useState({
-    tenant_id: "",
-    property_id: "",
-    monthly_rent: 0,
-    status: "pending" as "pending" | "active" | "inactive" | "expired",
-    start_date: "",
-    end_date: "",
-    notes: "",
-  })
+  const [leaseType, setLeaseType] = useState<LeaseType>("fixed")
+  const [unit, setUnit] = useState("1A")
+  const [leaseTerm, setLeaseTerm] = useState("New Term")
 
-  const navItems = [
+  const [leaseBeginDate, setLeaseBeginDate] = useState("2026-05-10")
+  const [leaseEndDate, setLeaseEndDate] = useState("")
+  const [switchToMonthToMonth, setSwitchToMonthToMonth] = useState(false)
+
+  const [paymentFrequency, setPaymentFrequency] = useState("")
+  const [customFrequencyValue, setCustomFrequencyValue] = useState("1")
+  const [customFrequencyUnit, setCustomFrequencyUnit] = useState("Months")
+  const [rentAmountEtb, setRentAmountEtb] = useState("120000")
+  const [dueDay, setDueDay] = useState("1st")
+  const [firstInvoiceDate, setFirstInvoiceDate] = useState("")
+
+  const [tenants, setTenants] = useState<TenantRow[]>([
     {
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      name: "Dashboard",
-      path: "/dashboard",
-      active: false,
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
     },
-    {
-      icon: <Building2 className="w-5 h-5" />,
-      name: "My Listings",
-      path: "/dashboard/listings",
-      active: false,
-    },
-    {
-      icon: <PlusCircle className="w-5 h-5" />,
-      name: "Create Listing",
-      path: "/dashboard/create-listing",
-      active: false,
-    },
-    {
-      icon: <MessageSquare className="w-5 h-5" />,
-      name: "Chat",
-      path: "/dashboard/chat",
-      active: false,
-    },
-    {
-      icon: <Users className="w-5 h-5" />,
-      name: "Reports",
-      path: "/dashboard/reports",
-      active: false,
-    },
-    {
-      icon: <FileText className="w-5 h-5" />,
-      name: "Rents",
-      path: "/dashboard/leases",
-      active: true,
-    },
-    {
-      icon: <CreditCard className="w-5 h-5" />,
-      name: "Payouts",
-      path: "/dashboard/payouts",
-      active: false,
-    },
-    {
-      icon: <TrendingUp className="w-5 h-5" />,
-      name: "Analytics",
-      path: "/dashboard/analytics",
-      active: false,
-    },
-    {
-      icon: <Users className="w-5 h-5" />,
-      name: "Employees",
-      path: "/dashboard/employees",
-      active: false,
-    },
-    {
-      icon: <Settings className="w-5 h-5" />,
-      name: "Settings",
-      path: "/dashboard/settings",
-      active: false,
-    },
-  ]
+  ])
 
-  useEffect(() => {
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isSidebarCollapsed))
-  }, [isSidebarCollapsed])
+  const [sharingType, setSharingType] = useState("")
+  const [leaseDocumentName, setLeaseDocumentName] = useState("")
+  const [tenantErrors, setTenantErrors] = useState<Record<number, { email?: string; phone?: string }>>({})
 
-  // Fetch data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = getAuthToken()
-        if (!token) return
+  const activeStep = steps[currentStepIndex].key
 
-        // Fetch user to get ID
-        const userRes = await fetch(`${API_BASE_URL}/user/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const userPayload = await userRes.json()
-        if (!userPayload.success) return
-        setCurrentUserId(userPayload.data.user.user_id)
-
-        // Fetch leases
-        const leasesRes = await fetch(`${API_BASE_URL}/leases`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const leasesPayload = await leasesRes.json()
-        const rawLeases = (leasesPayload.data?.leases || []) as AnyRecord[]
-        const normalizedLeases: Lease[] = rawLeases.map((l) => {
-          const tenantId = pickStringField(l, ["tenant_id", "tenantId", "tenant_id_fk", "tenantID"]) || ""
-          const propertyId = pickStringField(l, ["property_id", "propertyId", "building_id", "buildingId"]) || ""
-          const startDate = pickStringField(l, ["start_date", "startDate"]) || ""
-          const endDate = pickStringField(l, ["end_date", "endDate"]) || ""
-          const monthlyRent = pickNumberField(l, ["monthly_rent", "monthlyRent"], 0)
-
-          const id =
-            pickStringField(l, ["id", "lease_id", "leaseId"]) ||
-            [tenantId, propertyId, startDate, endDate, String(monthlyRent)].filter(Boolean).join("|") ||
-            `${Math.random()}`
-
-          const statusRaw = pickStringField(l, ["status"]) || "pending"
-          const status = (["pending", "active", "inactive", "expired"].includes(statusRaw) ? statusRaw : "pending") as Lease["status"]
-
-          return {
-            id,
-            tenant_id: tenantId,
-            property_id: propertyId,
-            landlord_id: pickStringField(l, ["landlord_id", "landlordId"]) || "",
-            monthly_rent: monthlyRent,
-            status,
-            start_date: startDate,
-            end_date: endDate,
-            is_active: Boolean(l.is_active ?? l.isActive ?? true),
-            created_at: pickStringField(l, ["created_at", "createdAt"]) || new Date().toISOString(),
-            tenant_name: pickStringField(l, ["tenant_name", "tenantName"]) || undefined,
-            property_title: pickStringField(l, ["property_title", "propertyTitle", "building_title", "buildingTitle"]) || undefined,
-          }
-        })
-        setLeases(normalizedLeases)
-
-        // Fetch tenants (Search/List all)
-        const tenantsRes = await fetch(`${API_BASE_URL}/tenants/search?q=`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const tenantsPayload = await tenantsRes.json()
-        const rawTenants = (tenantsPayload.data?.tenants || []) as AnyRecord[]
-        const normalizedTenants: Tenant[] = rawTenants.map((t) => {
-          const id = pickStringField(t, ["id", "tenant_id", "tenantId", "user_id", "userId"]) || `${Math.random()}`
-          const fullName =
-            pickStringField(t, ["full_name", "fullName", "name"]) ||
-            [pickStringField(t, ["first_name", "firstName"]) || "", pickStringField(t, ["last_name", "lastName"]) || ""].join(" ").trim() ||
-            "Unknown"
-          return {
-            id,
-            full_name: fullName,
-            email: pickStringField(t, ["email"]) || "",
-          }
-        })
-        setTenants(normalizedTenants)
-
-        // Fetch properties (Listings)
-        const propertiesRes = await fetch(`${API_BASE_URL}/buildings`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const propertiesPayload = await propertiesRes.json()
-        const rawProperties = (propertiesPayload.data?.buildings || []) as AnyRecord[]
-        const normalizedProperties: Property[] = rawProperties.map((p) => {
-          const id = pickStringField(p, ["id", "building_id", "buildingId", "property_id", "propertyId"]) || `${Math.random()}`
-          return {
-            id,
-            title: pickStringField(p, ["title", "name", "building_name", "buildingName"]) || "Unknown",
-            monthly_rent: pickNumberField(p, ["monthly_rent", "monthlyRent", "rent"], 0),
-            address_line1: pickStringField(p, ["address_line1", "addressLine1", "address"]) || "",
-          }
-        })
-        setProperties(normalizedProperties)
-
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      } finally {
-        setLoading(false)
-      }
+  const isStepComplete = (step: StepKey) => {
+    if (step === "term") {
+      return Boolean(unit && leaseTerm && leaseType)
     }
-
-    fetchData()
-  }, [])
-
-  const handleCreateLease = async () => {
-    if (!currentUserId || !formData.tenant_id || !formData.property_id) return
-
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${API_BASE_URL}/leases`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          unit_id: formData.property_id, // Map property to unit_id
-          tenant_id: formData.tenant_id,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          rent_amount: formData.monthly_rent,
-          security_deposit: 0, // Placeholder
-        })
-      })
-
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || "Failed to create lease")
-
-      // Refresh leases
-      const updatedLeasesRes = await fetch(`${API_BASE_URL}/leases`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const updatedLeasesPayload = await updatedLeasesRes.json()
-      setLeases(updatedLeasesPayload.data?.leases || [])
-
-      setCreateModalOpen(false)
-      setFormData({
-        tenant_id: "",
-        property_id: "",
-        monthly_rent: 0,
-        status: "pending",
-        start_date: "",
-        end_date: "",
-        notes: "",
-      })
-    } catch (error) {
-      console.error("Error creating lease:", error)
+    if (step === "dates") {
+      if (leaseType === "month_to_month") return Boolean(leaseBeginDate)
+      return Boolean(leaseBeginDate && leaseEndDate)
     }
+    if (step === "rent") {
+      if (!paymentFrequency) return false
+      if (paymentFrequency === "Custom" && (!customFrequencyValue || Number(customFrequencyValue) <= 0 || !customFrequencyUnit)) return false
+      if (!rentAmountEtb || Number(rentAmountEtb) <= 0) return false
+      if (!firstInvoiceDate) return false
+      return true
+    }
+    if (step === "tenants") {
+      return tenants.some(
+        (t) =>
+          t.firstName.trim() &&
+          t.lastName.trim() &&
+          t.email.trim() &&
+          t.phone.trim() &&
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email.trim()) &&
+          /^251(7|9)\d{8}$/.test(t.phone.trim())
+      )
+    }
+    if (step === "sharing") {
+      return Boolean(sharingType)
+    }
+    if (step === "docs") {
+      return Boolean(leaseDocumentName.trim())
+    }
+    return false
   }
 
-  const handleDeleteLease = async () => {
-    if (!selectedLease) return
+  const completedSet = useMemo(() => {
+    return new Set(steps.filter((s) => isStepComplete(s.key)).map((s) => s.key))
+  }, [
+    unit,
+    leaseTerm,
+    leaseType,
+    leaseBeginDate,
+    leaseEndDate,
+    paymentFrequency,
+    customFrequencyValue,
+    customFrequencyUnit,
+    rentAmountEtb,
+    firstInvoiceDate,
+    tenants,
+    sharingType,
+    leaseDocumentName,
+  ])
 
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${API_BASE_URL}/leases/${selectedLease.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      if (!response.ok) throw new Error("Failed to delete lease")
-
-      setLeases(leases.filter(l => l.id !== selectedLease.id))
-      setDeleteConfirmOpen(false)
-      setSelectedLease(null)
-    } catch (error) {
-      console.error("Error deleting lease:", error)
-    }
-  }
-
-  const handleUpdateStatus = async (leaseId: string, newStatus: string) => {
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${API_BASE_URL}/leases/${leaseId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      })
-
-      if (!response.ok) throw new Error("Failed to update status")
-
-      setLeases(leases.map(l => 
-        l.id === leaseId ? { ...l, status: newStatus as "pending" | "active" | "inactive" | "expired" } : l
-      ))
-    } catch (error) {
-      console.error("Error updating lease:", error)
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-emerald-100 text-emerald-800 border-emerald-300"
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300"
-      case "inactive":
-        return "bg-gray-100 text-gray-800 border-gray-300"
-      case "expired":
-        return "bg-red-100 text-red-800 border-red-300"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-300"
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "active":
-        return <CheckCircle className="w-4 h-4" />
-      case "pending":
-        return <Clock className="w-4 h-4" />
-      case "expired":
-        return <AlertCircle className="w-4 h-4" />
-      default:
-        return <X className="w-4 h-4" />
-    }
-  }
-
-  const filteredLeases = leases.filter(lease => {
-    const matchesSearch = 
-      (tenants.find(t => t.id === lease.tenant_id)?.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (properties.find(p => p.id === lease.property_id)?.title || "").toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesStatus = filterStatus === "all" || lease.status === filterStatus
-
-    return matchesSearch && matchesStatus
-  })
-
-  const stats = [
-    {
-      title: "Total Leases",
-      value: leases.length,
-      icon: <FileText className="w-8 h-8" />,
-      color: "text-blue-600",
-    },
-    {
-      title: "Active Leases",
-      value: leases.filter(l => l.status === "active").length,
-      icon: <CheckCircle className="w-8 h-8" />,
-      color: "text-emerald-600",
-    },
-    {
-      title: "Pending",
-      value: leases.filter(l => l.status === "pending").length,
-      icon: <Clock className="w-8 h-8" />,
-      color: "text-yellow-600",
-    },
-    {
-      title: "Monthly Revenue",
-      value: `ETB ${(leases.filter(l => l.status === "active").reduce((sum, l) => sum + l.monthly_rent, 0) / 1000).toFixed(1)}K`,
-      icon: <DollarSign className="w-8 h-8" />,
-      color: "text-purple-600",
-    },
-  ]
-
-  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
-    if (!isCurrentlyCollapsed) {
-      setIsSidebarCollapsed(true)
-    }
-  }
+  const canGoNext = isStepComplete(activeStep)
+  const isLastStep = currentStepIndex === steps.length - 1
 
   const handleLogout = async () => {
     const token = getAuthToken()
@@ -455,7 +148,6 @@ function LeasesContent() {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
-    
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
     localStorage.removeItem("authToken")
@@ -465,610 +157,374 @@ function LeasesContent() {
     router.push("/")
   }
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed)
+  const updateTenant = (index: number, key: keyof TenantRow, value: string) => {
+    setTenants((prev) => prev.map((t, i) => (i === index ? { ...t, [key]: value } : t)))
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex">
-        <DashboardSidebar
-          navItems={navItems}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
-          onLogout={handleLogout}
-          onNavigate={handleSidebarNavigation}
-        />
+  const addTenantRow = () => {
+    setTenants((prev) => [
+      ...prev,
+      { firstName: "", lastName: "", email: "", phone: "" },
+    ])
+  }
 
-        <div className="flex-1 flex flex-col">
-          <DashboardHeader
-            title="Rent Management"
-            subtitle="Manage and track all tenant rents"
-            onToggleSidebar={toggleSidebar}
-          />
-          <main className="p-6 md:p-8 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </main>
-        </div>
-      </div>
-    )
+  const validateTenants = () => {
+    const nextErrors: Record<number, { email?: string; phone?: string }> = {}
+    tenants.forEach((t, i) => {
+      if (t.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email.trim())) {
+        nextErrors[i] = { ...(nextErrors[i] || {}), email: "Invalid email format" }
+      }
+      if (t.phone.trim() && !/^251(7|9)\d{8}$/.test(t.phone.trim())) {
+        nextErrors[i] = { ...(nextErrors[i] || {}), phone: "Phone must be 2517/2519 + 8 digits" }
+      }
+    })
+    setTenantErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-[#F4F6FA]">
       <DashboardSidebar
-        navItems={navItems}
         isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={toggleSidebar}
+        onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)}
         onLogout={handleLogout}
-        onNavigate={handleSidebarNavigation}
       />
 
       <div className="flex-1 flex flex-col">
         <DashboardHeader
-          title="Rent Management"
-          subtitle="Manage and track all tenant rents"
-          onToggleSidebar={toggleSidebar}
+          title="Leasing"
+          subtitle=""
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)}
         />
 
-        <ScrollArea className="flex-1">
-          <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {stats.map((stat, index) => (
-                <div
-                  key={stat.title ?? index}
-                  className="rounded-2xl p-5 md:p-6 border-0 group hover:shadow-lg transition-all duration-300"
-                  style={{
-                    backgroundColor: "var(--card)",
-                    boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
-                  }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <Text className="text-sm text-muted-foreground mb-1">
-                        {stat.title}
-                      </Text>
-                      <Heading level={3} className={`text-2xl font-bold ${stat.color}`}>
-                        {stat.value}
-                      </Heading>
-                    </div>
-                    <div className={`p-2 rounded-lg bg-white/50 group-hover:scale-110 transition-transform ${stat.color}`}>
-                      {stat.icon}
-                    </div>
+        <main className="p-3 md:p-4">
+          <div className="mx-auto max-w-[1320px]">
+            <div className="rounded-md border border-[#D6DEEA] bg-[#F2F5FA] px-3 py-2.5">
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_repeat(4,minmax(0,1fr))]">
+                <div className="flex items-center gap-2.5 border-r border-[#E1E6EF] pr-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E7F4FA] text-[#5B7E9E]">
+                    <Building2 className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-[0.95rem] font-semibold leading-tight text-[#24394F]">Africa Avenue (Bole Airport Road) in the Bole area</div>
+                    <div className="text-[0.76rem] text-[#586D84]">Addis Ababa, Ethiopia | 1A</div>
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Header with Search and Filters */}
-            <div className="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              <div>
-                <Heading level={2} className="mb-1">
-                  Your Rents
-                </Heading>
-                <Text className="text-muted-foreground">
-                  Manage and track all tenant rents
-                </Text>
+                <TopCol title="Rental Lease for" value="-" />
+                <TopCol title="Start" value={leaseBeginDate || "-"} />
+                <TopCol title="End" value={leaseEndDate || "-"} />
+                <TopCol title="Monthly Rent" value={rentAmountEtb ? `ETB ${Number(rentAmountEtb).toLocaleString()}` : "-"} />
               </div>
-              <Button
-                onClick={() => setCreateModalOpen(true)}
-                className="bg-[#3096DA] hover:bg-[#277FB8] text-white rounded-lg flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Create Lease
-              </Button>
             </div>
 
-            {/* Search and Filter Bar */}
-            <div className="mb-6 flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by tenant name or property..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 rounded-lg"
-                />
-              </div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full md:w-48 px-4 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="inactive">Inactive</option>
-                <option value="expired">Expired</option>
-              </select>
-            </div>
-
-            {/* Leases Table */}
-            <div className="rounded-2xl border-0 overflow-hidden" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
-              {filteredLeases.length === 0 ? (
-                <div className="p-12 text-center">
-                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                  <Heading level={3} className="mb-2">
-                    No leases found
-                  </Heading>
-                  <Text className="text-muted-foreground mb-6">
-                    {searchQuery || filterStatus !== "all" 
-                      ? "Try adjusting your search or filters" 
-                      : "Create your first lease to get started"}
-                  </Text>
-                  {!searchQuery && filterStatus === "all" && (
-                    <Button
-                      onClick={() => setCreateModalOpen(true)}
-                      className="bg-[#3096DA] hover:bg-[#277FB8] text-white rounded-lg"
+            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[270px_1fr]">
+              <aside className="rounded-md border border-[#E0E6EF] bg-white py-2">
+                {steps.map((step, idx) => {
+                  const active = step.key === activeStep
+                  const done = completedSet.has(step.key)
+                  return (
+                    <button
+                      key={step.key}
+                      type="button"
+                      onClick={() => setCurrentStepIndex(idx)}
+                      className={`flex w-full items-center gap-2.5 border-b border-[#EEF2F7] px-3.5 py-3 text-left last:border-b-0 ${
+                        active ? "bg-[#F7FAFE]" : "bg-white"
+                      }`}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Lease
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">Tenant</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">Property</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">Monthly Rent</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">Period</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-muted-foreground">Status</th>
-                        <th className="px-6 py-4 text-right text-sm font-semibold text-muted-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredLeases.map((lease) => {
-                        const tenant = tenants.find(t => t.id === lease.tenant_id)
-                        const property = properties.find(p => p.id === lease.property_id)
+                      <span className={`flex h-5.5 w-5.5 items-center justify-center rounded-full ${done ? "text-[#34B56A]" : "text-[#A3B0C0]"}`}>
+                        {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : step.icon}
+                      </span>
+                      <span className={`text-[0.92rem] ${active ? "font-semibold text-[#203449]" : "text-[#6F7F91]"}`}>{step.label}</span>
+                    </button>
+                  )
+                })}
+              </aside>
 
-                        return (
-                          <tr key={lease.id} className="border-b border-border hover:bg-white/50 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                                  {tenant?.full_name?.charAt(0) || "T"}
-                                </div>
-                                <div>
-                                  <Text className="font-medium">{tenant?.full_name || "Unknown"}</Text>
-                                  <Text className="text-xs text-muted-foreground">{tenant?.email || ""}</Text>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <Home className="w-4 h-4 text-muted-foreground" />
-                                <div>
-                                  <Text className="font-medium">{property?.title || "Unknown"}</Text>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <Text className="font-semibold text-emerald-600">
-                                ETB {lease.monthly_rent.toLocaleString()}
-                              </Text>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2 text-sm">
-                                <Calendar className="w-4 h-4 text-muted-foreground" />
-                                <Text className="text-xs">
-                                  {new Date(lease.start_date).toLocaleDateString()} - {new Date(lease.end_date).toLocaleDateString()}
-                                </Text>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${getStatusColor(lease.status)}`}>
-                                {getStatusIcon(lease.status)}
-                                <Text className="text-xs font-semibold capitalize">{lease.status}</Text>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedLease(lease)
-                                      setViewModalOpen(true)
-                                    }}
-                                    className="cursor-pointer"
-                                  >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    View Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedLease(lease)
-                                      setEditModalOpen(true)
-                                    }}
-                                    className="cursor-pointer"
-                                  >
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Edit Status
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSelectedLease(lease)
-                                      setDeleteConfirmOpen(true)
-                                    }}
-                                    className="cursor-pointer text-red-600"
-                                  >
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
+              <section className="rounded-md border border-[#E0E6EF] bg-white p-3.5">
+                {activeStep === "term" && (
+                  <>
+                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Lease Term</h2>
+                    <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Select Unit</label>
+                        <select value={unit} onChange={(e) => setUnit(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
+                          <option value="1A">1A</option>
+                          <option value="1B">1B</option>
+                          <option value="2A">2A</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Select Lease Term</label>
+                        <select value={leaseTerm} onChange={(e) => setLeaseTerm(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
+                          <option value="New Term">New Term</option>
+                          <option value="Renewal">Renewal</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                      <LeaseTypeCard title="Fixed Term" description="This lease has a fixed start date and will expire after a fixed end date." checked={leaseType === "fixed"} onClick={() => setLeaseType("fixed")} />
+                      <LeaseTypeCard title="Month to Month" description="Lease has a start date but no fixed end date. It should automatically renew each month." checked={leaseType === "month_to_month"} onClick={() => setLeaseType("month_to_month")} />
+                    </div>
+                  </>
+                )}
 
-      {/* Create Lease Modal */}
-      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="max-w-2xl" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Create New Lease</DialogTitle>
-            <DialogDescription>
-              Set up a new lease agreement between a tenant and property
-            </DialogDescription>
-          </DialogHeader>
+                {activeStep === "dates" && (
+                  <>
+                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Lease Dates</h2>
+                    <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                      <DateField label="Lease Begin Date *" value={leaseBeginDate} onChange={setLeaseBeginDate} />
+                      <DateField label="Lease End Date *" value={leaseEndDate} onChange={setLeaseEndDate} disabled={leaseType === "month_to_month"} />
+                    </div>
+                    <label className="mt-2.5 inline-flex items-center gap-2 text-[0.82rem] text-[#2E4358]">
+                      <input type="checkbox" checked={switchToMonthToMonth} onChange={(e) => setSwitchToMonthToMonth(e.target.checked)} className="h-3.5 w-3.5" />
+                      Switch to Month-To-Month at the end of the lease
+                    </label>
+                  </>
+                )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
-            {/* Tenant Selection */}
-            <div className="space-y-3">
-              <Label htmlFor="tenant" className="text-sm font-semibold">
-                Select Tenant
-              </Label>
-              <select
-                id="tenant"
-                value={formData.tenant_id}
-                onChange={(e) => setFormData({ ...formData, tenant_id: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">Choose a tenant</option>
-                {tenants.map(tenant => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.full_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {activeStep === "rent" && (
+                  <>
+                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Rent/Additional Fee</h2>
+                    <div className="mt-2.5">
+                      <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Payment Frequency</label>
+                      <select value={paymentFrequency} onChange={(e) => setPaymentFrequency(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
+                        <option value="">Select</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Bi-Monthly">Bi-Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Yearly">Yearly</option>
+                        <option value="Custom">Custom</option>
+                      </select>
+                    </div>
 
-            {/* Property Selection */}
-            <div className="space-y-3">
-              <Label htmlFor="property" className="text-sm font-semibold">
-                Select Property
-              </Label>
-              <select
-                id="property"
-                value={formData.property_id}
-                onChange={(e) => {
-                  const property = properties.find(p => p.id === e.target.value)
-                  setFormData({
-                    ...formData,
-                    property_id: e.target.value,
-                    monthly_rent: property?.monthly_rent || 0
-                  })
-                }}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">Choose a property</option>
-                {properties.map(property => (
-                  <option key={property.id} value={property.id}>
-                    {property.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+                    {paymentFrequency === "Custom" && (
+                      <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:grid-cols-[130px_1fr]">
+                        <div>
+                          <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Every</label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={customFrequencyValue}
+                            onChange={(e) => setCustomFrequencyValue(e.target.value)}
+                            className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Unit</label>
+                          <select
+                            value={customFrequencyUnit}
+                            onChange={(e) => setCustomFrequencyUnit(e.target.value)}
+                            className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]"
+                          >
+                            <option>Days</option>
+                            <option>Weeks</option>
+                            <option>Months</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
 
-            {/* Monthly Rent */}
-            <div className="space-y-3">
-              <Label htmlFor="rent" className="text-sm font-semibold">
-                Monthly Rent
-              </Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="rent"
-                  type="number"
-                  value={formData.monthly_rent}
-                  onChange={(e) => setFormData({ ...formData, monthly_rent: parseFloat(e.target.value) })}
-                  placeholder="0.00"
-                  className="pl-10 rounded-lg"
-                />
-              </div>
-            </div>
+                    {paymentFrequency && (
+                      <div className="mt-3 space-y-2.5">
+                        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Rent</label>
+                            <div className="flex h-9 items-center overflow-hidden rounded border border-[#D8DFE9]">
+                              <span className="flex h-full w-12 items-center justify-center border-r border-[#D8DFE9] text-[0.8rem] text-[#6A7C90]">ETB</span>
+                              <input value={rentAmountEtb} onChange={(e) => setRentAmountEtb(e.target.value)} className="h-full w-full px-2.5 text-[0.82rem] outline-none" />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Due on the</label>
+                            <div className="grid grid-cols-[1fr_auto] overflow-hidden rounded border border-[#D8DFE9]">
+                              <select value={dueDay} onChange={(e) => setDueDay(e.target.value)} className="h-9 border-r border-[#D8DFE9] px-2.5 text-[0.82rem]">
+                                {dueDays.map((day) => (
+                                  <option key={day}>{day}</option>
+                                ))}
+                              </select>
+                              <div className="flex items-center px-2.5 text-[0.75rem] text-[#6A7C90]">of every month</div>
+                            </div>
+                          </div>
+                        </div>
 
-            {/* Status */}
-            <div className="space-y-3">
-              <Label htmlFor="status" className="text-sm font-semibold">
-                Initial Status
-              </Label>
-              <select
-                id="status"
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as "pending" | "active" | "inactive" | "expired" })}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="pending">Pending</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+                        <div>
+                          <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">On which date should the first rental invoice be due?*</label>
+                          <input type="date" value={firstInvoiceDate} onChange={(e) => setFirstInvoiceDate(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]" />
+                          <p className="mt-1.5 text-[0.73rem] text-[#8A98A8]">We'll immediately create an unpaid invoice due on whichever date you select. Invoices will continue from that date onward.</p>
+                        </div>
+
+                        <div className="border-t border-[#E7EDF5] pt-2">
+                          <button type="button" className="inline-flex items-center gap-1 text-[0.8rem] font-medium text-[#6E83A0] hover:text-[#4E6F98]">
+                            <PlusCircle className="h-3.5 w-3.5" /> Add Additional Fee (Optional)
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {activeStep === "tenants" && (
+                  <>
+                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Add Tenants</h2>
+                    <div className="mt-2 rounded border border-[#E2E8F1] overflow-hidden">
+                      <div className="grid grid-cols-6 gap-2 bg-[#F2F5FA] px-2.5 py-2 text-[0.75rem] font-semibold text-[#5F7288]">
+                        <div>First Name</div>
+                        <div>Last Name</div>
+                        <div>Email</div>
+                        <div>Phone Number</div>
+                        <div>Application Status</div>
+                        <div></div>
+                      </div>
+                      <div className="space-y-2 px-2.5 py-2.5">
+                        {tenants.map((tenant, i) => (
+                          <div key={i} className="grid grid-cols-6 gap-2">
+                            <input value={tenant.firstName} onChange={(e) => updateTenant(i, "firstName", e.target.value)} className="h-8 rounded border border-[#D8DFE9] px-2 text-[0.78rem]" />
+                            <input value={tenant.lastName} onChange={(e) => updateTenant(i, "lastName", e.target.value)} className="h-8 rounded border border-[#D8DFE9] px-2 text-[0.78rem]" />
+                            <div>
+                              <input value={tenant.email} onChange={(e) => updateTenant(i, "email", e.target.value)} className="h-8 w-full rounded border border-[#D8DFE9] px-2 text-[0.78rem]" />
+                              {tenantErrors[i]?.email && <p className="mt-1 text-[0.68rem] text-red-600">{tenantErrors[i].email}</p>}
+                            </div>
+                            <div>
+                              <input value={tenant.phone} onChange={(e) => updateTenant(i, "phone", e.target.value)} className="h-8 w-full rounded border border-[#D8DFE9] px-2 text-[0.78rem]" />
+                              {tenantErrors[i]?.phone && <p className="mt-1 text-[0.68rem] text-red-600">{tenantErrors[i].phone}</p>}
+                            </div>
+                            <div className="flex h-8 items-center rounded border border-[#E4EAF2] px-2 text-[0.75rem] text-[#7D8EA1]">Application Not Requested</div>
+                            <div />
+                          </div>
+                        ))}
+
+                        <button type="button" onClick={addTenantRow} className="inline-flex items-center gap-1 text-[0.78rem] font-semibold text-[#4E88C8]">
+                          <PlusCircle className="h-3.5 w-3.5" /> Add Another Tenant
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeStep === "sharing" && (
+                  <>
+                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Rent/Deposit Sharing</h2>
+                    <div className="mt-2.5">
+                      <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Sharing Method</label>
+                      <select value={sharingType} onChange={(e) => setSharingType(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
+                        <option value="">Select</option>
+                        <option value="Equal Split">Equal Split</option>
+                        <option value="Custom Split">Custom Split</option>
+                        <option value="Primary Tenant Pays">Primary Tenant Pays</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {activeStep === "docs" && (
+                  <>
+                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Lease/Documents</h2>
+                    <div className="mt-2.5">
+                      <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Lease Document Name</label>
+                      <input value={leaseDocumentName} onChange={(e) => setLeaseDocumentName(e.target.value)} placeholder="Enter document title" className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]" />
+                    </div>
+                  </>
+                )}
+              </section>
             </div>
 
-            {/* Start Date */}
-            <div className="space-y-3">
-              <Label htmlFor="startDate" className="text-sm font-semibold">
-                Start Date
-              </Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="pl-10 rounded-lg"
-                />
-              </div>
-            </div>
-
-            {/* End Date */}
-            <div className="space-y-3">
-              <Label htmlFor="endDate" className="text-sm font-semibold">
-                End Date
-              </Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="pl-10 rounded-lg"
-                />
-              </div>
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-3 md:col-span-2">
-              <Label htmlFor="notes" className="text-sm font-semibold">
-                Additional Notes (Optional)
-              </Label>
-              <textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Add any special terms or conditions..."
-                className="w-full px-4 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-24 resize-none"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setCreateModalOpen(false)}
-              className="rounded-lg"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateLease}
-              className="bg-[#3096DA] hover:bg-[#277FB8] text-white rounded-lg"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Lease
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Lease Details Modal */}
-      {selectedLease && (
-        <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
-          <DialogContent className="max-w-2xl" style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
-            <DialogHeader>
-              <DialogTitle className="text-2xl">Lease Details</DialogTitle>
-            </DialogHeader>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
-              {/* Tenant Info */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Tenant</Text>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                    {tenants.find(t => t.id === selectedLease.tenant_id)?.full_name?.charAt(0) || "T"}
-                  </div>
-                  <div>
-                    <Text className="font-semibold">{tenants.find(t => t.id === selectedLease.tenant_id)?.full_name}</Text>
-                    <Text className="text-sm text-muted-foreground">{tenants.find(t => t.id === selectedLease.tenant_id)?.email}</Text>
-                  </div>
-                </div>
-              </div>
-
-              {/* Property Info */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Property</Text>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white">
-                    <Home className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <Text className="font-semibold">{properties.find(p => p.id === selectedLease.property_id)?.title}</Text>
-                    <Text className="text-sm text-muted-foreground">{properties.find(p => p.id === selectedLease.property_id)?.address_line1}</Text>
-                  </div>
-                </div>
-              </div>
-
-              {/* Monthly Rent */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Monthly Rent</Text>
-                <Text className="text-2xl font-bold text-emerald-600">ETB {selectedLease.monthly_rent.toLocaleString()}</Text>
-              </div>
-
-              {/* Status */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Status</Text>
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${getStatusColor(selectedLease.status)}`}>
-                  {getStatusIcon(selectedLease.status)}
-                  <Text className="text-sm font-semibold capitalize">{selectedLease.status}</Text>
-                </div>
-              </div>
-
-              {/* Lease Period */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Start Date</Text>
+            <div className="mt-4 border-t border-[#E4EAF2] pt-3">
+              <div className="flex items-center justify-between">
+                <div />
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <Text className="font-medium">{new Date(selectedLease.start_date).toLocaleDateString()}</Text>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">End Date</Text>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <Text className="font-medium">{new Date(selectedLease.end_date).toLocaleDateString()}</Text>
-                </div>
-              </div>
-
-              {/* Lease Duration */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Duration</Text>
-                <Text className="font-medium">
-                  {Math.ceil((new Date(selectedLease.end_date).getTime() - new Date(selectedLease.start_date).getTime()) / (1000 * 60 * 60 * 24))} days
-                </Text>
-              </div>
-
-              {/* Total Value */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Total Value</Text>
-                <Text className="text-xl font-bold text-purple-600">
-                  ETB {(selectedLease.monthly_rent * Math.ceil((new Date(selectedLease.end_date).getTime() - new Date(selectedLease.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))).toLocaleString()}
-                </Text>
-              </div>
-
-              {/* Created Date */}
-              <div className="space-y-2">
-                <Text className="text-xs font-semibold text-muted-foreground uppercase">Created</Text>
-                <Text className="font-medium">{new Date(selectedLease.created_at).toLocaleDateString()}</Text>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setViewModalOpen(false)}
-                className="rounded-lg"
-              >
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Edit Status Modal */}
-      {selectedLease && (
-        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-          <DialogContent style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
-            <DialogHeader>
-              <DialogTitle>Update Lease Status</DialogTitle>
-              <DialogDescription>
-                Change the status of this lease
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-6">
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold">New Status</Label>
-                <select
-                  defaultValue={selectedLease.status}
-                  onChange={(e) => {
-                    handleUpdateStatus(selectedLease.id, e.target.value)
-                    setEditModalOpen(false)
-                  }}
-                  className="w-full px-4 py-2 rounded-lg border border-border bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+              {currentStepIndex > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setCurrentStepIndex((x) => Math.max(0, x - 1))}
+                  className="h-8 rounded border border-[#9CB7D8] px-5 text-[0.78rem] font-semibold text-[#4E88C8]"
                 >
-                  <option value="pending">Pending</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="expired">Expired</option>
-                </select>
-              </div>
-            </div>
+                  Back
+                </button>
+              )}
 
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setEditModalOpen(false)}
-                className="rounded-lg"
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {selectedLease && (
-        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-          <DialogContent style={{ backgroundColor: "var(--card)", boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)" }}>
-            <DialogHeader>
-              <DialogTitle className="text-red-600">Delete Lease</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this lease? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
-              <div className="flex gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <Text className="font-semibold text-red-900">Warning</Text>
-                  <Text className="text-sm text-red-800">
-                    Deleting this lease will remove all associated records. Make sure this is intentional.
-                  </Text>
+              {!isLastStep && canGoNext && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeStep === "tenants" && !validateTenants()) return
+                    setCurrentStepIndex((x) => Math.min(steps.length - 1, x + 1))
+                  }}
+                  className="h-8 rounded bg-[#4E88C8] px-5 text-[0.78rem] font-semibold text-white"
+                >
+                  Next
+                </button>
+              )}
                 </div>
               </div>
             </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}
 
-            <DialogFooter className="gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setDeleteConfirmOpen(false)}
-                className="rounded-lg"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleDeleteLease}
-                className="bg-red-600 hover:bg-red-700 text-white rounded-lg"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Lease
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+function TopCol({ title, value }: { title: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[0.72rem] font-medium text-[#5D6F83]">{title}</div>
+      <div className="mt-1 text-[0.82rem] font-semibold text-[#22364A]">{value}</div>
+    </div>
+  )
+}
+
+function LeaseTypeCard({
+  title,
+  description,
+  checked,
+  onClick,
+}: {
+  title: string
+  description: string
+  checked: boolean
+  onClick: () => void
+}) {
+  return (
+    <button type="button" onClick={onClick} className={`rounded border p-2.5 text-left ${checked ? "border-[#9FB9D8] bg-[#F8FBFF]" : "border-[#E0E6EF] bg-white"}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-[#607790]" />
+          <h3 className="text-[0.95rem] font-semibold text-[#253A50]">{title}</h3>
+        </div>
+        <span className={`mt-0.5 inline-block h-3.5 w-3.5 rounded-full border ${checked ? "border-[#4E88C8] bg-[#4E88C8]" : "border-[#D7DDE7]"}`} />
+      </div>
+      <p className="mt-1 text-[0.76rem] leading-[1.35] text-[#6A7C90]">{description}</p>
+    </button>
+  )
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  disabled?: boolean
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">{label}</label>
+      <div className="relative">
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className="h-9 w-full rounded border border-[#D8DFE9] bg-white px-2.5 pr-8 text-[0.82rem]"
+        />
+        <Calendar className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#7A8EA5]" />
+      </div>
     </div>
   )
 }
@@ -1076,8 +532,7 @@ function LeasesContent() {
 export default function LeasesPage() {
   return (
     <ProtectedRoute>
-      <LeasesContent />
+      <LeasingContent />
     </ProtectedRoute>
   )
 }
-

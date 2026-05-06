@@ -1,205 +1,71 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Text, Heading } from "@/components/ui/typography"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { API_BASE_URL, getAuthToken } from "@/lib/apiClient"
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
-import { LandlordDocumentReview } from "@/components/documents"
-import {
-  LayoutDashboard,
-  Building2,
-  FileText,
-  MessageSquare,
-  CreditCard,
-  TrendingUp,
-  Settings,
-  Users,
-  PlusCircle,
-} from "lucide-react"
+import { FileText, Calendar, MoreHorizontal } from "lucide-react"
 
-interface Document {
+type UploadedFile = {
   id: string
-  file_name: string
-  file_path: string
-  file_size: number
-  status: "pending" | "approved" | "rejected"
-  rejection_reason?: string
-  created_at: string
-  tenant_id: string
-  document_type?: {
-    id: string
-    name: string
-  }
-  tenant_name?: string
+  title: string
+  category: string
+  unit: string
+  lastModifiedBy: string
+  lastModifiedAt: string
 }
 
-function LandlordDocumentsContent() {
+function FilesContent() {
   const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [documents, setDocuments] = useState<Document[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending")
+  const [categoryFilter, setCategoryFilter] = useState("All Categories")
+  const [uploadedRange, setUploadedRange] = useState("Last 90 days")
+  const [dateFrom, setDateFrom] = useState("2026-02-05")
+  const [dateTo, setDateTo] = useState("2026-05-06")
+  const [openActionFor, setOpenActionFor] = useState<string | null>(null)
 
-  const navItems = [
+  const [categories] = useState<string[]>([
+    "Applicant File",
+    "Bill Files",
+    "eSignature Documents",
+    "Mobile Uploads",
+    "Shared Reports",
+    "Uncategorized",
+    "Leases",
+  ])
+
+  const [files, setFiles] = useState<UploadedFile[]>([
     {
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      name: "Dashboard",
-      path: "/dashboard",
-      active: false,
+      id: "1",
+      title: "Lease document",
+      category: "Leases",
+      unit: "3 Industrial Road - A",
+      lastModifiedBy: "sfsdfa asfasdfa",
+      lastModifiedAt: "5/6/2026 1:42 AM",
     },
     {
-      icon: <Building2 className="w-5 h-5" />,
-      name: "My Listings",
-      path: "/dashboard/listings",
-      active: false,
+      id: "2",
+      title: "Lease document",
+      category: "Leases",
+      unit: "160 East End Avenue - 1",
+      lastModifiedBy: "sfsdfa asfasdfa",
+      lastModifiedAt: "5/6/2026 1:41 AM",
     },
-    {
-      icon: <PlusCircle className="w-5 h-5" />,
-      name: "Create Listing",
-      path: "/dashboard/create-listing",
-      active: false,
-    },
-    {
-      icon: <MessageSquare className="w-5 h-5" />,
-      name: "Chat",
-      path: "/dashboard/chat",
-      active: false,
-    },
-    {
-      icon: <FileText className="w-5 h-5" />,
-      name: "Rents",
-      path: "/dashboard/leases",
-      active: false,
-    },
-    {
-      icon: <FileText className="w-5 h-5" />,
-      name: "Documents",
-      path: "/dashboard/documents",
-      active: true,
-    },
-    {
-      icon: <CreditCard className="w-5 h-5" />,
-      name: "Payouts",
-      path: "/dashboard/payouts",
-      active: false,
-    },
-    {
-      icon: <TrendingUp className="w-5 h-5" />,
-      name: "Analytics",
-      path: "/dashboard/analytics",
-      active: false,
-    },
-    {
-      icon: <Users className="w-5 h-5" />,
-      name: "Employees",
-      path: "/dashboard/employees",
-      active: false,
-    },
-    {
-      icon: <Settings className="w-5 h-5" />,
-      name: "Settings",
-      path: "/dashboard/settings",
-      active: false,
-    },
-  ]
+  ])
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const token = getAuthToken()
-        if (!token) {
-          router.push("/auth/signin")
-          return
-        }
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
-        // In the new API, landlord documents might be under a different endpoint or handled via a filter
-        // Assuming /document/tenant-documents with admin/owner role access
-        const response = await fetch(`${API_BASE_URL}/document/tenant-documents`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const payload = await response.json()
-        setDocuments(payload.data || [])
-      } catch (error) {
-        console.error("Error fetching data:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
-
-  const handleApproveDocument = async (documentId: string) => {
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${API_BASE_URL}/document/tenant-documents/${documentId}/approve`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` }
-      })
-
-      if (!response.ok) throw new Error("Failed to approve")
-
-      // Update local state
-      setDocuments(
-        documents.map((doc) =>
-          doc.id === documentId ? { ...doc, status: "approved" } : doc
-        )
-      )
-    } catch (error) {
-      console.error("Error approving document:", error)
-      throw error
-    }
-  }
-
-  const handleRejectDocument = async (documentId: string, reason: string) => {
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${API_BASE_URL}/document/tenant-documents/${documentId}/reject`, {
-        method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` 
-        },
-        body: JSON.stringify({ comment: reason })
-      })
-
-      if (!response.ok) throw new Error("Failed to reject")
-
-      // Update local state
-      setDocuments(
-        documents.map((doc) =>
-          doc.id === documentId
-            ? { ...doc, status: "rejected", rejection_reason: reason }
-            : doc
-        )
-      )
-    } catch (error) {
-      console.error("Error rejecting document:", error)
-      throw error
-    }
-  }
-
-  const handleDownloadDocument = async (documentId: string) => {
-    try {
-      const token = getAuthToken()
-      const response = await fetch(`${API_BASE_URL}/document/tenant-documents/${documentId}/download`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!response.ok) throw new Error("Failed to download")
-      
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      window.open(url, "_blank")
-    } catch (error) {
-      console.error("Error downloading document:", error)
-      throw error
-    }
-  }
+  const filteredFiles = useMemo(() => {
+    return files.filter((f) => {
+      const byCategory = categoryFilter === "All Categories" || f.category === categoryFilter
+      const q = searchQuery.trim().toLowerCase()
+      const bySearch = !q || f.title.toLowerCase().includes(q) || f.unit.toLowerCase().includes(q)
+      return byCategory && bySearch
+    })
+  }, [files, categoryFilter, searchQuery])
 
   const handleLogout = async () => {
     const token = getAuthToken()
@@ -207,7 +73,7 @@ function LandlordDocumentsContent() {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
-    
+
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userRole")
     localStorage.removeItem("authToken")
@@ -217,140 +83,191 @@ function LandlordDocumentsContent() {
     router.push("/")
   }
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed)
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
   }
 
-  const handleSidebarNavigation = (isCurrentlyCollapsed: boolean) => {
-    if (!isCurrentlyCollapsed) {
-      setIsSidebarCollapsed(true)
-    }
-  }
+  const handleFilesSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files
+    if (!selected || selected.length === 0) return
 
-  const stats = [
-    {
-      title: "Total Documents",
-      value: documents.length,
-      color: "text-blue-600",
-    },
-    {
-      title: "Pending Review",
-      value: documents.filter((d) => d.status === "pending").length,
-      color: "text-yellow-600",
-    },
-    {
-      title: "Approved",
-      value: documents.filter((d) => d.status === "approved").length,
-      color: "text-emerald-600",
-    },
-    {
-      title: "Rejected",
-      value: documents.filter((d) => d.status === "rejected").length,
-      color: "text-red-600",
-    },
-  ]
+    const appended: UploadedFile[] = Array.from(selected).map((f, idx) => ({
+      id: `${Date.now()}-${idx}`,
+      title: f.name,
+      category: "Uncategorized",
+      unit: "-",
+      lastModifiedBy: "You",
+      lastModifiedAt: new Date().toLocaleString(),
+    }))
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex">
-        <DashboardSidebar
-          navItems={navItems}
-          isSidebarCollapsed={isSidebarCollapsed}
-          onToggleSidebar={toggleSidebar}
-          onLogout={handleLogout}
-          onNavigate={handleSidebarNavigation}
-        />
-
-        <div className="flex-1 transition-all duration-300 ease-in-out">
-          <DashboardHeader
-            title="Documents"
-            subtitle="Loading documents..."
-            onToggleSidebar={toggleSidebar}
-          />
-
-          <main className="p-6 flex items-center justify-center min-h-96">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <Text className="text-muted-foreground">Loading documents...</Text>
-            </div>
-          </main>
-        </div>
-      </div>
-    )
+    setFiles((prev) => [...appended, ...prev])
+    event.target.value = ""
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-[#F4F6FA]">
       <DashboardSidebar
-        navItems={navItems}
         isSidebarCollapsed={isSidebarCollapsed}
-        onToggleSidebar={toggleSidebar}
+        onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)}
         onLogout={handleLogout}
-        onNavigate={handleSidebarNavigation}
       />
 
       <div className="flex-1 flex flex-col">
         <DashboardHeader
-          title="Documents"
-          subtitle="Review and manage tenant documents"
-          onToggleSidebar={toggleSidebar}
+          title="Files"
+          subtitle=""
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)}
         />
 
-        <ScrollArea className="flex-1">
-          <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {stats.map((stat, index) => (
-                <div
-                  key={index}
-                  className="rounded-2xl p-5 md:p-6 border-0"
-                  style={{
-                    backgroundColor: "var(--card)",
-                    boxShadow: "0 4px 12px rgba(107, 90, 70, 0.25)",
-                  }}
-                >
-                  <Text className="text-sm text-muted-foreground mb-1">
-                    {stat.title}
-                  </Text>
-                  <Heading level={3} className={`text-2xl font-bold ${stat.color}`}>
-                    {stat.value}
-                  </Heading>
-                </div>
-              ))}
-            </div>
-
-            {/* Filter Tabs */}
-            <div className="mb-6 flex gap-2">
-              {(["pending", "approved", "rejected", "all"] as const).map((status) => (
+        <main className="p-4 md:p-5">
+          <div className="mx-auto max-w-[1320px]">
+            <div className="mb-4 flex items-center justify-between">
+              <h1 className="text-[2rem] font-medium text-[#1F3549]">Files</h1>
+              <div className="flex items-center gap-2">
                 <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                    filterStatus === status
-                      ? "bg-[#3096DA] text-white"
-                      : "bg-card text-foreground hover:bg-muted border border-border"
-                  }`}
+                  type="button"
+                  onClick={handleUploadClick}
+                  className="h-11 rounded-md bg-[#7BB286] px-6 text-[1rem] font-semibold text-white hover:bg-[#6fa47a]"
                 >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                  Upload account file
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard/documents/categories")}
+                  className="h-11 rounded-md border border-[#9CB7D8] bg-[#F7FAFE] px-6 text-[1rem] font-semibold text-[#4E88C8] hover:bg-[#EAF3FF]"
+                >
+                  Manage categories
+                </button>
+              </div>
             </div>
 
-            {/* Documents List */}
-            <div>
-              <Heading level={2} className="mb-6">
-                Documents
-              </Heading>
-              <LandlordDocumentReview
-                documents={documents}
-                filterStatus={filterStatus}
-                onApprove={handleApproveDocument}
-                onReject={handleRejectDocument}
-                onDownload={handleDownloadDocument}
-              />
+            <div className="rounded-md border border-[#DDE5EF] bg-white p-4">
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.1fr_1.1fr_1fr_180px_180px]">
+                <div>
+                  <label className="mb-1 block text-[0.75rem] font-semibold uppercase tracking-[0.04em] text-[#677A8F]">Category</label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="h-10 w-full rounded border border-[#D8DFE9] px-3 text-[0.9rem] text-[#30485F]"
+                  >
+                    <option>All Categories</option>
+                    {categories.map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-[0.75rem] font-semibold uppercase tracking-[0.04em] text-[#677A8F]">Uploaded</label>
+                  <select
+                    value={uploadedRange}
+                    onChange={(e) => setUploadedRange(e.target.value)}
+                    className="h-10 w-full rounded border border-[#D8DFE9] px-3 text-[0.9rem] text-[#30485F]"
+                  >
+                    <option>Last 90 days</option>
+                    <option>Last 30 days</option>
+                    <option>Last 7 days</option>
+                    <option>Custom range</option>
+                  </select>
+                </div>
+
+                <DateInput label="From" value={dateFrom} onChange={setDateFrom} />
+                <DateInput label="To" value={dateTo} onChange={setDateTo} />
+              </div>
+
+              <div className="mt-4 border-t border-[#E7EDF5] pt-3 text-[1.4rem] text-[#7B8DA2]">{filteredFiles.length} matches</div>
+
+              <div className="mt-2 overflow-x-auto rounded border border-[#E0E7F0]">
+                <table className="min-w-full">
+                  <thead className="bg-[#F2F5FA]">
+                    <tr className="text-left text-[0.9rem] font-semibold text-[#31485F]">
+                      <th className="px-4 py-2.5">TITLE</th>
+                      <th className="px-4 py-2.5">CATEGORY</th>
+                      <th className="px-4 py-2.5">UNIT</th>
+                      <th className="px-4 py-2.5">LAST MODIFIED BY</th>
+                      <th className="px-4 py-3 w-[70px]"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredFiles.map((row) => (
+                      <tr key={row.id} className="border-t border-[#E7EDF5] text-[#273F56]">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-[#A0A9B3]" />
+                            <span className="text-[0.95rem] font-semibold">{row.title}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[0.95rem]">{row.category}</td>
+                        <td className="px-4 py-3 text-[0.95rem]">{row.unit}</td>
+                        <td className="px-4 py-3">
+                          <div className="text-[0.95rem]">{row.lastModifiedAt}</div>
+                          <div className="text-[0.86rem] italic text-[#5F7288]">by {row.lastModifiedBy}</div>
+                        </td>
+                        <td className="px-4 py-3 text-right relative">
+                          <button
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#C9D3DF] text-[#7C8EA2]"
+                            onClick={() => setOpenActionFor((prev) => (prev === row.id ? null : row.id))}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                          {openActionFor === row.id && (
+                            <div className="absolute right-3 top-12 z-20 w-44 rounded-md border border-[#D6DFEA] bg-white py-1 shadow-lg">
+                              {["Delete", "Email", "Download", "View"].map((action) => (
+                                <button
+                                  key={action}
+                                  type="button"
+                                  className="block w-full px-4 py-2 text-left text-[0.95rem] text-[#3F556B] hover:bg-[#F2F7FF]"
+                                  onClick={() => setOpenActionFor(null)}
+                                >
+                                  {action}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </ScrollArea>
+        </main>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        multiple
+        onChange={handleFilesSelected}
+      />
+    </div>
+  )
+}
+
+function DateInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-[0.75rem] font-semibold uppercase tracking-[0.04em] text-[#677A8F]">{label}</label>
+      <div className="relative">
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-10 w-full rounded border border-[#D8DFE9] px-3 pr-9 text-[0.9rem] text-[#30485F]"
+        />
+        <Calendar className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
       </div>
     </div>
   )
@@ -359,8 +276,7 @@ function LandlordDocumentsContent() {
 export default function LandlordDocumentsPage() {
   return (
     <ProtectedRoute requiredRole="landlord">
-      <LandlordDocumentsContent />
+      <FilesContent />
     </ProtectedRoute>
   )
 }
-
