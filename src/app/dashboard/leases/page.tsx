@@ -199,17 +199,17 @@ function LeasingContent() {
           onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)}
         />
 
-        <main className="p-3 md:p-4">
-          <div className="mx-auto max-w-[1320px]">
-            <div className="rounded-md border border-[#D6DEEA] bg-[#F2F5FA] px-3 py-2.5">
+        <main className="p-2.5 md:p-3">
+          <div className="mx-auto max-w-[1240px]">
+            <div className="rounded border border-[#D6DEEA] bg-[#F2F5FA] px-2.5 py-2">
               <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_repeat(4,minmax(0,1fr))]">
                 <div className="flex items-center gap-2.5 border-r border-[#E1E6EF] pr-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E7F4FA] text-[#5B7E9E]">
-                    <Building2 className="h-3.5 w-3.5" />
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E7F4FA] text-[#5B7E9E]">
+                    <Building2 className="h-3 w-3" />
                   </div>
                   <div>
-                    <div className="text-[0.95rem] font-semibold leading-tight text-[#24394F]">Africa Avenue (Bole Airport Road) in the Bole area</div>
-                    <div className="text-[0.76rem] text-[#586D84]">Addis Ababa, Ethiopia | 1A</div>
+                    <div className="text-[0.86rem] font-semibold leading-tight text-[#24394F]">Africa Avenue (Bole Airport Road) in the Bole area</div>
+                    <div className="text-[0.7rem] text-[#586D84]">Addis Ababa, Ethiopia | 1A</div>
                   </div>
                 </div>
 
@@ -220,8 +220,8 @@ function LeasingContent() {
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[270px_1fr]">
-              <aside className="rounded-md border border-[#E0E6EF] bg-white py-2">
+            <div className="mt-3 grid grid-cols-1 gap-2.5 lg:grid-cols-[250px_1fr]">
+              <aside className="rounded border border-[#E0E6EF] bg-white py-1.5">
                 {steps.map((step, idx) => {
                   const active = step.key === activeStep
                   const done = completedSet.has(step.key)
@@ -230,23 +230,23 @@ function LeasingContent() {
                       key={step.key}
                       type="button"
                       onClick={() => setCurrentStepIndex(idx)}
-                      className={`flex w-full items-center gap-2.5 border-b border-[#EEF2F7] px-3.5 py-3 text-left last:border-b-0 ${
+                      className={`flex w-full items-center gap-2.5 border-b border-[#EEF2F7] px-3 py-2.5 text-left last:border-b-0 ${
                         active ? "bg-[#F7FAFE]" : "bg-white"
                       }`}
                     >
-                      <span className={`flex h-5.5 w-5.5 items-center justify-center rounded-full ${done ? "text-[#34B56A]" : "text-[#A3B0C0]"}`}>
+                      <span className={`flex h-5 w-5 items-center justify-center rounded-full ${done ? "text-[#34B56A]" : "text-[#A3B0C0]"}`}>
                         {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : step.icon}
                       </span>
-                      <span className={`text-[0.92rem] ${active ? "font-semibold text-[#203449]" : "text-[#6F7F91]"}`}>{step.label}</span>
+                      <span className={`text-[0.84rem] ${active ? "font-semibold text-[#203449]" : "text-[#6F7F91]"}`}>{step.label}</span>
                     </button>
                   )
                 })}
               </aside>
 
-              <section className="rounded-md border border-[#E0E6EF] bg-white p-3.5">
+              <section className="rounded border border-[#E0E6EF] bg-white p-3">
                 {activeStep === "term" && (
                   <>
-                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Lease Term</h2>
+                    <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Lease Term</h2>
                     <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Select Unit</label>
@@ -273,7 +273,7 @@ function LeasingContent() {
 
                 {activeStep === "dates" && (
                   <>
-                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Lease Dates</h2>
+                    <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Lease Dates</h2>
                     <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:grid-cols-2">
                       <DateField label="Lease Begin Date *" value={leaseBeginDate} onChange={setLeaseBeginDate} />
                       <DateField label="Lease End Date *" value={leaseEndDate} onChange={setLeaseEndDate} disabled={leaseType === "month_to_month"} />
@@ -287,7 +287,7 @@ function LeasingContent() {
 
                 {activeStep === "rent" && (
                   <>
-                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Rent/Additional Fee</h2>
+                    <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Rent/Additional Fee</h2>
                     <div className="mt-2.5">
                       <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Payment Frequency</label>
                       <select value={paymentFrequency} onChange={(e) => setPaymentFrequency(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
@@ -368,7 +368,7 @@ function LeasingContent() {
 
                 {activeStep === "tenants" && (
                   <>
-                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Add Tenants</h2>
+                    <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Add Tenants</h2>
                     <div className="mt-2 rounded border border-[#E2E8F1] overflow-hidden">
                       <div className="grid grid-cols-6 gap-2 bg-[#F2F5FA] px-2.5 py-2 text-[0.75rem] font-semibold text-[#5F7288]">
                         <div>First Name</div>
@@ -406,7 +406,7 @@ function LeasingContent() {
 
                 {activeStep === "sharing" && (
                   <>
-                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Rent/Deposit Sharing</h2>
+                    <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Rent/Deposit Sharing</h2>
                     <div className="mt-2.5">
                       <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Sharing Method</label>
                       <select value={sharingType} onChange={(e) => setSharingType(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
@@ -421,7 +421,7 @@ function LeasingContent() {
 
                 {activeStep === "docs" && (
                   <>
-                    <h2 className="text-[1.3rem] font-semibold text-[#22364A]">Lease/Documents</h2>
+                    <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Lease/Documents</h2>
                     <div className="mt-2.5">
                       <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Lease Document Name</label>
                       <input value={leaseDocumentName} onChange={(e) => setLeaseDocumentName(e.target.value)} placeholder="Enter document title" className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]" />

@@ -123,13 +123,14 @@ function FilesContent() {
 
         <main className="p-4 md:p-5">
           <div className="mx-auto max-w-[1320px]">
-            <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-[2rem] font-medium text-[#1F3549]">Files</h1>
+            <div className="sticky top-0 z-20 -mx-2 mb-4 bg-[#F4F6FA] px-2 pb-3 pt-1">
+              <div className="flex items-center justify-between">
+              <h1 className="text-[1.7rem] font-medium text-[#1F3549]">Files</h1>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleUploadClick}
-                  className="h-11 rounded-md bg-[#7BB286] px-6 text-[1rem] font-semibold text-white hover:bg-[#6fa47a]"
+                  className="h-10 rounded-md bg-[#4E88C8] px-6 text-[0.95rem] font-semibold text-white hover:bg-[#3f79ba]"
                 >
                   Upload account file
                 </button>
@@ -141,6 +142,7 @@ function FilesContent() {
                   Manage categories
                 </button>
               </div>
+            </div>
             </div>
 
             <div className="rounded-md border border-[#DDE5EF] bg-white p-4">

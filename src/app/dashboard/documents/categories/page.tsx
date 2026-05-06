@@ -25,6 +25,7 @@ function CategoriesContent() {
   const [fileCounts] = useState<Record<string, number>>({
     Leases: 21,
   })
+  const [newCategoryName, setNewCategoryName] = useState("")
 
   const handleLogout = async () => {
     const token = getAuthToken()
@@ -60,7 +61,7 @@ function CategoriesContent() {
 
         <main className="p-4 md:p-5">
           <div className="mx-auto max-w-[1320px]">
-            <h1 className="text-[2rem] font-medium text-[#1F3549]">Manage file categories</h1>
+            <h1 className="text-[1.55rem] font-medium text-[#1F3549]">Manage file categories</h1>
 
             <div className="mt-4 overflow-hidden rounded border border-[#D9E1EB] bg-white">
               <table className="min-w-full">
@@ -88,23 +89,47 @@ function CategoriesContent() {
               </table>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setCategories((prev) => [...prev, `New Category ${prev.length - 5}`])}
-              className="mt-3 inline-flex items-center gap-1 text-[1.2rem] text-[#2F79B7]"
-            >
-              <Plus className="h-5 w-5" /> Add a new category
-            </button>
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setNewCategoryName("New Category")}
+                className="inline-flex items-center gap-1 text-[1.02rem] text-[#2F79B7]"
+              >
+                <Plus className="h-4.5 w-4.5" /> Add a new category
+              </button>
+              {newCategoryName !== "" && (
+                <div className="mt-2 flex max-w-md items-center gap-2">
+                  <input
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Enter category name"
+                    className="h-9 w-full rounded border border-[#D8DFE9] px-3 text-[0.9rem]"
+                  />
+                  <button
+                    type="button"
+                    className="h-9 rounded-md bg-[#4E88C8] px-4 text-[0.85rem] font-semibold text-white"
+                    onClick={() => {
+                      const trimmed = newCategoryName.trim()
+                      if (!trimmed) return
+                      setCategories((prev) => [...prev, trimmed])
+                      setNewCategoryName("")
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="mt-6 flex items-center gap-3">
               <button
-                className="h-11 rounded-md bg-[#4E88C8] px-8 text-[1rem] font-semibold text-white hover:bg-[#3f79ba]"
+                className="h-10 rounded-md bg-[#4E88C8] px-8 text-[0.95rem] font-semibold text-white hover:bg-[#3f79ba]"
                 onClick={() => router.push("/dashboard/documents")}
               >
                 Save
               </button>
               <button
-                className="h-11 rounded-md border border-[#9CB7D8] bg-[#F7FAFE] px-6 text-[1rem] font-semibold text-[#4E88C8] hover:bg-[#EAF3FF]"
+                className="h-10 rounded-md border border-[#9CB7D8] bg-[#F7FAFE] px-6 text-[0.95rem] font-semibold text-[#4E88C8] hover:bg-[#EAF3FF]"
                 onClick={() => router.push("/dashboard/documents")}
               >
                 Cancel
@@ -124,4 +149,3 @@ export default function ManageCategoriesPage() {
     </ProtectedRoute>
   )
 }
-
