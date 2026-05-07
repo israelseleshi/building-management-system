@@ -61,13 +61,13 @@ export function SectionSettingsModal({
                   value={values[field.key] ?? ""}
                   onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
                   placeholder={field.placeholder}
-                  className="min-h-[90px] w-full rounded-lg border border-[#D9E1E8] bg-white px-3 py-2 text-sm text-[#1F3549] outline-none"
+                  className="min-h-[90px] max-w-[380px] w-full rounded-lg border border-[#D9E1E8] bg-white px-3 py-2 text-sm text-[#1F3549] outline-none focus:border-[#4E88C8]"
                 />
               ) : field.type === "select" ? (
                 <select
                   value={values[field.key] ?? ""}
                   onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  className="h-10 w-full rounded-lg border border-[#D9E1E8] bg-white px-3 text-sm text-[#1F3549] outline-none"
+                  className="h-10 max-w-[280px] w-full rounded-lg border border-[#D9E1E8] bg-white px-3 text-sm text-[#1F3549] outline-none focus:border-[#4E88C8]"
                 >
                   <option value="">Select {field.label}</option>
                   {(field.options ?? []).map((opt) => (
@@ -82,7 +82,7 @@ export function SectionSettingsModal({
                   value={values[field.key] ?? ""}
                   onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
                   placeholder={field.placeholder}
-                  className="h-10 w-full rounded-lg border border-[#D9E1E8] bg-white px-3 text-sm text-[#1F3549] outline-none"
+                  className="h-10 max-w-[280px] w-full rounded-lg border border-[#D9E1E8] bg-white px-3 text-sm text-[#1F3549] outline-none focus:border-[#4E88C8]"
                 />
               )}
             </div>

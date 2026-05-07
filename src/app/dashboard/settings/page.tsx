@@ -249,10 +249,10 @@ function OwnerSettingsContent() {
                           setSelectedFeature(feature)
                           setIsSettingsModalOpen(true)
                         }}
-                        className={`flex min-h-[88px] items-start gap-3.5 rounded-xl border px-4 py-3 text-left transition ${
+                        className={`flex min-h-[88px] items-start gap-3.5 rounded-lg border px-4 py-3 text-left transition-all duration-200 ${
                           selectedFeature?.title === feature.title
-                            ? "border-[#BFD2E8] bg-[#F8FBFF]"
-                            : "border-[#E7ECF3] bg-white hover:border-[#CFDAE8] hover:bg-[#FCFDFF]"
+                            ? "border-[#4E88C8] bg-[#F8FBFF] shadow-sm"
+                            : "border-[#DDE5EF] bg-white hover:border-[#4E88C8]/50 hover:shadow-md"
                         }`}
                       >
                         <div className="mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#F3F6FA] text-[#2F4C67]">

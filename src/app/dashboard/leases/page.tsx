@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar"
@@ -58,6 +58,7 @@ function LeasingContent() {
 
   const [leaseType, setLeaseType] = useState<LeaseType>("fixed")
   const [unit, setUnit] = useState("1A")
+  const [unitOptions, setUnitOptions] = useState<string[]>(["1A"])
   const [leaseTerm, setLeaseTerm] = useState("New Term")
 
   const [leaseBeginDate, setLeaseBeginDate] = useState("2026-05-10")
@@ -182,6 +183,51 @@ function LeasingContent() {
     return Object.keys(nextErrors).length === 0
   }
 
+  useEffect(() => {
+    const fetchUnits = async () => {
+      const token = getAuthToken()
+      if (!token) return
+      try {
+        const buildingsRes = await fetch(`${API_BASE_URL}/buildings`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!buildingsRes.ok) return
+        const buildingsPayload = await buildingsRes.json().catch(() => ({}))
+        const buildings = buildingsPayload?.data?.buildings || []
+        const buildingIds: string[] = buildings
+          .map((b: any) => (b?.building_id ?? b?.id)?.toString?.())
+          .filter((id: string) => Boolean(id))
+
+        if (buildingIds.length === 0) return
+
+        const results = await Promise.allSettled(
+          buildingIds.map(async (buildingId) => {
+            const unitsRes = await fetch(`${API_BASE_URL}/buildings/${buildingId}/units`, {
+              method: "GET",
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (!unitsRes.ok) return []
+            const unitsPayload = await unitsRes.json().catch(() => ({}))
+            return (unitsPayload?.data?.units || []).map((u: any) => u?.unit_number?.toString?.()).filter(Boolean)
+          })
+        )
+
+        const flat = results
+          .filter((r): r is PromiseFulfilledResult<string[]> => r.status === "fulfilled")
+          .flatMap((r) => r.value)
+        const unique = Array.from(new Set(flat))
+        if (unique.length > 0) {
+          setUnitOptions(unique)
+          if (!unique.includes(unit)) setUnit(unique[0])
+        }
+      } catch {
+        // keep fallback option silently
+      }
+    }
+    fetchUnits()
+  }, [])
+
   return (
     <div className="min-h-screen flex bg-[#F4F6FA]">
       <DashboardSidebar
@@ -199,9 +245,9 @@ function LeasingContent() {
           onToggleSidebar={() => setIsSidebarCollapsed((x) => !x)}
         />
 
-        <main className="p-2.5 md:p-3">
+        <main className="p-2.5 pt-3.5 md:p-3 md:pt-4">
           <div className="mx-auto max-w-[1240px]">
-            <div className="rounded border border-[#D6DEEA] bg-[#F2F5FA] px-2.5 py-2">
+            <div className="rounded border border-[#D6DEEA] bg-[#F2F5FA] px-3.5 py-3">
               <div className="grid grid-cols-1 gap-3 xl:grid-cols-[2fr_repeat(4,minmax(0,1fr))]">
                 <div className="flex items-center gap-2.5 border-r border-[#E1E6EF] pr-3">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E7F4FA] text-[#5B7E9E]">
@@ -220,8 +266,8 @@ function LeasingContent() {
               </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-2.5 lg:grid-cols-[250px_1fr]">
-              <aside className="rounded border border-[#E0E6EF] bg-white py-1.5">
+            <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[232px_1fr]">
+              <aside className="h-fit overflow-hidden rounded-md border border-[#DCE4F0] bg-[#F5F8FC]">
                 {steps.map((step, idx) => {
                   const active = step.key === activeStep
                   const done = completedSet.has(step.key)
@@ -230,8 +276,8 @@ function LeasingContent() {
                       key={step.key}
                       type="button"
                       onClick={() => setCurrentStepIndex(idx)}
-                      className={`flex w-full items-center gap-2.5 border-b border-[#EEF2F7] px-3 py-2.5 text-left last:border-b-0 ${
-                        active ? "bg-[#F7FAFE]" : "bg-white"
+                      className={`flex w-full items-center gap-2.5 border-b border-[#E3E9F2] px-3 py-3.5 text-left transition-colors ${
+                        active ? "bg-white" : "bg-transparent hover:bg-[#F0F5FB]"
                       }`}
                     >
                       <span className={`flex h-5 w-5 items-center justify-center rounded-full ${done ? "text-[#34B56A]" : "text-[#A3B0C0]"}`}>
@@ -243,28 +289,39 @@ function LeasingContent() {
                 })}
               </aside>
 
-              <section className="rounded border border-[#E0E6EF] bg-white p-3">
+              <section className="px-1 py-0.5">
                 {activeStep === "term" && (
                   <>
                     <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Lease Term</h2>
-                    <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                    <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:max-w-[740px] md:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Select Unit</label>
-                        <select value={unit} onChange={(e) => setUnit(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
-                          <option value="1A">1A</option>
-                          <option value="1B">1B</option>
-                          <option value="2A">2A</option>
-                        </select>
+                        <input
+                          list="leasing-unit-options"
+                          value={unit}
+                          onChange={(e) => setUnit(e.target.value)}
+                          placeholder="Search unit..."
+                          className="h-9 max-w-[280px] w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem] outline-none focus:border-[#4E88C8]"
+                        />
+                        <datalist id="leasing-unit-options">
+                          {unitOptions.map((u) => (
+                            <option key={u} value={u} />
+                          ))}
+                        </datalist>
                       </div>
                       <div>
                         <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Select Lease Term</label>
-                        <select value={leaseTerm} onChange={(e) => setLeaseTerm(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
+                        <select
+                          value={leaseTerm}
+                          onChange={(e) => setLeaseTerm(e.target.value)}
+                          className="h-9 max-w-[280px] w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem] outline-none focus:border-[#4E88C8]"
+                        >
                           <option value="New Term">New Term</option>
                           <option value="Renewal">Renewal</option>
                         </select>
                       </div>
                     </div>
-                    <div className="mt-3 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                    <div className="mt-3 grid grid-cols-1 gap-2.5 md:max-w-[740px] md:grid-cols-2">
                       <LeaseTypeCard title="Fixed Term" description="This lease has a fixed start date and will expire after a fixed end date." checked={leaseType === "fixed"} onClick={() => setLeaseType("fixed")} />
                       <LeaseTypeCard title="Month to Month" description="Lease has a start date but no fixed end date. It should automatically renew each month." checked={leaseType === "month_to_month"} onClick={() => setLeaseType("month_to_month")} />
                     </div>
@@ -274,7 +331,7 @@ function LeasingContent() {
                 {activeStep === "dates" && (
                   <>
                     <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Lease Dates</h2>
-                    <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                    <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:max-w-[740px] md:grid-cols-2">
                       <DateField label="Lease Begin Date *" value={leaseBeginDate} onChange={setLeaseBeginDate} />
                       <DateField label="Lease End Date *" value={leaseEndDate} onChange={setLeaseEndDate} disabled={leaseType === "month_to_month"} />
                     </div>
@@ -288,9 +345,13 @@ function LeasingContent() {
                 {activeStep === "rent" && (
                   <>
                     <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Rent/Additional Fee</h2>
-                    <div className="mt-2.5">
+                    <div className="mt-2.5 md:max-w-[740px]">
                       <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Payment Frequency</label>
-                      <select value={paymentFrequency} onChange={(e) => setPaymentFrequency(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
+                      <select
+                        value={paymentFrequency}
+                        onChange={(e) => setPaymentFrequency(e.target.value)}
+                        className="h-9 max-w-[280px] w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem] outline-none focus:border-[#4E88C8]"
+                      >
                         <option value="">Select</option>
                         <option value="Monthly">Monthly</option>
                         <option value="Bi-Monthly">Bi-Monthly</option>
@@ -301,7 +362,7 @@ function LeasingContent() {
                     </div>
 
                     {paymentFrequency === "Custom" && (
-                      <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:grid-cols-[130px_1fr]">
+                      <div className="mt-2.5 grid grid-cols-1 gap-2.5 md:max-w-[520px] md:grid-cols-[130px_1fr]">
                         <div>
                           <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Every</label>
                           <input
@@ -309,7 +370,7 @@ function LeasingContent() {
                             min={1}
                             value={customFrequencyValue}
                             onChange={(e) => setCustomFrequencyValue(e.target.value)}
-                            className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]"
+                            className="h-9 max-w-[120px] w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem] outline-none focus:border-[#4E88C8]"
                           />
                         </div>
                         <div>
@@ -317,7 +378,7 @@ function LeasingContent() {
                           <select
                             value={customFrequencyUnit}
                             onChange={(e) => setCustomFrequencyUnit(e.target.value)}
-                            className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]"
+                            className="h-9 max-w-[200px] w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem] outline-none focus:border-[#4E88C8]"
                           >
                             <option>Days</option>
                             <option>Weeks</option>
@@ -328,19 +389,27 @@ function LeasingContent() {
                     )}
 
                     {paymentFrequency && (
-                      <div className="mt-3 space-y-2.5">
+                      <div className="mt-3 space-y-2.5 md:max-w-[740px]">
                         <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
                           <div>
                             <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Rent</label>
-                            <div className="flex h-9 items-center overflow-hidden rounded border border-[#D8DFE9]">
+                            <div className="flex h-9 max-w-[280px] items-center overflow-hidden rounded border border-[#D8DFE9] focus-within:border-[#4E88C8]">
                               <span className="flex h-full w-12 items-center justify-center border-r border-[#D8DFE9] text-[0.8rem] text-[#6A7C90]">ETB</span>
-                              <input value={rentAmountEtb} onChange={(e) => setRentAmountEtb(e.target.value)} className="h-full w-full px-2.5 text-[0.82rem] outline-none" />
+                              <input
+                                value={rentAmountEtb}
+                                onChange={(e) => setRentAmountEtb(e.target.value)}
+                                className="h-full w-full px-2.5 text-[0.82rem] outline-none"
+                              />
                             </div>
                           </div>
                           <div>
                             <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Due on the</label>
-                            <div className="grid grid-cols-[1fr_auto] overflow-hidden rounded border border-[#D8DFE9]">
-                              <select value={dueDay} onChange={(e) => setDueDay(e.target.value)} className="h-9 border-r border-[#D8DFE9] px-2.5 text-[0.82rem]">
+                            <div className="grid grid-cols-[1fr_auto] max-w-[280px] overflow-hidden rounded border border-[#D8DFE9] focus-within:border-[#4E88C8]">
+                              <select
+                                value={dueDay}
+                                onChange={(e) => setDueDay(e.target.value)}
+                                className="h-9 border-r border-[#D8DFE9] px-2.5 text-[0.82rem] outline-none"
+                              >
                                 {dueDays.map((day) => (
                                   <option key={day}>{day}</option>
                                 ))}
@@ -350,9 +419,14 @@ function LeasingContent() {
                           </div>
                         </div>
 
-                        <div>
+                        <div className="max-w-[620px]">
                           <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">On which date should the first rental invoice be due?*</label>
-                          <input type="date" value={firstInvoiceDate} onChange={(e) => setFirstInvoiceDate(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]" />
+                          <input
+                            type="date"
+                            value={firstInvoiceDate}
+                            onChange={(e) => setFirstInvoiceDate(e.target.value)}
+                            className="h-9 max-w-[280px] w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem] outline-none focus:border-[#4E88C8]"
+                          />
                           <p className="mt-1.5 text-[0.73rem] text-[#8A98A8]">We'll immediately create an unpaid invoice due on whichever date you select. Invoices will continue from that date onward.</p>
                         </div>
 
@@ -369,7 +443,7 @@ function LeasingContent() {
                 {activeStep === "tenants" && (
                   <>
                     <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Add Tenants</h2>
-                    <div className="mt-2 rounded border border-[#E2E8F1] overflow-hidden">
+                    <div className="mt-2 max-w-[920px] overflow-hidden rounded border border-[#E2E8F1]">
                       <div className="grid grid-cols-6 gap-2 bg-[#F2F5FA] px-2.5 py-2 text-[0.75rem] font-semibold text-[#5F7288]">
                         <div>First Name</div>
                         <div>Last Name</div>
@@ -378,20 +452,20 @@ function LeasingContent() {
                         <div>Application Status</div>
                         <div></div>
                       </div>
-                      <div className="space-y-2 px-2.5 py-2.5">
+                      <div className="space-y-1.5 px-2.5 py-2">
                         {tenants.map((tenant, i) => (
                           <div key={i} className="grid grid-cols-6 gap-2">
-                            <input value={tenant.firstName} onChange={(e) => updateTenant(i, "firstName", e.target.value)} className="h-8 rounded border border-[#D8DFE9] px-2 text-[0.78rem]" />
-                            <input value={tenant.lastName} onChange={(e) => updateTenant(i, "lastName", e.target.value)} className="h-8 rounded border border-[#D8DFE9] px-2 text-[0.78rem]" />
+                            <input value={tenant.firstName} onChange={(e) => updateTenant(i, "firstName", e.target.value)} className="h-7 rounded border border-[#D8DFE9] px-2 text-[0.76rem]" />
+                            <input value={tenant.lastName} onChange={(e) => updateTenant(i, "lastName", e.target.value)} className="h-7 rounded border border-[#D8DFE9] px-2 text-[0.76rem]" />
                             <div>
-                              <input value={tenant.email} onChange={(e) => updateTenant(i, "email", e.target.value)} className="h-8 w-full rounded border border-[#D8DFE9] px-2 text-[0.78rem]" />
+                              <input value={tenant.email} onChange={(e) => updateTenant(i, "email", e.target.value)} className="h-7 w-full rounded border border-[#D8DFE9] px-2 text-[0.76rem]" />
                               {tenantErrors[i]?.email && <p className="mt-1 text-[0.68rem] text-red-600">{tenantErrors[i].email}</p>}
                             </div>
                             <div>
-                              <input value={tenant.phone} onChange={(e) => updateTenant(i, "phone", e.target.value)} className="h-8 w-full rounded border border-[#D8DFE9] px-2 text-[0.78rem]" />
+                              <input value={tenant.phone} onChange={(e) => updateTenant(i, "phone", e.target.value)} className="h-7 w-full rounded border border-[#D8DFE9] px-2 text-[0.76rem]" />
                               {tenantErrors[i]?.phone && <p className="mt-1 text-[0.68rem] text-red-600">{tenantErrors[i].phone}</p>}
                             </div>
-                            <div className="flex h-8 items-center rounded border border-[#E4EAF2] px-2 text-[0.75rem] text-[#7D8EA1]">Application Not Requested</div>
+                            <div className="flex h-7 items-center rounded border border-[#E4EAF2] px-2 text-[0.72rem] text-[#7D8EA1]">Application Not Requested</div>
                             <div />
                           </div>
                         ))}
@@ -407,7 +481,7 @@ function LeasingContent() {
                 {activeStep === "sharing" && (
                   <>
                     <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Rent/Deposit Sharing</h2>
-                    <div className="mt-2.5">
+                    <div className="mt-2.5 max-w-[420px]">
                       <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Sharing Method</label>
                       <select value={sharingType} onChange={(e) => setSharingType(e.target.value)} className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]">
                         <option value="">Select</option>
@@ -422,7 +496,7 @@ function LeasingContent() {
                 {activeStep === "docs" && (
                   <>
                     <h2 className="text-[1.08rem] font-semibold text-[#22364A]">Lease/Documents</h2>
-                    <div className="mt-2.5">
+                    <div className="mt-2.5 max-w-[420px]">
                       <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">Lease Document Name</label>
                       <input value={leaseDocumentName} onChange={(e) => setLeaseDocumentName(e.target.value)} placeholder="Enter document title" className="h-9 w-full rounded border border-[#D8DFE9] px-2.5 text-[0.82rem]" />
                     </div>
@@ -432,31 +506,36 @@ function LeasingContent() {
             </div>
 
             <div className="mt-4 border-t border-[#E4EAF2] pt-3">
-              <div className="flex items-center justify-between">
-                <div />
+              <div className="flex items-center justify-center">
                 <div className="flex items-center gap-2">
-              {currentStepIndex > 0 && (
                 <button
                   type="button"
                   onClick={() => setCurrentStepIndex((x) => Math.max(0, x - 1))}
-                  className="h-8 rounded border border-[#9CB7D8] px-5 text-[0.78rem] font-semibold text-[#4E88C8]"
+                  disabled={currentStepIndex === 0}
+                  className={`h-8 rounded border px-5 text-[0.78rem] font-semibold ${
+                    currentStepIndex === 0
+                      ? "cursor-not-allowed border-[#C8D5E6] text-[#9AB0C8]"
+                      : "border-[#9CB7D8] text-[#4E88C8]"
+                  }`}
                 >
                   Back
                 </button>
-              )}
-
-              {!isLastStep && canGoNext && (
                 <button
                   type="button"
                   onClick={() => {
+                    if (isLastStep) return
                     if (activeStep === "tenants" && !validateTenants()) return
                     setCurrentStepIndex((x) => Math.min(steps.length - 1, x + 1))
                   }}
-                  className="h-8 rounded bg-[#4E88C8] px-5 text-[0.78rem] font-semibold text-white"
+                  disabled={isLastStep || !canGoNext}
+                  className={`h-8 rounded px-5 text-[0.78rem] font-semibold text-white ${
+                    isLastStep || !canGoNext
+                      ? "cursor-not-allowed bg-[#B7C8DE]"
+                      : "bg-[#4E88C8]"
+                  }`}
                 >
                   Next
                 </button>
-              )}
                 </div>
               </div>
             </div>
@@ -488,7 +567,15 @@ function LeaseTypeCard({
   onClick: () => void
 }) {
   return (
-    <button type="button" onClick={onClick} className={`rounded border p-2.5 text-left ${checked ? "border-[#9FB9D8] bg-[#F8FBFF]" : "border-[#E0E6EF] bg-white"}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md border p-2.5 text-left transition-all duration-200 ${
+        checked
+          ? "border-[#4E88C8] bg-[#F8FBFF] shadow-sm"
+          : "border-[#DDE5EF] bg-white hover:border-[#4E88C8]/50 hover:shadow-md"
+      }`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5 text-[#607790]" />
@@ -513,18 +600,15 @@ function DateField({
   disabled?: boolean
 }) {
   return (
-    <div>
+    <div className="max-w-[280px]">
       <label className="mb-1 block text-[0.78rem] font-medium text-[#3D5167]">{label}</label>
-      <div className="relative">
-        <input
-          type="date"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          className="h-9 w-full rounded border border-[#D8DFE9] bg-white px-2.5 pr-8 text-[0.82rem]"
-        />
-        <Calendar className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#7A8EA5]" />
-      </div>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="h-9 w-full rounded border border-[#D8DFE9] bg-white px-2.5 text-[0.82rem] outline-none focus:border-[#4E88C8]"
+      />
     </div>
   )
 }
