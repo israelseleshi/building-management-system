@@ -287,15 +287,15 @@ function TenantsContent() {
               </div>
             </div>
 
-            <div className="overflow-x-hidden">
+            <div className="overflow-visible">
               <table className="w-full table-fixed border-collapse">
                 <colgroup>
-                  <col className="w-[26%]" />
-                  <col className="w-[14%]" />
+                  <col className="w-[25%]" />
+                  <col className="w-[13%]" />
                   <col className="w-[22%]" />
-                  <col className="w-[20%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[3%]" />
+                  <col className="w-[21%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[5%]" />
                 </colgroup>
                 <thead style={{ backgroundColor: theme.tableHead }}>
                   <tr className="border-b" style={{ borderColor: theme.line }}>
@@ -304,7 +304,7 @@ function TenantsContent() {
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.04em]" style={{ color: theme.muted }}>Contact Info</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.04em]" style={{ color: theme.muted }}>Tenant Portal Status</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.04em]" style={{ color: theme.muted }}>Action</th>
-                    <th className="w-12 px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.04em]" style={{ color: theme.muted }} />
+                    <th className="w-14 px-3 py-3 text-center text-xs font-semibold uppercase tracking-[0.04em]" style={{ color: theme.muted }} />
                   </tr>
                 </thead>
                 <tbody>
@@ -360,7 +360,7 @@ function TenantsContent() {
                             </Button>
                           )}
                         </td>
-                        <td className="px-4 py-4 text-right">
+                        <td className="px-3 py-4 text-center">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -371,7 +371,11 @@ function TenantsContent() {
                                 <MoreVertical className="h-4 w-4" />
                               </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent
+                              align="end"
+                              sideOffset={6}
+                              className="z-[120] min-w-[170px] border border-slate-200 bg-white opacity-100 shadow-lg"
+                            >
                               <DropdownMenuItem onClick={() => setEditTenant(tenant)}>Edit Tenant</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setViewTenant(tenant)}>View Tenant</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setSmsTenant(tenant)}>Send SMS</DropdownMenuItem>
